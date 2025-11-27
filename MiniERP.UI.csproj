@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+	  <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWPF>true</UseWPF>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Application\**;Domain\**;Infrastructure\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\article.png" />
+    <None Remove="Assets\customer.png" />
+    <None Remove="Assets\delete.png" />
+    <None Remove="Assets\duplicate.png" />
+    <None Remove="Assets\new.png" />
+    <None Remove="Assets\order.png" />
+    <None Remove="Assets\quotation.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\delete.png" />
+    <Resource Include="Assets\duplicate.png" />
+    <Resource Include="Assets\new.png" />
+    <Resource Include="Assets\quotation.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\article.png" />
+    <Resource Include="Assets\customer.png" />
+    <Resource Include="Assets\order.png" />
+  </ItemGroup>
+
+</Project>
