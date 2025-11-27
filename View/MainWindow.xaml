@@ -79,7 +79,7 @@
                                 Width="32"
                                 Height="32"
                                 Source="/Assets/quotation.png" />
-                            <TextBlock Text="Quote" />
+                            <TextBlock HorizontalAlignment="Center" Text="Quote" />
                         </StackPanel>
                     </Button>
                     <Button
@@ -95,19 +95,37 @@
                                 Width="32"
                                 Height="32"
                                 Source="/Assets/order.png" />
-                            <TextBlock Text="Order" />
+                            <TextBlock HorizontalAlignment="Center" Text="Order" />
                         </StackPanel>
                     </Button>
                     <Button
                         Width="60"
                         Height="50"
                         Margin="5,0,0,0"
-                        Content="Invoice" />
+                        Background="Transparent"
+                        BorderThickness="0">
+                        <StackPanel>
+                            <Image
+                                Width="32"
+                                Height="32"
+                                Source="/Assets/invoice.png" />
+                            <TextBlock HorizontalAlignment="Center" Text="Invoice" />
+                        </StackPanel>
+                    </Button>
                     <Button
                         Width="60"
                         Height="50"
                         Margin="5,0,0,0"
-                        Content="P/L" />
+                        Background="Transparent"
+                        BorderThickness="0">
+                        <StackPanel>
+                            <Image
+                                Width="32"
+                                Height="32"
+                                Source="/Assets/packing-list.png" />
+                            <TextBlock HorizontalAlignment="Center" Text="P/L" />
+                        </StackPanel>
+                    </Button>
                     <Button
                         Width="60"
                         Height="50"
