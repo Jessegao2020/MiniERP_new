@@ -1,4 +1,5 @@
-﻿using MiniERP.UI.ViewModel;
+﻿using Microsoft.Extensions.DependencyInjection;
+using MiniERP.UI.ViewModel;
 using System.Windows;
 
 namespace MiniERP.UI.View
@@ -11,7 +12,8 @@ namespace MiniERP.UI.View
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+            // 从依赖注入容器获取 MainViewModel
+            DataContext = App.ServiceProvider.GetRequiredService<MainViewModel>();
         }
     }
 }

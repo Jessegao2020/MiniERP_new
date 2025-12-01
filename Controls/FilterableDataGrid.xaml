@@ -1,0 +1,286 @@
+<UserControl
+    x:Class="MiniERP.UI.Controls.FilterableDataGrid"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:MiniERP.UI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <!--  筛选框样式 - 完全透明，看起来像单元格内的文本  -->
+        <Style x:Key="FilterTextBoxStyle" TargetType="TextBox">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="MinHeight" Value="22" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <ScrollViewer
+                            x:Name="PART_ContentHost"
+                            Background="Transparent"
+                            Focusable="False"
+                            HorizontalScrollBarVisibility="Hidden"
+                            VerticalScrollBarVisibility="Hidden" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--  列标题模板：包含标题和筛选框  -->
+        <DataTemplate x:Key="FilterableHeaderTemplate">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!--  标题行 - 使用原生DataGrid列标题样式  -->
+                <Border
+                    Grid.Row="0"
+                    Padding="7,5,7,3"
+                    Background="#E8E8E8"
+                    BorderBrush="#C0C0C0"
+                    BorderThickness="0">
+                    <ContentPresenter
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Content="{Binding}" />
+                </Border>
+
+                <!--  筛选行 - 完全像DataGrid单元格  -->
+                <Border
+                    Grid.Row="1"
+                    Padding="0"
+                    Background="#fdffec"
+                    BorderBrush="#C0C0C0"
+                    BorderThickness="0">
+                    <TextBox
+                        x:Name="FilterTextBox"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        KeyDown="FilterTextBox_KeyDown"
+                        Style="{StaticResource FilterTextBoxStyle}">
+                        <TextBox.ToolTip>
+                            <TextBlock Text="输入筛选条件后按回车键筛选" />
+                        </TextBox.ToolTip>
+                    </TextBox>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <!--  列标题拖拽调整大小样式  -->
+        <Style x:Key="ColumnHeaderGripperStyle" TargetType="Thumb">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Cursor" Value="SizeWE" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="{TemplateBinding Background}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--  原生DataGrid列标题样式  -->
+        <Style x:Key="FilterableColumnHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#E8E8E8" />
+            <Setter Property="BorderBrush" Value="#C0C0C0" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridColumnHeader">
+                        <Grid>
+                            <Border
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter
+                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                            </Border>
+                            <Thumb
+                                x:Name="PART_LeftHeaderGripper"
+                                HorizontalAlignment="Left"
+                                Style="{StaticResource ColumnHeaderGripperStyle}" />
+                            <Thumb
+                                x:Name="PART_RightHeaderGripper"
+                                HorizontalAlignment="Right"
+                                Style="{StaticResource ColumnHeaderGripperStyle}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#D0D0D0" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#B0B0B0" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--  DataGridCell样式 - 控制单元格边框粗细  -->
+        <Style x:Key="FlatDataGridCellStyle" TargetType="DataGridCell">
+            <!--  避免半像素导致的细缝  -->
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+
+            <!--  只画底部和右侧的边框，形成网格线  -->
+            <Setter Property="BorderBrush" Value="LightGray" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+
+            <!--  垂直方向 padding 改小一点，不要把内容往中间顶出“额外高度”  -->
+            <Setter Property="Padding" Value="2,0,0,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            SnapsToDevicePixels="True">
+                            <!--  内容在边框里面，边框本身占满整行高度  -->
+                            <ContentPresenter
+                                Margin="{TemplateBinding Padding}"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                </Trigger>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!--  RowHeader样式 - 左侧备用列，用于拖拽调整行高  -->
+        <Style TargetType="DataGridRowHeader">
+            <Setter Property="Width" Value="25" />
+            <Setter Property="Background" Value="#F5F5F5" />
+            <Setter Property="BorderBrush" Value="LightGray" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridRowHeader">
+                        <Grid>
+                            <Border
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" />
+                            <!--  拖拽调整行高的Thumb - 在RowHeader底部，用于拖拽调整下一行的高度  -->
+                            <Thumb
+                                x:Name="PART_BottomHeaderGripper"
+                                Height="8"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Bottom"
+                                Background="Transparent"
+                                Cursor="SizeNS"
+                                IsHitTestVisible="True">
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="Transparent"
+                                            BorderThickness="0"
+                                            SnapsToDevicePixels="True">
+                                            <!--  添加一个小的视觉指示器  -->
+                                            <Rectangle
+                                                Width="20"
+                                                Height="2"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Fill="#808080"
+                                                Opacity="0.5" />
+                                        </Border>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <!--  数据表格  -->
+        <DataGrid
+            x:Name="InnerDataGrid"
+            AlternatingRowBackground="#e9e9e9"
+            AutoGenerateColumns="False"
+            Background="White"
+            BorderBrush="LightGray"
+            BorderThickness="0"
+            CanUserResizeRows="True"
+            CellStyle="{StaticResource FlatDataGridCellStyle}"
+            GridLinesVisibility="None"
+            HeadersVisibility="All"
+            IsReadOnly="True"
+            MinRowHeight="22"
+            RowBackground="White"
+            RowHeight="22"
+            SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=1}, Mode=TwoWay}"
+            SelectionMode="Single"
+            SnapsToDevicePixels="True">
+            <DataGrid.ColumnHeaderStyle>
+                <Style BasedOn="{StaticResource FilterableColumnHeaderStyle}" TargetType="DataGridColumnHeader" />
+            </DataGrid.ColumnHeaderStyle>
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="SnapsToDevicePixels" Value="True" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="BorderThickness" Value="0" />
+                    <!--  设置默认高度，但允许拖拽调整  -->
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="DataGridRow">
+                                <!--  整行的背景，只负责涂底色，不留额外 Padding  -->
+                                <Border
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="0"
+                                    SnapsToDevicePixels="True">
+
+                                    <!--  只两列：左边 RowHeader，右边 Cells  -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!--  行头：会自动套用你上面定义的 DataGridRowHeader 样式  -->
+                                        <DataGridRowHeader Grid.Column="0" />
+
+                                        <!--  单元格区域：从顶部开始铺满整行高度  -->
+                                        <DataGridCellsPresenter
+                                            Grid.Column="1"
+                                            ItemsPanel="{TemplateBinding ItemsPanel}"
+                                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                    </Grid>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </DataGrid.RowStyle>
+        </DataGrid>
+    </Grid>
+</UserControl>

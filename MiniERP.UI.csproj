@@ -14,12 +14,14 @@
     <None Remove="Assets\article.png" />
     <None Remove="Assets\customer.png" />
     <None Remove="Assets\delete.png" />
+    <None Remove="Assets\discard.png" />
     <None Remove="Assets\duplicate.png" />
     <None Remove="Assets\invoice.png" />
     <None Remove="Assets\new.png" />
     <None Remove="Assets\order.png" />
     <None Remove="Assets\packing-list.png" />
     <None Remove="Assets\quotation.png" />
+    <None Remove="Assets\save.png" />
     <None Remove="erp.db" />
   </ItemGroup>
 
@@ -31,6 +33,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\delete.png" />
+    <Resource Include="Assets\discard.png" />
     <Resource Include="Assets\duplicate.png" />
     <Resource Include="Assets\invoice.png" />
     <Resource Include="Assets\new.png" />
@@ -42,6 +45,7 @@
     <Resource Include="Assets\article.png" />
     <Resource Include="Assets\customer.png" />
     <Resource Include="Assets\order.png" />
+    <Resource Include="Assets\save.png" />
   </ItemGroup>
 
   <ItemGroup>

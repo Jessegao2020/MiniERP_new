@@ -9,7 +9,7 @@ using System.Windows.Input;
 
 namespace MiniERP.UI.ViewModel
 {
-    public class MainViewModel:INotifyPropertyChanged
+    public class MainViewModel : INotifyPropertyChanged, INavigationService
     {
         public ICommand OpenPageCommand { get; }
         public ICommand CloseTabCommand { get; }
@@ -48,9 +48,17 @@ namespace MiniERP.UI.ViewModel
                 _ => throw new NotImplementedException(),
             };
 
+            OpenView(view, pageName);
+        }
+
+        /// <summary>
+        /// 实现 INavigationService 接口，在标签页中打开视图
+        /// </summary>
+        public void OpenView(UserControl view, string title)
+        {
             var tab = new TabPageModel
             {
-                Title = pageName,
+                Title = title,
                 ContentView = view
             };
 

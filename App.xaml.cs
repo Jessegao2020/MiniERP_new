@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using MiniERP.Infrastructure;
-using MiniERP.UI.ViewModel;
+using MiniERP.UI.Helper;
 using System.IO;
 using System.Windows;
 
@@ -29,9 +29,7 @@ namespace MiniERP
             // 注册服务
             services.AddInfrastructure(connectionString);
             services.AddApplication();
-            
-            // 注册ViewModel
-            services.AddTransient<ArticleViewModel>();
+            services.AddUI();
             
             ServiceProvider = services.BuildServiceProvider();
             
