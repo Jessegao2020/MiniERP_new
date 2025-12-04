@@ -30,7 +30,8 @@ namespace MiniERP.UI.Service
 
         public void CloseTab(PageType type)
         {
-            throw new NotImplementedException();
+            var tab = _tabManager.OpenedTabs.FirstOrDefault(t=>t.Title == type.ToString());
+            _tabManager.RemoveTab(tab);
         }
     }
 

@@ -16,14 +16,13 @@ namespace MiniERP.UI.ViewModel
         public ICommand OpenPageCommand { get; }
         public ICommand CloseTabCommand { get; }
 
-
-
         public MainViewModel(ITabManager tabManager, INavigationService nav)
         {
             TabManager = tabManager;
             _nav = nav;
 
             OpenPageCommand = new RelayCommand<PageType>(page => _nav.OpenTab(page));
+            CloseTabCommand = new RelayCommand<TabPageModel>(tab => TabManager.RemoveTab(tab));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

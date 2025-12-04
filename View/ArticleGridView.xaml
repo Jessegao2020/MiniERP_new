@@ -7,6 +7,7 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:MiniERP.UI.View"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:MiniERP.UI.Model"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -23,7 +24,8 @@
                 Margin="3,0,0,0"
                 Background="Transparent"
                 BorderThickness="0"
-                Command="{Binding OpenCreateViewCommand}">
+                Command="{Binding OpenTabCommand}"
+                CommandParameter="{x:Static model:PageType.ArticleData}">
                 <StackPanel Orientation="Horizontal">
                     <Image
                         Width="16"
@@ -34,9 +36,10 @@
                         VerticalAlignment="Center"
                         FontSize="10"
                         Text="New" />
+                    
                 </StackPanel>
             </Button>
-
+            
             <Button
                 Margin="3,0,0,0"
                 Background="Transparent"
@@ -70,6 +73,7 @@
                         Text="Delete" />
                 </StackPanel>
             </Button>
+            <TextBlock Text="{Binding OpenTabCommand}" Foreground="Red" />
         </StackPanel>
 
         <!--  Customized DataGrid  -->

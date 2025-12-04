@@ -20,9 +20,8 @@ namespace MiniERP.UI.Service
                 if (_selectedTab != value)
                 {
                     _selectedTab = value;
+                    OnPropertyChanged();
                 }
-
-                OnPropertyChanged();
             }
         }
 

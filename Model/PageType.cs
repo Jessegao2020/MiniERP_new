@@ -9,6 +9,7 @@
         Invoice,
         PI,
         PL,
-        Contract
+        Contract,
+        ArticleData
     }
 }

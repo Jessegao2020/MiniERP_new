@@ -61,8 +61,8 @@
                         Margin="5,0,0,0"
                         Background="Transparent"
                         BorderThickness="0"
-                        Command="{Binding OpenPageCommand}"
-                        CommandParameter="Customer">
+                        Command="{Binding}"
+                        CommandParameter="{x:Static model:PageType.Customer}">
                         <StackPanel>
                             <Image
                                 Width="32"

@@ -16,9 +16,10 @@ namespace MiniERP.UI.Service
 
         public object CreateViewModel(PageType type)
         {
-            var viewmodel = type switch
+            object viewmodel = type switch
             {
                 PageType.Article => ActivatorUtilities.CreateInstance<ArticleGridViewModel>(_serviceProvider),
+                PageType.ArticleData => ActivatorUtilities.CreateInstance<ArticleDataViewModel>(_serviceProvider),
                 _ => throw new NotSupportedException()
             };
 
