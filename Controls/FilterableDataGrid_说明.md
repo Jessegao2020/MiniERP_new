@@ -58,3 +58,4 @@
 - 多列筛选条件是 AND 关系（必须同时满足）
 - 列的 `Binding` 属性路径用于筛选，确保 `DataGridTextColumn.Binding` 正确设置
 
+

@@ -5,11 +5,15 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:MiniERP"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:MiniERP.UI.Model"
+    xmlns:view="clr-namespace:MiniERP.UI.View"
+    xmlns:vm="clr-namespace:MiniERP.UI.ViewModel"
     Title="MainWindow"
     Width="1200"
     Height="800"
     mc:Ignorable="d">
     <Grid>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
@@ -23,11 +27,16 @@
         </Menu>
 
         <TabControl x:Name="MenuTabControl" Grid.Row="1">
+
+            <!--  General Tab  -->
             <TabItem
                 Padding="10,5"
                 Background="Transparent"
                 Header="General">
+
                 <StackPanel Orientation="Horizontal">
+
+                    <!--  Article Button  -->
                     <Button
                         Width="60"
                         Height="50"
@@ -35,7 +44,7 @@
                         Background="Transparent"
                         BorderThickness="0"
                         Command="{Binding OpenPageCommand}"
-                        CommandParameter="Article">
+                        CommandParameter="{x:Static model:PageType.Article}">
                         <StackPanel>
                             <Image
                                 Width="32"
@@ -44,6 +53,8 @@
                             <TextBlock Text="Article" />
                         </StackPanel>
                     </Button>
+
+                    <!--  Customer Button  -->
                     <Button
                         Width="60"
                         Height="50"
@@ -62,11 +73,16 @@
                     </Button>
                 </StackPanel>
             </TabItem>
+
+            <!--  Documents Tab  -->
             <TabItem
                 Padding="10,5"
                 Background="Transparent"
                 Header="Documents">
+
                 <StackPanel Orientation="Horizontal">
+
+                    <!--  Quote Button  -->
                     <Button
                         Width="60"
                         Height="50"
@@ -82,6 +98,8 @@
                             <TextBlock HorizontalAlignment="Center" Text="Quote" />
                         </StackPanel>
                     </Button>
+
+                    <!--  Order Button  -->
                     <Button
                         Width="60"
                         Height="50"
@@ -98,6 +116,8 @@
                             <TextBlock HorizontalAlignment="Center" Text="Order" />
                         </StackPanel>
                     </Button>
+
+                    <!--  Invoice Button  -->
                     <Button
                         Width="60"
                         Height="50"
@@ -112,6 +132,8 @@
                             <TextBlock HorizontalAlignment="Center" Text="Invoice" />
                         </StackPanel>
                     </Button>
+
+                    <!--  P/L Button  -->
                     <Button
                         Width="60"
                         Height="50"
@@ -126,11 +148,15 @@
                             <TextBlock HorizontalAlignment="Center" Text="P/L" />
                         </StackPanel>
                     </Button>
+
+                    <!--  PI Button  -->
                     <Button
                         Width="60"
                         Height="50"
                         Margin="5,0,0,0"
                         Content="P/I" />
+
+                    <!--  Contract Button  -->
                     <Button
                         Width="60"
                         Height="50"
@@ -138,15 +164,21 @@
                         Content="Contract" />
                 </StackPanel>
             </TabItem>
+
+            <!--  Settings Tab  -->
             <TabItem
                 Padding="10,5"
                 Background="Transparent"
                 Header="Settings">
                 <StackPanel Orientation="Horizontal">
+
+                    <!--  System Button  -->
                     <Button
                         Width="60"
                         Height="50"
                         Content="System" />
+
+                    <!--  User Button  -->
                     <Button
                         Width="60"
                         Height="50"
@@ -155,15 +187,31 @@
                 </StackPanel>
             </TabItem>
         </TabControl>
+
+        <!--  Main Content Area  -->
         <TabControl
             x:Name="ContentTabControl"
             Grid.Row="2"
-            ItemsSource="{Binding OpenedTabs}"
-            SelectedItem="{Binding SelectedTab}">
+            ItemsSource="{Binding TabManager.OpenedTabs}"
+            SelectedItem="{Binding TabManager.SelectedTab}">
+
+            <TabControl.Resources>
+                <DataTemplate DataType="{x:Type vm:ArticleGridViewModel}">
+                    <view:ArticleGridView />
+                </DataTemplate>
+
+                <DataTemplate DataType="{x:Type vm:ArticleDataViewModel}">
+                    <view:ArticleDataView />
+                </DataTemplate>
+            </TabControl.Resources>
+
+            <!--  Custom Tab Style  -->
             <TabControl.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
+
                         <TextBlock Text="{Binding Title}" />
+
                         <Button
                             Margin="5,0,0,0"
                             Padding="0"
@@ -175,15 +223,18 @@
                             Cursor="Hand"
                             FontSize="10"
                             FontWeight="Bold" />
+
                     </StackPanel>
                 </DataTemplate>
             </TabControl.ItemTemplate>
 
+            <!--  Tab Content Area  -->
             <TabControl.ContentTemplate>
                 <DataTemplate>
                     <ContentControl Content="{Binding ContentView}" />
                 </DataTemplate>
             </TabControl.ContentTemplate>
+
         </TabControl>
     </Grid>
 </Window>

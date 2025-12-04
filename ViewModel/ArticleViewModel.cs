@@ -1,6 +1,7 @@
 using MiniERP.ApplicationLayer.Services;
 using MiniERP.Domain;
 using MiniERP.UI.Helper;
+using MiniERP.UI.Interface;
 using MiniERP.UI.View;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -44,7 +45,7 @@ namespace MiniERP.UI.ViewModel
         private void OpenCreateView()
         {
             var createView = new ArticleDataView();
-            _navigationService.OpenView(createView, "新建物料");
+            _navigationService.OpenTab(Model.PageType.Article);
         }
 
         private async Task LoadArticlesAsync()

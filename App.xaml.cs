@@ -17,14 +17,11 @@ namespace MiniERP
         {
             // 配置依赖注入
             var services = new ServiceCollection();
-            
+
             // 数据库连接字符串 - 优先查找项目根目录，如果不存在则使用输出目录
-            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            var rootDbPath = Path.Combine(baseDir, "..", "..", "..", "erp.db");
-            var rootDbFullPath = Path.GetFullPath(rootDbPath);
-            var outputDbPath = Path.Combine(baseDir, "erp.db");
-            var dbPath = File.Exists(rootDbFullPath) ? rootDbFullPath : outputDbPath;
-            var connectionString = $"Data Source={dbPath}";
+            var baseDir = AppContext.BaseDirectory;
+            var rootDbPath = Path.Combine(baseDir, "erp.db");
+            var connectionString = $"Data Source={rootDbPath}";
             
             // 注册服务
             services.AddInfrastructure(connectionString);
