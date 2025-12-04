@@ -13,13 +13,13 @@
     Height="800"
     mc:Ignorable="d">
     <Grid>
-
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!--  Top Menu Bar  -->
         <Menu Grid.Row="0" Padding="2">
             <MenuItem Header="File" />
             <MenuItem Header="Edit" />
@@ -205,13 +205,12 @@
                 </DataTemplate>
             </TabControl.Resources>
 
-            <!--  Custom Tab Style  -->
+            <!--  Customized Tab Style  -->
             <TabControl.ItemTemplate>
                 <DataTemplate>
+
                     <StackPanel Orientation="Horizontal">
-
                         <TextBlock Text="{Binding Title}" />
-
                         <Button
                             Margin="5,0,0,0"
                             Padding="0"
@@ -223,8 +222,8 @@
                             Cursor="Hand"
                             FontSize="10"
                             FontWeight="Bold" />
-
                     </StackPanel>
+
                 </DataTemplate>
             </TabControl.ItemTemplate>
 

@@ -1,0 +1,1 @@
+﻿1. 左右拖动收缩窗口大小时，articlegridview的gridview频繁闪烁滑动条。
