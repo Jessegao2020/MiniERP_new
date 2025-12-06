@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:helper="clr-namespace:MiniERP.UI.Helper"
     xmlns:local="clr-namespace:MiniERP"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:MiniERP.UI.Model"
@@ -12,6 +13,21 @@
     Width="1200"
     Height="800"
     mc:Ignorable="d">
+
+    <Window.Resources>
+
+        <helper:ActiveTabConverter x:Key="ActiveTabConverter" />
+
+        <DataTemplate DataType="{x:Type vm:ArticleGridViewModel}">
+            <view:ArticleGridView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ArticleDataViewModel}">
+            <view:ArticleDataView />
+        </DataTemplate>
+
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
@@ -26,7 +42,10 @@
             <MenuItem Header="About" />
         </Menu>
 
-        <TabControl x:Name="MenuTabControl" Grid.Row="1">
+        <TabControl
+            x:Name="MenuTabControl"
+            Grid.Row="1"
+            BorderThickness="1,1,1,0">
 
             <!--  General Tab  -->
             <TabItem
@@ -35,7 +54,6 @@
                 Header="General">
 
                 <StackPanel Orientation="Horizontal">
-
                     <!--  Article Button  -->
                     <Button
                         Width="60"
@@ -61,7 +79,7 @@
                         Margin="5,0,0,0"
                         Background="Transparent"
                         BorderThickness="0"
-                        Command="{Binding}"
+                        Command=""
                         CommandParameter="{x:Static model:PageType.Customer}">
                         <StackPanel>
                             <Image
@@ -81,7 +99,6 @@
                 Header="Documents">
 
                 <StackPanel Orientation="Horizontal">
-
                     <!--  Quote Button  -->
                     <Button
                         Width="60"
@@ -170,8 +187,8 @@
                 Padding="10,5"
                 Background="Transparent"
                 Header="Settings">
-                <StackPanel Orientation="Horizontal">
 
+                <StackPanel Orientation="Horizontal">
                     <!--  System Button  -->
                     <Button
                         Width="60"
@@ -189,51 +206,84 @@
         </TabControl>
 
         <!--  Main Content Area  -->
-        <TabControl
-            x:Name="ContentTabControl"
-            Grid.Row="2"
-            ItemsSource="{Binding TabManager.OpenedTabs}"
-            SelectedItem="{Binding TabManager.SelectedTab}">
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <TabControl.Resources>
-                <DataTemplate DataType="{x:Type vm:ArticleGridViewModel}">
-                    <view:ArticleGridView />
-                </DataTemplate>
+            <TabControl
+                x:Name="ContentTabControl"
+                Grid.Row="0"
+                BorderThickness="1,1,1,0"
+                ItemsSource="{Binding TabManager.OpenedTabs}"
+                SelectedItem="{Binding TabManager.SelectedTab}">
 
-                <DataTemplate DataType="{x:Type vm:ArticleDataViewModel}">
-                    <view:ArticleDataView />
-                </DataTemplate>
-            </TabControl.Resources>
+                <!--  Customized Tab  -->
+                <TabControl.ItemTemplate>
+                    <DataTemplate>
 
-            <!--  Customized Tab Style  -->
-            <TabControl.ItemTemplate>
-                <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Title}" />
+                            <Button
+                                Margin="5,0,0,0"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{Binding DataContext.CloseTabCommand, RelativeSource={RelativeSource AncestorType=TabControl}}"
+                                CommandParameter="{Binding}"
+                                Content="×"
+                                Cursor="Hand"
+                                FontSize="10"
+                                FontWeight="Bold" />
+                        </StackPanel>
 
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Title}" />
-                        <Button
-                            Margin="5,0,0,0"
-                            Padding="0"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Command="{Binding DataContext.CloseTabCommand, RelativeSource={RelativeSource AncestorType=TabControl}}"
-                            CommandParameter="{Binding}"
-                            Content="×"
-                            Cursor="Hand"
-                            FontSize="10"
-                            FontWeight="Bold" />
-                    </StackPanel>
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
 
-                </DataTemplate>
-            </TabControl.ItemTemplate>
+                <!--  Tab Content DIABLED  -->
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <Grid />
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+            </TabControl>
 
             <!--  Tab Content Area  -->
-            <TabControl.ContentTemplate>
-                <DataTemplate>
-                    <ContentControl Content="{Binding ContentView}" />
-                </DataTemplate>
-            </TabControl.ContentTemplate>
+            <ItemsControl
+                Grid.Row="1"
+                BorderBrush="Transparent"
+                BorderThickness="0"
+                ItemsSource="{Binding TabManager.OpenedTabs}">
 
-        </TabControl>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Grid />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ContentControl Content="{Binding ContentView}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Setter Property="Visibility">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource ActiveTabConverter}">
+                                    <Binding />
+                                    <Binding Path="DataContext.TabManager.SelectedTab" RelativeSource="{RelativeSource AncestorType=Window}" />
+                                </MultiBinding>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+
+            </ItemsControl>
+        </Grid>
+
     </Grid>
 </Window>

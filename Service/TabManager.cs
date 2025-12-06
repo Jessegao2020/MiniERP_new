@@ -1,17 +1,16 @@
-﻿using MiniERP.UI.Interface;
-using MiniERP.UI.Model;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using MiniERP.UI.Interface;
+using MiniERP.UI.Model;
 
 namespace MiniERP.UI.Service
 {
     public class TabManager : ITabManager
     {
-        public ObservableCollection<TabPageModel> OpenedTabs { get; } = new();
-
         private object _selectedTab;
 
+        public ObservableCollection<TabPageModel> OpenedTabs { get; } = new();
         public object SelectedTab
         {
             get { return _selectedTab; }

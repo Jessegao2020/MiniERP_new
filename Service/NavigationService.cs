@@ -34,6 +34,4 @@ namespace MiniERP.UI.Service
             _tabManager.RemoveTab(tab);
         }
     }
-
-  
 }

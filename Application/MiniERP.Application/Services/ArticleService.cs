@@ -12,50 +12,27 @@ namespace MiniERP.ApplicationLayer.Services
             _articleRepository = articleRepository;
         }
 
-        public async Task<Article?> GetArticleByIdAsync(int id)
-        {
-            return await _articleRepository.GetByIdAsync(id);
-        }
-
-        public async Task<Article?> GetArticleByCodeAsync(string code)
-        {
-            return await _articleRepository.GetByCodeAsync(code);
-        }
-
         public async Task<IEnumerable<Article>> GetAllArticlesAsync()
         {
             return await _articleRepository.GetAllAsync();
         }
 
+        public async Task<Article?> GetArticleByIdAsync(int id)
+            => await _articleRepository.GetByIdAsync(id);
+
+        public async Task<Article?> GetArticleByCodeAsync(string code)
+            => await _articleRepository.GetByCodeAsync(code);
+
         public async Task<IEnumerable<Article>> SearchArticlesAsync(string keyword)
         {
             if (string.IsNullOrWhiteSpace(keyword))
-            {
                 return await GetAllArticlesAsync();
-            }
+
             return await _articleRepository.SearchAsync(keyword);
         }
 
         public async Task<Article> CreateArticleAsync(Article article)
-        {
-            // 物料名称（或编码）为空时直接报错，避免空值写入数据库
-            if (string.IsNullOrWhiteSpace(article.Name))
-            {
-                throw new ArgumentException("物料名称不能为空", nameof(article));
-            }
-
-            var normalizedName = article.Name.Trim();
-
-            // 检查编码是否已存在
-            var existing = await _articleRepository.GetByCodeAsync(normalizedName);
-            if (existing != null)
-            {
-                throw new InvalidOperationException($"物料名称/编码 {normalizedName} 已存在");
-            }
-
-            article.Name = normalizedName;
-            return await _articleRepository.AddAsync(article);
-        }
+            => await _articleRepository.AddAsync(article);
 
         public async Task UpdateArticleAsync(Article article)
         {

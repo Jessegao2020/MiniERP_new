@@ -1,5 +1,7 @@
+using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
 using MiniERP.UI.Interface;
+using MiniERP.UI.Messaging;
 using MiniERP.UI.Service;
 using MiniERP.UI.ViewModel;
 
@@ -16,6 +18,8 @@ namespace MiniERP.UI.Helper
             services.AddSingleton<INavigationService,NavigationService>();
             services.AddSingleton<ITabManager, TabManager>();
             services.AddSingleton<IViewModelFactory, ViewModelFactory>();
+            services.AddSingleton<IEventBus, EventBus>();
+            services.AddSingleton<IDialogService, DialogService>();
 
             return services;
         }

@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MiniERP.ApplicationLayer.Interfaces;
 using MiniERP.Infrastructure.Data;
-using System.Linq.Expressions;
 
 namespace MiniERP.Infrastructure.Repositories
 {
@@ -16,16 +15,12 @@ namespace MiniERP.Infrastructure.Repositories
             _dbSet = context.Set<T>();
         }
 
-        public virtual async Task<T?> GetByIdAsync(int id)
-        {
-            return await _dbSet.FindAsync(id);
-        }
-
         public virtual async Task<IEnumerable<T>> GetAllAsync()
-        {
-            return await _dbSet.ToListAsync();
-        }
+            => await _dbSet.AsNoTracking().ToListAsync();
 
+        public virtual async Task<T?> GetByIdAsync(int id)
+            => await _dbSet.FindAsync(id);
+        
         public virtual async Task<T> AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);

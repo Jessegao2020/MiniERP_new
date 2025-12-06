@@ -23,16 +23,11 @@ namespace MiniERP.Infrastructure.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.ToTable("Articles");
-                
-                // 必需字段
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
-                
+
                 // Decimal字段配置
                 entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
                 entity.Property(e => e.MinimumPrice).HasColumnType("decimal(18,2)");
-                
-                // 所有可空字符串字段已经通过 string? 类型标记为可空
-                // EF Core会自动处理NULL值，不需要额外配置
+
             });
 
             // Customer配置

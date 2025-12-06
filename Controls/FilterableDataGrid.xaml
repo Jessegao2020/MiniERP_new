@@ -240,9 +240,18 @@
             SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=1}, Mode=TwoWay}"
             SelectionMode="Single"
             SnapsToDevicePixels="True">
+
+            <DataGrid.InputBindings>
+                <MouseBinding
+                    Command="{Binding DataContext.OpenArticleDetailsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                    Gesture="LeftDoubleClick" />
+            </DataGrid.InputBindings>
+
             <DataGrid.ColumnHeaderStyle>
                 <Style BasedOn="{StaticResource FilterableColumnHeaderStyle}" TargetType="DataGridColumnHeader" />
             </DataGrid.ColumnHeaderStyle>
+
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
                     <Setter Property="SnapsToDevicePixels" Value="True" />

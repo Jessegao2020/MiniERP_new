@@ -19,7 +19,6 @@
 
         <!--  Top Tool Bar  -->
         <StackPanel Grid.Row="0" Orientation="Horizontal">
-
             <!--  New Button  -->
             <Button
                 Margin="3,0,0,0"
@@ -62,7 +61,8 @@
             <Button
                 Margin="3,0,0,0"
                 Background="Transparent"
-                BorderThickness="0">
+                BorderThickness="0"
+                Command="{Binding DeleteArticleCommand}">
                 <StackPanel Orientation="Horizontal">
                     <Image
                         Width="16"
@@ -75,20 +75,16 @@
                         Text="Delete" />
                 </StackPanel>
             </Button>
-            <TextBlock Foreground="Red" Text="{Binding OpenTabCommand}" />
         </StackPanel>
 
         <!--  Customized DataGrid  -->
         <controls:FilterableDataGrid
             Grid.Row="1"
             ItemsSource="{Binding Articles}"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             SelectedItem="{Binding SelectedArticle, Mode=TwoWay}">
 
             <controls:FilterableDataGrid.Columns>
-                <DataGridTextColumn
-                    Width="80"
-                    Binding="{Binding Id}"
-                    Header="ID" />
 
                 <DataGridTextColumn
                     Width="*"
@@ -96,12 +92,12 @@
                     Header="物料编码" />
 
                 <DataGridTextColumn
-                    Width="100"
+                    Width="*"
                     Binding="{Binding Price, StringFormat='{}{0:F2}'}"
                     Header="单价" />
 
                 <DataGridTextColumn
-                    Width="100"
+                    Width="*"
                     Binding="{Binding MinimumPrice, StringFormat='{}{0:F2}'}"
                     Header="最低价" />
 
@@ -116,7 +112,7 @@
                     Header="规格" />
 
                 <DataGridTextColumn
-                    Width="100"
+                    Width="*"
                     Binding="{Binding Discount}"
                     Header="折扣" />
 
@@ -124,8 +120,9 @@
                     Width="*"
                     Binding="{Binding Note}"
                     Header="备注" />
+                
             </controls:FilterableDataGrid.Columns>
-
+            
         </controls:FilterableDataGrid>
 
         <!--  Footer  -->
