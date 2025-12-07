@@ -4,7 +4,7 @@ namespace MiniERP.UI.Interface
 {
     public interface INavigationService
     {
-        void OpenTab(PageType type);
-        void CloseTab(PageType type);
+        void OpenTab(PageType type, string? customizedTitle = null, object? parameter = null);
+        void CloseTab(object viewmodel);
     }
 }

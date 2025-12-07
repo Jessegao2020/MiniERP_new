@@ -50,9 +50,9 @@ namespace MiniERP.UI.ViewModel
 
         #region Commands
 
-        public ICommand OpenTabCommand { get; }
+        public ICommand OpenCreateViewCommand { get; }
         public ICommand DeleteArticleCommand { get; }
-        public ICommand OpenArticleDetailsCommand { get; }
+        public ICommand OpenEditViewCommand { get; }
         public ICommand LoadArticlesCommand { get; }    // 暂时未使用
         public ICommand RefreshCommand { get; }  // 暂时未使用
 
@@ -75,9 +75,9 @@ namespace MiniERP.UI.ViewModel
             TabManager = tabManager;
 
             // Command Methods
-            OpenTabCommand = new RelayCommand<PageType>(tab => _nav.OpenTab(tab));
+            OpenCreateViewCommand = new RelayCommand<PageType>(tab => _nav.OpenTab(tab, customizedTitle: "New Article"));
             DeleteArticleCommand = new RelayCommand(DeleteArticleAsync);
-            OpenArticleDetailsCommand = new RelayCommand<Article?>(OpenDetails);
+            OpenEditViewCommand = new RelayCommand<Article?>(OpenDetails);
             LoadArticlesCommand = new RelayCommand(() => _ = LoadArticlesAsync());  // 暂时未使用
             RefreshCommand = new RelayCommand(() => _ = LoadArticlesAsync());   // 暂时未使用
 
@@ -93,7 +93,6 @@ namespace MiniERP.UI.ViewModel
 
         private async Task LoadArticlesAsync()
         {
-            System.Diagnostics.Debug.WriteLine(">>>>> LoadArticles CALLED");
             try
             {
                 var articles = await _articleService.GetAllArticlesAsync();
@@ -132,7 +131,7 @@ namespace MiniERP.UI.ViewModel
         {
             if (article is null) return;
 
-            _nav.OpenTab(PageType.ArticleData);
+            _nav.OpenTab(PageType.ArticleData, "Article Details", article);
         }
 
         private void OnArticleChanged(EntityChangedMessage<Article> message)
@@ -142,8 +141,10 @@ namespace MiniERP.UI.ViewModel
                 case EntityChangeType.Created:
                     Articles.Add(message.Entity);
                     break;
+
                 case EntityChangeType.Updated:
                     break;
+
                 case EntityChangeType.Deleted:
                     Articles.Remove(message.Entity);
                     break;
@@ -156,9 +157,7 @@ namespace MiniERP.UI.ViewModel
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
         #endregion
     }

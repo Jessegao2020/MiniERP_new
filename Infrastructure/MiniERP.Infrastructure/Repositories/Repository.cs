@@ -20,7 +20,7 @@ namespace MiniERP.Infrastructure.Repositories
 
         public virtual async Task<T?> GetByIdAsync(int id)
             => await _dbSet.FindAsync(id);
-        
+
         public virtual async Task<T> AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
@@ -29,10 +29,7 @@ namespace MiniERP.Infrastructure.Repositories
         }
 
         public virtual async Task UpdateAsync(T entity)
-        {
-            _dbSet.Update(entity);
-            await _context.SaveChangesAsync();
-        }
+            => await _context.SaveChangesAsync();
 
         public virtual async Task DeleteAsync(int id)
         {

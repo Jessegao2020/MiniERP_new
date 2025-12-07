@@ -14,23 +14,24 @@ namespace MiniERP.UI.Service
             _factory = factory;
         }
 
-        public void OpenTab(PageType type)
+        public void OpenTab(PageType type, string? customizedTitle = null, object? parameter = null)
         {
-            var existing = _tabManager.OpenedTabs.FirstOrDefault(t => t.Title == type.ToString());
+            var title = customizedTitle ?? type.ToString();
+            var existing = _tabManager.OpenedTabs.FirstOrDefault(t => t.Title == title);
             if (existing != null)
             {
                 _tabManager.SelectedTab = existing;
                 return;
             }
 
-            var viewmodel = new TabPageModel(type.ToString(), _factory.CreateViewModel(type));
+            var viewmodel = new TabPageModel(title, _factory.CreateViewModel(type, parameter));
             _tabManager.AddTab(viewmodel);
             _tabManager.SelectedTab = viewmodel;
         }
 
-        public void CloseTab(PageType type)
+        public void CloseTab(object viewmodel)
         {
-            var tab = _tabManager.OpenedTabs.FirstOrDefault(t=>t.Title == type.ToString());
+            var tab = _tabManager.OpenedTabs.FirstOrDefault(t=>ReferenceEquals(t.ContentView, viewmodel));
             _tabManager.RemoveTab(tab);
         }
     }

@@ -38,25 +38,21 @@ namespace MiniERP.ApplicationLayer.Services
         {
             var existing = await _articleRepository.GetByIdAsync(article.Id);
             if (existing == null)
-            {
                 throw new KeyNotFoundException($"物料 ID {article.Id} 不存在");
-            }
 
-            var normalizedName = article.Name?.Trim();
+            existing.Name           = article.Name?.Trim();
+            existing.Description    = article.Description;
+            existing.Price          = article.Price;
+            existing.MinimumPrice   = article.MinimumPrice;
+            existing.Category       = article.Category;
+            existing.Specification  = article.Specification;
+            existing.Name_EN        = article.Name_EN;
+            existing.Specs_EN       = article.Specs_EN;
+            existing.Description_EN = article.Description_EN;
+            existing.Discount       = article.Discount;
+            existing.Note           = article.Note;
 
-            // 如果编码改变，检查新编码是否已存在
-            if (!string.Equals(existing.Name, normalizedName, StringComparison.OrdinalIgnoreCase) &&
-                !string.IsNullOrWhiteSpace(normalizedName))
-            {
-                var codeExists = await _articleRepository.GetByCodeAsync(normalizedName);
-                if (codeExists != null && codeExists.Id != article.Id)
-                {
-                    throw new InvalidOperationException($"物料名称/编码 {normalizedName} 已存在");
-                }
-            }
-
-            article.Name = normalizedName;
-            await _articleRepository.UpdateAsync(article);
+            await _articleRepository.UpdateAsync(existing);
         }
 
         public async Task DeleteArticleAsync(int id)
@@ -64,7 +60,7 @@ namespace MiniERP.ApplicationLayer.Services
             var existing = await _articleRepository.GetByIdAsync(id);
             if (existing == null)
             {
-                throw new KeyNotFoundException($"物料 ID {id} 不存在");
+                throw new KeyNotFoundException($"Article: {id} doesn't exist.");
             }
 
             await _articleRepository.DeleteAsync(id);

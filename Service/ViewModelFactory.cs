@@ -9,19 +9,26 @@ namespace MiniERP.UI.Service
     {
         private readonly IServiceProvider _serviceProvider;
 
+        private static readonly Dictionary<PageType, Type> viewmodelDic = new()
+        {
+            {PageType.Article, typeof(ArticleGridViewModel) },
+            {PageType.ArticleData, typeof(ArticleDataViewModel) }
+        };
+
         public ViewModelFactory(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
         }
 
-        public object CreateViewModel(PageType type)
+        public object CreateViewModel(PageType type, object? parameter = null)
         {
-            object viewmodel = type switch
-            {
-                PageType.Article => ActivatorUtilities.CreateInstance<ArticleGridViewModel>(_serviceProvider),
-                PageType.ArticleData => ActivatorUtilities.CreateInstance<ArticleDataViewModel>(_serviceProvider),
-                _ => throw new NotSupportedException()
-            };
+            if (!viewmodelDic.TryGetValue(type, out var vmType))
+                return new NotSupportedException();
+
+            var viewmodel = ActivatorUtilities.CreateInstance(_serviceProvider, vmType);
+
+            if (viewmodel is IPolymorphicViewModel vm)
+                vm.Initialize(parameter);
 
             return viewmodel;
         }

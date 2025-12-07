@@ -243,7 +243,7 @@
 
             <DataGrid.InputBindings>
                 <MouseBinding
-                    Command="{Binding DataContext.OpenArticleDetailsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Command="{Binding DataContext.OpenEditViewCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                     Gesture="LeftDoubleClick" />
             </DataGrid.InputBindings>

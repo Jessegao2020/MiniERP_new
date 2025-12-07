@@ -4,6 +4,6 @@ namespace MiniERP.UI.Interface
 {
     public interface IViewModelFactory
     {
-        object CreateViewModel(PageType type);
+        object CreateViewModel(PageType type, object? parameter = null);
     }
 }

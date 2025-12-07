@@ -13,7 +13,7 @@ namespace MiniERP.UI.Service
         public ObservableCollection<TabPageModel> OpenedTabs { get; } = new();
         public object SelectedTab
         {
-            get { return _selectedTab; }
+            get => _selectedTab;
             set
             {
                 if (_selectedTab != value)
@@ -31,12 +31,11 @@ namespace MiniERP.UI.Service
         }
 
         public void RemoveTab(TabPageModel tab)
-        {
-            OpenedTabs.Remove(tab);
-        }
+            => OpenedTabs.Remove(tab);
+
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

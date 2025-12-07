@@ -16,6 +16,7 @@
 
         <!--  Top Tool Bar  -->
         <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <!--  Save Button  -->
             <Button
                 Margin="3,0,0,0"
                 Background="Transparent"
@@ -34,6 +35,7 @@
                 </StackPanel>
             </Button>
 
+            <!--  Discard Button  -->
             <Button
                 Margin="3,0,0,0"
                 Background="Transparent"
@@ -48,6 +50,25 @@
                         VerticalAlignment="Center"
                         FontSize="10"
                         Text="Discard" />
+                </StackPanel>
+            </Button>
+
+            <!--  Delete Button  -->
+            <Button
+                Margin="3,0,0,0"
+                Background="Transparent"
+                BorderThickness="0"
+                Command="{Binding DeleteCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <Image
+                        Width="16"
+                        Height="16"
+                        Source="/Assets/delete.png" />
+                    <TextBlock
+                        Padding="2,3"
+                        VerticalAlignment="Center"
+                        FontSize="10"
+                        Text="Delete" />
                 </StackPanel>
             </Button>
         </StackPanel>
@@ -133,7 +154,7 @@
                 Grid.Column="1"
                 MinWidth="150"
                 Margin="5,2"
-                Text="" />
+                Text="{Binding Article.Price, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox
                 Grid.Row="3"
                 Grid.Column="1"
@@ -146,28 +167,28 @@
                 MinWidth="150"
                 MinHeight="80"
                 Margin="5,2"
-                Text="" />
+                Text="{Binding Article.Specification, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox
                 Grid.Row="5"
                 Grid.Column="1"
                 MinWidth="150"
                 MinHeight="80"
                 Margin="5,2"
-                Text="" />
+                Text="{Binding Article.Description, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox
                 Grid.Row="6"
                 Grid.Column="1"
                 MinWidth="150"
                 MinHeight="80"
                 Margin="5,2"
-                Text="" />
+                Text="{Binding Article.Discount, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox
                 Grid.Row="7"
                 Grid.Column="1"
                 MinWidth="150"
                 MinHeight="80"
                 Margin="5,2"
-                Text="" />
+                Text="{Binding Article.Note, UpdateSourceTrigger=PropertyChanged}" />
 
             <!--  English Fileds  -->
             <TextBlock
@@ -181,21 +202,21 @@
                 Grid.Column="2"
                 MinWidth="150"
                 Margin="5,2"
-                Text="" />
+                Text="{Binding Article.Name_EN, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox
                 Grid.Row="4"
                 Grid.Column="2"
                 MinWidth="150"
                 MinHeight="80"
                 Margin="5,2"
-                Text="" />
+                Text="{Binding Article.Specs_EN, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox
                 Grid.Row="5"
                 Grid.Column="2"
                 MinWidth="150"
                 MinHeight="80"
                 Margin="5,2"
-                Text="" />
+                Text="{Binding Article.Description_EN, UpdateSourceTrigger=PropertyChanged}" />
         </Grid>
     </Grid>
 </UserControl>

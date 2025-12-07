@@ -24,7 +24,7 @@
                 Margin="3,0,0,0"
                 Background="Transparent"
                 BorderThickness="0"
-                Command="{Binding OpenTabCommand}"
+                Command="{Binding OpenCreateViewCommand}"
                 CommandParameter="{x:Static model:PageType.ArticleData}">
                 <StackPanel Orientation="Horizontal">
                     <Image
@@ -120,9 +120,9 @@
                     Width="*"
                     Binding="{Binding Note}"
                     Header="备注" />
-                
+
             </controls:FilterableDataGrid.Columns>
-            
+
         </controls:FilterableDataGrid>
 
         <!--  Footer  -->
