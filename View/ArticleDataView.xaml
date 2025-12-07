@@ -15,10 +15,14 @@
         </Grid.RowDefinitions>
 
         <!--  Top Tool Bar  -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal">
+        <StackPanel
+            Grid.Row="0"
+            Margin="5,0"
+            Orientation="Horizontal">
             <!--  Save Button  -->
             <Button
                 Margin="3,0,0,0"
+                Padding="5,0"
                 Background="Transparent"
                 BorderThickness="0"
                 Command="{Binding SaveCommand}">
@@ -38,6 +42,7 @@
             <!--  Discard Button  -->
             <Button
                 Margin="3,0,0,0"
+                Padding="5,0"
                 Background="Transparent"
                 BorderThickness="0">
                 <StackPanel Orientation="Horizontal">
@@ -56,6 +61,7 @@
             <!--  Delete Button  -->
             <Button
                 Margin="3,0,0,0"
+                Padding="5,0"
                 Background="Transparent"
                 BorderThickness="0"
                 Command="{Binding DeleteCommand}">
@@ -74,7 +80,10 @@
         </StackPanel>
 
         <!--  Content Area  -->
-        <Grid Grid.Row="1" Tag="Content">
+        <Grid
+            Grid.Row="1"
+            Margin="10,0,0,0"
+            Tag="Content">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
@@ -96,43 +105,43 @@
             <TextBlock
                 Grid.Row="1"
                 Grid.Column="0"
-                Margin="0,2"
+                Margin="5,2"
                 HorizontalAlignment="Right"
                 Text="Name" />
             <TextBlock
                 Grid.Row="2"
                 Grid.Column="0"
-                Margin="0,2"
+                Margin="5,2"
                 HorizontalAlignment="Right"
                 Text="CNY Untaxed" />
             <TextBlock
                 Grid.Row="3"
                 Grid.Column="0"
-                Margin="0,2"
+                Margin="5,2"
                 HorizontalAlignment="Right"
                 Text="USD Untaxed" />
             <TextBlock
                 Grid.Row="4"
                 Grid.Column="0"
-                Margin="0,2"
+                Margin="5,2"
                 HorizontalAlignment="Right"
                 Text="Specification" />
             <TextBlock
                 Grid.Row="5"
                 Grid.Column="0"
-                Margin="0,2"
+                Margin="5,2"
                 HorizontalAlignment="Right"
                 Text="Description" />
             <TextBlock
                 Grid.Row="6"
                 Grid.Column="0"
-                Margin="0,2"
+                Margin="5,2"
                 HorizontalAlignment="Right"
                 Text="Discount" />
             <TextBlock
                 Grid.Row="7"
                 Grid.Column="0"
-                Margin="0,2"
+                Margin="5,2"
                 HorizontalAlignment="Right"
                 Text="Note" />
 
@@ -146,49 +155,58 @@
             <TextBox
                 Grid.Row="1"
                 Grid.Column="1"
-                MinWidth="150"
+                Width="250"
                 Margin="5,2"
                 Text="{Binding Article.Name, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox
                 Grid.Row="2"
                 Grid.Column="1"
-                MinWidth="150"
+                Width="250"
                 Margin="5,2"
                 Text="{Binding Article.Price, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox
                 Grid.Row="3"
                 Grid.Column="1"
-                MinWidth="150"
+                Width="250"
                 Margin="5,2"
+                IsEnabled="False"
                 Text="" />
             <TextBox
                 Grid.Row="4"
                 Grid.Column="1"
-                MinWidth="150"
+                Width="250"
                 MinHeight="80"
                 Margin="5,2"
-                Text="{Binding Article.Specification, UpdateSourceTrigger=PropertyChanged}" />
+                AcceptsReturn="True"
+                Text="{Binding Article.Specification, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap" />
             <TextBox
                 Grid.Row="5"
                 Grid.Column="1"
-                MinWidth="150"
+                Width="250"
                 MinHeight="80"
                 Margin="5,2"
-                Text="{Binding Article.Description, UpdateSourceTrigger=PropertyChanged}" />
+                AcceptsReturn="True"
+                Text="{Binding Article.Description, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap" />
             <TextBox
                 Grid.Row="6"
                 Grid.Column="1"
-                MinWidth="150"
+                Width="250"
                 MinHeight="80"
                 Margin="5,2"
-                Text="{Binding Article.Discount, UpdateSourceTrigger=PropertyChanged}" />
+                AcceptsReturn="True"
+                Text="{Binding Article.Discount, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap" />
             <TextBox
                 Grid.Row="7"
                 Grid.Column="1"
-                MinWidth="150"
+                Width="250"
                 MinHeight="80"
                 Margin="5,2"
-                Text="{Binding Article.Note, UpdateSourceTrigger=PropertyChanged}" />
+                AcceptsReturn="True"
+                Text="{Binding Article.Note, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap" />
 
             <!--  English Fileds  -->
             <TextBlock
@@ -200,23 +218,27 @@
             <TextBox
                 Grid.Row="1"
                 Grid.Column="2"
-                MinWidth="150"
+                Width="250"
                 Margin="5,2"
                 Text="{Binding Article.Name_EN, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox
                 Grid.Row="4"
                 Grid.Column="2"
-                MinWidth="150"
+                Width="250"
                 MinHeight="80"
                 Margin="5,2"
-                Text="{Binding Article.Specs_EN, UpdateSourceTrigger=PropertyChanged}" />
+                AcceptsReturn="True"
+                Text="{Binding Article.Specs_EN, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap" />
             <TextBox
                 Grid.Row="5"
                 Grid.Column="2"
-                MinWidth="150"
+                Width="250"
                 MinHeight="80"
                 Margin="5,2"
-                Text="{Binding Article.Description_EN, UpdateSourceTrigger=PropertyChanged}" />
+                AcceptsReturn="True"
+                Text="{Binding Article.Description_EN, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap" />
         </Grid>
     </Grid>
 </UserControl>

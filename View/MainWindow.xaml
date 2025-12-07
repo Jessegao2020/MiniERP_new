@@ -223,8 +223,15 @@
                 <TabControl.ItemTemplate>
                     <DataTemplate>
 
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel
+                            Height="17"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+
+                            <!--  Tab Title  -->
                             <TextBlock Text="{Binding Title}" />
+
+                            <!--  Close Tab Button  -->
                             <Button
                                 Margin="5,0,0,0"
                                 Padding="0"
@@ -236,12 +243,13 @@
                                 Cursor="Hand"
                                 FontSize="10"
                                 FontWeight="Bold" />
+
                         </StackPanel>
 
                     </DataTemplate>
                 </TabControl.ItemTemplate>
 
-                <!--  Tab Content DIABLED  -->
+                <!--  Original Tab Content DIABLED  -->
                 <TabControl.ContentTemplate>
                     <DataTemplate>
                         <Grid />

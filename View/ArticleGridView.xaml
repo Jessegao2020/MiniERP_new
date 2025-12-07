@@ -22,6 +22,7 @@
             <!--  New Button  -->
             <Button
                 Margin="3,0,0,0"
+                Padding="5,0"
                 Background="Transparent"
                 BorderThickness="0"
                 Command="{Binding OpenCreateViewCommand}"
@@ -42,6 +43,7 @@
             <!--  Duplicate Button  -->
             <Button
                 Margin="3,0,0,0"
+                Padding="5,0"
                 Background="Transparent"
                 BorderThickness="0">
                 <StackPanel Orientation="Horizontal">
@@ -60,6 +62,7 @@
             <!--  Delete Button  -->
             <Button
                 Margin="3,0,0,0"
+                Padding="5,0"
                 Background="Transparent"
                 BorderThickness="0"
                 Command="{Binding DeleteArticleCommand}">
@@ -80,6 +83,7 @@
         <!--  Customized DataGrid  -->
         <controls:FilterableDataGrid
             Grid.Row="1"
+            Margin="0,5,0,0"
             ItemsSource="{Binding Articles}"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             SelectedItem="{Binding SelectedArticle, Mode=TwoWay}">
@@ -87,42 +91,41 @@
             <controls:FilterableDataGrid.Columns>
 
                 <DataGridTextColumn
-                    Width="*"
+                    Width="6*"
                     Binding="{Binding Name}"
-                    Header="物料编码" />
+                    Header="Name" />
 
                 <DataGridTextColumn
                     Width="*"
                     Binding="{Binding Price, StringFormat='{}{0:F2}'}"
-                    Header="单价" />
+                    Header="Price" />
 
                 <DataGridTextColumn
                     Width="*"
                     Binding="{Binding MinimumPrice, StringFormat='{}{0:F2}'}"
-                    Header="最低价" />
+                    Header="Min. Price" />
 
                 <DataGridTextColumn
-                    Width="*"
+                    Width="4*"
                     Binding="{Binding Description}"
-                    Header="描述" />
+                    Header="Description" />
 
                 <DataGridTextColumn
-                    Width="*"
+                    Width="4*"
                     Binding="{Binding Specification}"
-                    Header="规格" />
+                    Header="Specification" />
 
                 <DataGridTextColumn
-                    Width="*"
+                    Width="4*"
                     Binding="{Binding Discount}"
-                    Header="折扣" />
+                    Header="Discount" />
 
                 <DataGridTextColumn
-                    Width="*"
+                    Width="4*"
                     Binding="{Binding Note}"
-                    Header="备注" />
+                    Header="Note" />
 
             </controls:FilterableDataGrid.Columns>
-
         </controls:FilterableDataGrid>
 
         <!--  Footer  -->
