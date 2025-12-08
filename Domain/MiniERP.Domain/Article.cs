@@ -1,6 +1,6 @@
 ﻿namespace MiniERP.Domain
 {
-    public class Article
+    public class Article : AuditableEntity
     {
         public int Id { get; set; }
         public string? Name { get; set; }

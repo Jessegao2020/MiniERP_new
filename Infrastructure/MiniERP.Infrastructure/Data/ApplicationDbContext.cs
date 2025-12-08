@@ -12,7 +12,9 @@ namespace MiniERP.Infrastructure.Data
 
         public DbSet<Article> Articles { get; set; }
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<CustomerContact> Contacts { get; set; }
         public DbSet<Quotation> Quotations { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,22 +36,24 @@ namespace MiniERP.Infrastructure.Data
             modelBuilder.Entity<Customer>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.Code).IsUnique();
-                entity.Property(e => e.Code).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            });
+
+            modelBuilder.Entity<CustomerContact>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
             });
 
             // Quotation配置
             modelBuilder.Entity<Quotation>(entity =>
             {
+                entity.HasKey(e=>e.QuotationNumber);
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
                 entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.QuotationNumber).IsUnique();
-                entity.Property(e => e.QuotationNumber).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.Status).HasMaxLength(20);
-                entity.HasOne(e => e.Customer)
-                    .WithMany()
-                    .HasForeignKey(e => e.CustomerId)
-                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

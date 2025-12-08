@@ -12,82 +12,39 @@ namespace MiniERP.ApplicationLayer.Services
             _customerRepository = customerRepository;
         }
 
-        public async Task<Customer?> GetCustomerByIdAsync(int id)
+        public Task<Customer> CreateCustomerAsync(Customer customer)
         {
-            return await _customerRepository.GetByIdAsync(id);
+            throw new NotImplementedException();
         }
 
-        public async Task<Customer?> GetCustomerByCodeAsync(string code)
+        public Task DeleteCustomerAsync(int id)
         {
-            return await _customerRepository.GetByCodeAsync(code);
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<Customer>> GetAllCustomersAsync()
+        public Task<IEnumerable<Customer>> GetAllCustomersAsync()
         {
-            return await _customerRepository.GetAllAsync();
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<Customer>> SearchCustomersAsync(string keyword)
+        public Task<Customer?> GetCustomerByCodeAsync(string code)
         {
-            if (string.IsNullOrWhiteSpace(keyword))
-            {
-                return await GetAllCustomersAsync();
-            }
-            return await _customerRepository.SearchAsync(keyword);
+            throw new NotImplementedException();
         }
 
-        public async Task<Customer> CreateCustomerAsync(Customer customer)
+        public Task<Customer?> GetCustomerByIdAsync(int id)
         {
-            if (string.IsNullOrWhiteSpace(customer.Code))
-            {
-                throw new ArgumentException("客户编码不能为空", nameof(customer));
-            }
-
-            if (string.IsNullOrWhiteSpace(customer.Name))
-            {
-                throw new ArgumentException("客户名称不能为空", nameof(customer));
-            }
-
-            var existing = await _customerRepository.GetByCodeAsync(customer.Code);
-            if (existing != null)
-            {
-                throw new InvalidOperationException($"客户编码 {customer.Code} 已存在");
-            }
-
-            customer.CreatedAt = DateTime.Now;
-            return await _customerRepository.AddAsync(customer);
+            throw new NotImplementedException();
         }
 
-        public async Task UpdateCustomerAsync(Customer customer)
+        public Task<IEnumerable<Customer>> SearchCustomersAsync(string keyword)
         {
-            var existing = await _customerRepository.GetByIdAsync(customer.Id);
-            if (existing == null)
-            {
-                throw new KeyNotFoundException($"客户 ID {customer.Id} 不存在");
-            }
-
-            if (existing.Code != customer.Code)
-            {
-                var codeExists = await _customerRepository.GetByCodeAsync(customer.Code);
-                if (codeExists != null)
-                {
-                    throw new InvalidOperationException($"客户编码 {customer.Code} 已存在");
-                }
-            }
-
-            customer.UpdatedAt = DateTime.Now;
-            await _customerRepository.UpdateAsync(customer);
+            throw new NotImplementedException();
         }
 
-        public async Task DeleteCustomerAsync(int id)
+        public Task UpdateCustomerAsync(Customer customer)
         {
-            var existing = await _customerRepository.GetByIdAsync(id);
-            if (existing == null)
-            {
-                throw new KeyNotFoundException($"客户 ID {id} 不存在");
-            }
-
-            await _customerRepository.DeleteAsync(id);
+            throw new NotImplementedException();
         }
     }
 }

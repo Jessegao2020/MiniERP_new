@@ -13,16 +13,13 @@ namespace MiniERP.Infrastructure.Repositories
 
         public async Task<Customer?> GetByCodeAsync(string code)
         {
-            return await _dbSet.FirstOrDefaultAsync(c => c.Code == code);
+            throw new NotImplementedException();
         }
 
         public async Task<IEnumerable<Customer>> SearchAsync(string keyword)
         {
-            return await _dbSet
-                .Where(c => c.Name.Contains(keyword) || 
-                           c.Code.Contains(keyword) ||
-                           (c.ContactPerson != null && c.ContactPerson.Contains(keyword)))
-                .ToListAsync();
+            throw new NotImplementedException();
+
         }
     }
 }

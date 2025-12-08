@@ -6,11 +6,15 @@
         public string QuotationNumber { get; set; } = string.Empty;
         public int CustomerId { get; set; }
         public Customer? Customer { get; set; }
+        public string UserId { get; set; }
+        public User? User { get; set; }
+        public string? DeliveryTerm { get; set; }
+        public string? LeadTime { get; set; }
+        public string? PaymentTerm  { get; set; }
+        public string? Remarks { get; set; }
         public DateTime QuotationDate { get; set; } = DateTime.Now;
         public DateTime? ValidUntil { get; set; }
-        public decimal TotalAmount { get; set; }
-        public string Status { get; set; } = "Draft"; // Draft, Sent, Accepted, Rejected
-        public string? Remarks { get; set; }
+        public string? CratedBy { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
         

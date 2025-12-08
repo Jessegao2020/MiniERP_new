@@ -28,10 +28,7 @@ namespace MiniERP.Infrastructure.Repositories
 
         public async Task<IEnumerable<Quotation>> GetByStatusAsync(string status)
         {
-            return await _dbSet
-                .Include(q => q.Customer)
-                .Where(q => q.Status == status)
-                .ToListAsync();
+            throw new NotImplementedException();
         }
     }
 }
