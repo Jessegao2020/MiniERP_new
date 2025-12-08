@@ -11,8 +11,8 @@ using MiniERP.Infrastructure.Data;
 namespace MiniERP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251208073220_AddedCustomerContactUser")]
-    partial class AddedCustomerContactUser
+    [Migration("20251208133549_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -29,12 +29,6 @@ namespace MiniERP.Infrastructure.Migrations
                     b.Property<string>("Category")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedByUserName")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
@@ -44,14 +38,8 @@ namespace MiniERP.Infrastructure.Migrations
                     b.Property<string>("Discount")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastModifiedByUserName")
-                        .HasColumnType("TEXT");
-
                     b.Property<decimal?>("MinimumPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
@@ -63,7 +51,7 @@ namespace MiniERP.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<decimal?>("Price")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Specification")
                         .HasColumnType("TEXT");
@@ -73,7 +61,7 @@ namespace MiniERP.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Articles", (string)null);
+                    b.ToTable("Articles");
                 });
 
             modelBuilder.Entity("MiniERP.Domain.Customer", b =>
@@ -94,10 +82,10 @@ namespace MiniERP.Infrastructure.Migrations
                     b.Property<string>("Country")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("CreatedByUserName")
+                    b.Property<string>("CreatedBy")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
@@ -106,12 +94,11 @@ namespace MiniERP.Infrastructure.Migrations
                     b.Property<DateTime?>("LastModifiedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("LastModifiedByUserName")
+                    b.Property<string>("LastModifiedBy")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PostalCode")
@@ -131,10 +118,10 @@ namespace MiniERP.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("CreatedByUserName")
+                    b.Property<string>("CreatedBy")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("CustomerId")
@@ -143,7 +130,7 @@ namespace MiniERP.Infrastructure.Migrations
                     b.Property<DateTime?>("LastModifiedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("LastModifiedByUserName")
+                    b.Property<string>("LastModifiedBy")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
@@ -162,13 +149,14 @@ namespace MiniERP.Infrastructure.Migrations
 
             modelBuilder.Entity("MiniERP.Domain.Quotation", b =>
                 {
-                    b.Property<string>("QuotationNumber")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("CratedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<string>("CreatedBy")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("CustomerId")
@@ -177,8 +165,11 @@ namespace MiniERP.Infrastructure.Migrations
                     b.Property<string>("DeliveryTerm")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Id")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("LeadTime")
                         .HasColumnType("TEXT");
@@ -189,27 +180,24 @@ namespace MiniERP.Infrastructure.Migrations
                     b.Property<DateTime>("QuotationDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Remarks")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
+                    b.Property<string>("QuotationNumber")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("UserId1")
+                    b.Property<string>("Remarks")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("ValidUntil")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("QuotationNumber");
+                    b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("UserId1");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Quotations");
                 });
@@ -261,7 +249,9 @@ namespace MiniERP.Infrastructure.Migrations
 
                     b.HasOne("MiniERP.Domain.User", "User")
                         .WithMany()
-                        .HasForeignKey("UserId1");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Customer");
 
