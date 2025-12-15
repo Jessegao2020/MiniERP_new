@@ -11,18 +11,17 @@ namespace MiniERP.ApplicationLayer.Services
         {
             _customerRepository = customerRepository;
         }
-
-        public Task<Customer> CreateCustomerAsync(Customer customer)
+        public Task<IEnumerable<Customer>> GetAllCustomersAsync()
         {
-            throw new NotImplementedException();
+            return _customerRepository.GetAllAsync();
+        }
+
+        public async Task CreateCustomerAsync(Customer customer)
+        {
+             await _customerRepository.AddAsync(customer);
         }
 
         public Task DeleteCustomerAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<Customer>> GetAllCustomersAsync()
         {
             throw new NotImplementedException();
         }

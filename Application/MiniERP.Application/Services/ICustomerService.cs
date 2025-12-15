@@ -8,7 +8,7 @@ namespace MiniERP.ApplicationLayer.Services
         Task<Customer?> GetCustomerByCodeAsync(string code);
         Task<IEnumerable<Customer>> GetAllCustomersAsync();
         Task<IEnumerable<Customer>> SearchCustomersAsync(string keyword);
-        Task<Customer> CreateCustomerAsync(Customer customer);
+        Task CreateCustomerAsync(Customer customer);
         Task UpdateCustomerAsync(Customer customer);
         Task DeleteCustomerAsync(int id);
     }

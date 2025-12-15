@@ -10,6 +10,10 @@
         PI,
         PL,
         Contract,
-        ArticleData
+        ArticleData,
+        CustomerData,
+        CustomerQuote,
+        CustomerOrder,
+        CustomerAddress
     }
 }

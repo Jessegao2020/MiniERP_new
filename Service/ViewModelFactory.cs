@@ -2,6 +2,7 @@
 using MiniERP.UI.Interface;
 using MiniERP.UI.Model;
 using MiniERP.UI.ViewModel;
+using MiniERP.UI.ViewModel.Customer;
 
 namespace MiniERP.UI.Service
 {
@@ -12,7 +13,10 @@ namespace MiniERP.UI.Service
         private static readonly Dictionary<PageType, Type> viewmodelDic = new()
         {
             {PageType.Article, typeof(ArticleGridViewModel) },
-            {PageType.ArticleData, typeof(ArticleDataViewModel) }
+            {PageType.ArticleData, typeof(ArticleDataViewModel) },
+            {PageType.Customer, typeof(CustomerGridViewModel) },
+            {PageType.CustomerData, typeof(CustomerDataViewModel) },
+            {PageType.CustomerAddress, typeof(CustomerAddressViewModel) }
         };
 
         public ViewModelFactory(IServiceProvider serviceProvider)
