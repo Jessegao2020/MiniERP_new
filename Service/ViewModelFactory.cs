@@ -16,7 +16,7 @@ namespace MiniERP.UI.Service
             {PageType.ArticleData, typeof(ArticleDataViewModel) },
             {PageType.Customer, typeof(CustomerGridViewModel) },
             {PageType.CustomerData, typeof(CustomerDataViewModel) },
-            {PageType.CustomerAddress, typeof(CustomerAddressViewModel) }
+            {PageType.CustomerAddress, typeof(CustomerAddressViewModel) },
         };
 
         public ViewModelFactory(IServiceProvider serviceProvider)

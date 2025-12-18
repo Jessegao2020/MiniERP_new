@@ -14,6 +14,7 @@
         CustomerData,
         CustomerQuote,
         CustomerOrder,
-        CustomerAddress
+        CustomerAddress,
+        CustomerContact
     }
 }

@@ -6,6 +6,8 @@
     xmlns:local="clr-namespace:MiniERP.UI.View"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:MiniERP.UI.Model"
+    xmlns:view="clr-namespace:MiniERP.UI.View.Customer"
+    xmlns:vmc="clr-namespace:MiniERP.UI.ViewModel.Customer"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -21,7 +23,10 @@
             BorderBrush="LightGray"
             BorderThickness="1">
 
-            <TreeView HorizontalAlignment="Stretch" ItemsSource="{Binding NavItems}">
+            <TreeView
+                HorizontalAlignment="Stretch"
+                ItemsSource="{Binding NavItems}"
+                SelectedItemChanged="TreeView_SelectedItemChanged">
                 <TreeView.Resources>
                     <HierarchicalDataTemplate DataType="{x:Type model:NavItem}" ItemsSource="{Binding Children}">
                         <TextBlock Text="{Binding Header}" />
@@ -34,6 +39,17 @@
             Grid.Column="1"
             Margin="0,5,5,5"
             BorderBrush="LightGray"
-            BorderThickness="1" />
+            BorderThickness="1">
+
+            <ContentControl Content="{Binding CurrentPage}">
+                <ContentControl.Resources>
+                    <DataTemplate DataType="{x:Type vmc:CustomerAddressViewModel}">
+                        <view:CustomerAddressView />
+                    </DataTemplate>
+
+
+                </ContentControl.Resources>
+            </ContentControl>
+        </Border>
     </Grid>
 </UserControl>
