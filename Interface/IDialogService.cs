@@ -5,5 +5,7 @@
         void ShowError(string message, string title = "Error");
         void ShowWarning(string message, string title = "Warning");
         bool ShowConfirm(string message, string title = "Confirm");
+
+        string? PickCountryCode(string? currentCode = null);
     }
 }

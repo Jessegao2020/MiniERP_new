@@ -5,9 +5,11 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:MiniERP.UI.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="root"
     d:DesignHeight="30"
     d:DesignWidth="80"
     mc:Ignorable="d">
+
     <Grid Height="17">
         <TextBox
             Padding="2,0,20,0"

@@ -61,7 +61,9 @@
             Grid.Row="3"
             Grid.Column="1"
             Width="60"
-            HorizontalAlignment="Left" />
+            HorizontalAlignment="Left"
+            BrowseCommand="{Binding PickCountryCommand}"
+            BrowseCommandParameter="{Binding CountryCode}" />
         <TextBox
             Grid.Row="3"
             Grid.Column="1"
