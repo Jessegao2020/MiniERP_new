@@ -1,5 +1,6 @@
 ﻿using MiniERP.UI.Interface;
 using MiniERP.UI.Model;
+using System.Collections.ObjectModel;
 
 namespace MiniERP.UI.ViewModel.Customer
 {
@@ -8,6 +9,11 @@ namespace MiniERP.UI.ViewModel.Customer
         private readonly INavigationService _nav;
         private readonly IViewModelFactory _viewModelFactory;
         private object currentPage;
+        private CustomerAddressViewModel? _addressVm;
+        private CustomerContactGridViewModel? _contactVm;
+
+        public CustomerDTO CustomerDTO { get; } = new();
+        private readonly Dictionary<PageType, object> _pageCache = new();
 
         public object CurrentPage
         {
@@ -18,7 +24,6 @@ namespace MiniERP.UI.ViewModel.Customer
                 OnPropertyChanged();
             }
         }
-
 
         public List<NavItem> NavItems { get; } = new()
         {
@@ -42,13 +47,19 @@ namespace MiniERP.UI.ViewModel.Customer
 
         public void OnNavSelected(NavItem item)
         {
-            if (item?.PageType is null) return; // 父节点不切换
+            if (item?.PageType is null) return;
+            CurrentPage = GetOrCreatePage(item.PageType.Value);
+        }
 
-            CurrentPage = item.PageType.Value switch
-            {
-                PageType.CustomerAddress => _viewModelFactory.CreateViewModel(PageType.CustomerAddress),
-                _ => null
-            };
+        private object GetOrCreatePage(PageType pageType)
+        {
+            if (_pageCache.TryGetValue(pageType, out var vm))
+                return vm;
+
+            // 关键：子页面 parameter 统一传 Editor
+            vm = _viewModelFactory.CreateViewModel(pageType, CustomerDTO);
+            _pageCache[pageType] = vm;
+            return vm;
         }
     }
 }

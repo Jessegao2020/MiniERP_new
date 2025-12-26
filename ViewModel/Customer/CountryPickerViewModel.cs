@@ -1,6 +1,5 @@
 ﻿using MiniERP.UI.Model;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 
 namespace MiniERP.UI.ViewModel.Customer
 {
@@ -21,7 +20,7 @@ namespace MiniERP.UI.ViewModel.Customer
         public CountryPickerViewModel(string? currentCode = null)
         {
             Countries.Add(new Country("CN", "China"));
-            Countries.Add(new Country("GB", "United Kingdom")); // ISO 推荐 GB（UK 可做别名）
+            Countries.Add(new Country("GB", "United Kingdom"));
             Countries.Add(new Country("DE", "Germany"));
             Countries.Add(new Country("FR", "France"));
             Countries.Add(new Country("US", "United States"));

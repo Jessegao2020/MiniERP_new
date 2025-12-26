@@ -60,7 +60,7 @@
                         x:Name="FilterTextBox"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        KeyDown="FilterTextBox_KeyDown"
+                        PreviewKeyDown="FilterTextBox_PreviewKeyDown"
                         Style="{StaticResource FilterTextBoxStyle}">
                         <TextBox.ToolTip>
                             <TextBlock Text="输入筛选条件后按回车键筛选" />

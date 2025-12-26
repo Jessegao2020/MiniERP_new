@@ -39,7 +39,7 @@ namespace MiniERP.UI.Controls
         {
             // 避免重复初始化
             if (_isInitialized) return;
-            
+
             // 确保列已设置（只有在列确实为空或数量不匹配时才设置）
             if (Columns != null && Columns.Count > 0)
             {
@@ -63,7 +63,7 @@ namespace MiniERP.UI.Controls
             {
                 SetupAllFilterBindings();
             }), System.Windows.Threading.DispatcherPriority.Loaded);
-            
+
             _isInitialized = true;
         }
 
@@ -195,7 +195,7 @@ namespace MiniERP.UI.Controls
         {
             // 防止重复设置
             if (_isSettingColumns) return;
-            
+
             // 如果列已经设置且没有变化，不需要重新设置
             if (Columns == null || Columns.Count == 0)
             {
@@ -216,15 +216,15 @@ namespace MiniERP.UI.Controls
                 {
                     var sourceColumn = Columns[i];
                     var existingColumn = InnerDataGrid.Columns[i];
-                    
+
                     // 比较列的关键属性
                     string? sourceHeader = sourceColumn.Header?.ToString();
                     string? existingHeader = existingColumn.Header?.ToString();
-                    
+
                     // 比较Binding（如果是DataGridTextColumn）
                     string? sourceBindingPath = null;
                     string? existingBindingPath = null;
-                    
+
                     if (sourceColumn is DataGridTextColumn sourceTextCol && sourceTextCol.Binding is Binding sourceBinding)
                     {
                         sourceBindingPath = sourceBinding.Path.Path;
@@ -233,21 +233,21 @@ namespace MiniERP.UI.Controls
                     {
                         existingBindingPath = existingBinding.Path.Path;
                     }
-                    
+
                     if (sourceHeader != existingHeader || sourceBindingPath != existingBindingPath)
                     {
                         allMatch = false;
                         break;
                     }
                 }
-                
+
                 // 如果所有列都匹配，直接返回，不重新设置
                 if (allMatch) return;
             }
 
             // 设置标志，防止重复设置
             _isSettingColumns = true;
-            
+
             try
             {
                 // 清除现有列
@@ -377,42 +377,39 @@ namespace MiniERP.UI.Controls
             }
         }
 
-        private void FilterTextBox_KeyDown(object sender, KeyEventArgs e)
+        private void FilterTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
+            if (e.Key != Key.Enter) return;
+
+            // 关键：吃掉 Enter，防止冒泡触发窗口默认按钮(IsDefault)
+            e.Handled = true;
+
+            if (sender is not TextBox textBox) return;
+
+            FilterColumnInfo? filterInfo = textBox.Tag as FilterColumnInfo;
+
+            if (filterInfo == null)
             {
-                if (sender is TextBox textBox)
+                var columnHeader = FindParent<DataGridColumnHeader>(textBox);
+                if (columnHeader?.Column != null)
                 {
-                    // 从 Tag 获取 FilterColumnInfo，或者通过查找父元素获取
-                    FilterColumnInfo? filterInfo = textBox.Tag as FilterColumnInfo;
-
-                    if (filterInfo == null)
-                    {
-                        // 如果 Tag 没有设置，尝试通过可视化树查找
-                        var columnHeader = FindParent<DataGridColumnHeader>(textBox);
-                        if (columnHeader?.Column != null)
-                        {
-                            var columnIndex = InnerDataGrid.Columns.IndexOf(columnHeader.Column);
-                            _filterColumns.TryGetValue(columnIndex, out filterInfo);
-                        }
-                    }
-
-                    if (filterInfo != null)
-                    {
-                        // 更新筛选文本
-                        var bindingExpr = BindingOperations.GetBindingExpression(textBox, TextBox.TextProperty);
-                        bindingExpr?.UpdateSource();
-
-                        // 确保筛选文本已更新
-                        filterInfo.FilterText = textBox.Text;
-
-                        // 刷新筛选
-                        _collectionViewSource?.View.Refresh();
-
-                        // 移除焦点，完成筛选
-                        textBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-                    }
+                    var columnIndex = InnerDataGrid.Columns.IndexOf(columnHeader.Column);
+                    _filterColumns.TryGetValue(columnIndex, out filterInfo);
                 }
+            }
+
+            if (filterInfo != null)
+            {
+                // Explicit 更新（你原来就这么做的）
+                BindingOperations.GetBindingExpression(textBox, TextBox.TextProperty)?.UpdateSource();
+
+                filterInfo.FilterText = textBox.Text;
+                _collectionViewSource?.View.Refresh();
+
+                // 不要 MoveFocus(Next) —— 否则可能把焦点送到 OK 上
+                // 如果你想筛选后让用户继续打字，就保持焦点不动
+                // 如果你想筛选后让用户上下键选行，可以改成：
+                // Dispatcher.BeginInvoke(() => InnerDataGrid.Focus(), DispatcherPriority.Input);
             }
         }
 

@@ -11,5 +11,7 @@
         public string? PostalCode { get; set; }
         public string? Country { get; set; }
         public bool IsActive { get; set; } = true;
+
+        public ICollection<CustomerContact> Contacts { get; set; } = new List<CustomerContact>();
     }
 }

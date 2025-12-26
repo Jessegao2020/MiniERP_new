@@ -10,6 +10,7 @@
     xmlns:vmc="clr-namespace:MiniERP.UI.ViewModel.Customer"
     d:DesignHeight="450"
     d:DesignWidth="800"
+    Background="#f0f0f0"
     mc:Ignorable="d">
     <Grid>
         <Grid.ColumnDefinitions>
@@ -17,7 +18,62 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  Top Tool Bar  -->
+        <StackPanel
+            Grid.Row="0"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Background="#fff"
+            Orientation="Horizontal">
+
+            <!--  Duplicate Button  -->
+            <Button
+                Margin="3,0,0,0"
+                Padding="5,0"
+                Background="Transparent"
+                BorderThickness="0"
+                Command="{Binding SaveCustomerCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <Image
+                        Width="16"
+                        Height="16"
+                        Source="/Assets/save.png" />
+                    <TextBlock
+                        Padding="2,3"
+                        VerticalAlignment="Center"
+                        FontSize="10"
+                        Text="Save" />
+                </StackPanel>
+            </Button>
+
+            <!--  Delete Button  -->
+            <Button
+                Margin="3,0,0,0"
+                Padding="5,0"
+                Background="Transparent"
+                BorderThickness="0"
+                Command="{Binding}">
+                <StackPanel Orientation="Horizontal">
+                    <Image
+                        Width="16"
+                        Height="16"
+                        Source="/Assets/delete.png" />
+                    <TextBlock
+                        Padding="2,3"
+                        VerticalAlignment="Center"
+                        FontSize="10"
+                        Text="Delete" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
         <Border
+            Grid.Row="1"
             Grid.Column="0"
             Margin="5"
             BorderBrush="LightGray"
@@ -36,6 +92,7 @@
         </Border>
 
         <Border
+            Grid.Row="1"
             Grid.Column="1"
             Margin="0,5,5,5"
             BorderBrush="LightGray"
@@ -47,6 +104,9 @@
                         <view:CustomerAddressView />
                     </DataTemplate>
 
+                    <DataTemplate DataType="{x:Type vmc:CustomerContactGridViewModel}">
+                        <view:CustomerContactGridView />
+                    </DataTemplate>
 
                 </ContentControl.Resources>
             </ContentControl>

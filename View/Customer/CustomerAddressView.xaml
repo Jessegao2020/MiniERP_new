@@ -8,8 +8,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="450"
     d:DesignWidth="800"
+    Background="#fff"
     mc:Ignorable="d">
-    <Grid Margin="20">
+    <Grid Margin="30,20,0,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
@@ -23,58 +24,79 @@
             <ColumnDefinition Width="auto" />
         </Grid.ColumnDefinitions>
 
-        <TextBlock
+        <!--  Active Checkbox  -->
+        <CheckBox
             Grid.Row="0"
+            Grid.Column="1"
+            Margin="0,0,0,5"
+            HorizontalAlignment="Right"
+            Content="Active"
+            IsChecked="{Binding IsActive, Mode=TwoWay}" />
+
+        <!--  Name  -->
+        <TextBlock
+            Grid.Row="1"
             Grid.Column="0"
+            HorizontalAlignment="Right"
             Text="Name" />
         <TextBox
-            Grid.Row="0"
+            Grid.Row="1"
             Grid.Column="1"
             Width="200"
-            Text="" />
+            Margin="5,0,0,0"
+            Text="{Binding Name}" />
 
+        <!--  Address 1  -->
         <TextBlock
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="0"
+            HorizontalAlignment="Right"
             Text="Address Line 1" />
         <TextBox
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="1"
             Width="200"
-            Text="" />
+            Margin="5,0,0,0"
+            Text="{Binding AddressLine1}" />
 
+        <!--  Address 2  -->
         <TextBlock
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="0"
+            HorizontalAlignment="Right"
             Text="Address Line 2" />
         <TextBox
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="1"
             Width="200"
-            Text="" />
+            Margin="5,0,0,0"
+            Text="{Binding AddressLine2}" />
 
+        <!--  Country  -->
         <TextBlock
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="0"
-            Text="City-Zipcode-State" />
-        <controls:PickerTextBox
-            Grid.Row="3"
-            Grid.Column="1"
-            Width="60"
-            HorizontalAlignment="Left"
-            BrowseCommand="{Binding PickCountryCommand}"
-            BrowseCommandParameter="{Binding CountryCode}" />
-        <TextBox
-            Grid.Row="3"
-            Grid.Column="1"
-            Width="60"
-            HorizontalAlignment="Center"
-            Text="" />
-        <TextBox
-            Grid.Row="3"
-            Grid.Column="1"
-            Width="60"
             HorizontalAlignment="Right"
-            Text="" />
+            Text="City-Zipcode-State" />
+        <Grid
+            Grid.Row="4"
+            Grid.Column="1"
+            Margin="5,0,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <controls:PickerTextBox
+                Grid.Column="0"
+                Width="50"
+                BrowseCommand="{Binding PickCountryCommand}"
+                BrowseCommandParameter="{Binding CountryCode}"
+                IsReadOnly="True"
+                Text="{Binding CountryCode, Mode=OneWay}" />
+            <TextBox Grid.Column="1" Text="{Binding PostalCode}" />
+            <TextBox Grid.Column="2" Text="{Binding City}" />
+        </Grid>
     </Grid>
 </UserControl>

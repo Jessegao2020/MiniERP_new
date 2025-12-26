@@ -17,6 +17,7 @@ namespace MiniERP.UI.Service
             {PageType.Customer, typeof(CustomerGridViewModel) },
             {PageType.CustomerData, typeof(CustomerDataViewModel) },
             {PageType.CustomerAddress, typeof(CustomerAddressViewModel) },
+            {PageType.CustomerContact, typeof(CustomerContactGridViewModel) },
         };
 
         public ViewModelFactory(IServiceProvider serviceProvider)
@@ -27,7 +28,7 @@ namespace MiniERP.UI.Service
         public object CreateViewModel(PageType type, object? parameter = null)
         {
             if (!viewmodelDic.TryGetValue(type, out var vmType))
-                return new NotSupportedException();
+                throw new NotSupportedException();
 
             var viewmodel = ActivatorUtilities.CreateInstance(_serviceProvider, vmType);
 

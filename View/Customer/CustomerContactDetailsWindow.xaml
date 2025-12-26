@@ -1,0 +1,77 @@
+﻿<Window
+    x:Class="MiniERP.UI.View.Customer.CustomerContactDetailsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:MiniERP.UI.View.Customer"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="CustomerContactDetailsWindow"
+    Width="400"
+    Height="250"
+    Background="#f0f0f0"
+    mc:Ignorable="d">
+    <Grid Margin="30,20,5,5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="auto" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Labels  -->
+            <TextBlock
+                Grid.Row="0"
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Text="Title" />
+            <TextBlock
+                Grid.Row="1"
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Text="Name" />
+
+            <!--  Boxes  -->
+            <ComboBox
+                Grid.Row="0"
+                Grid.Column="1"
+                Width="150"
+                Height="20"
+                Margin="5,0,0,0"
+                IsEditable="True" />
+            <TextBox
+                Grid.Row="1"
+                Grid.Column="1"
+                Width="150"
+                Height="20"
+                Margin="5,0,0,0"
+                Text="" />
+        </Grid>
+
+        <!--  Bottom Buttons  -->
+        <StackPanel
+            Grid.Row="1"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+
+            <Button
+                Width="70"
+                Margin="0"
+                Content="OK" />
+            <Button
+                Width="70"
+                Margin="5,0,0,0"
+                Content="Cancel" />
+        </StackPanel>
+    </Grid>
+</Window>

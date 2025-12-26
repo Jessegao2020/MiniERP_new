@@ -70,7 +70,7 @@ namespace MiniERP.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Articles");
+                    b.ToTable("Articles", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.Customer", b =>
@@ -118,7 +118,7 @@ namespace MiniERP.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Customers");
+                    b.ToTable("Customers", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.CustomerContact", b =>
@@ -153,7 +153,7 @@ namespace MiniERP.Infrastructure.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Contacts");
+                    b.ToTable("Contacts", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.Quotation", b =>
@@ -208,7 +208,7 @@ namespace MiniERP.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Quotations");
+                    b.ToTable("Quotations", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.User", b =>
@@ -234,7 +234,7 @@ namespace MiniERP.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.CustomerContact", b =>
