@@ -2,6 +2,7 @@ using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
 using MiniERP.UI.Interface;
 using MiniERP.UI.Messaging;
+using MiniERP.UI.Model;
 using MiniERP.UI.Service;
 using MiniERP.UI.ViewModel;
 
@@ -13,6 +14,7 @@ namespace MiniERP.UI.Helper
         {
             // ViewModels
             services.AddSingleton<MainViewModel>();
+            services.AddSingleton<CustomerDTO>();
 
             // Services
             services.AddSingleton<INavigationService,NavigationService>();

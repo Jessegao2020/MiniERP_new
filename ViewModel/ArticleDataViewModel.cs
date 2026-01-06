@@ -9,7 +9,7 @@ using MiniERP.UI.Messaging;
 
 namespace MiniERP.UI.ViewModel
 {
-    public class ArticleDataViewModel : INotifyPropertyChanged, IPolymorphicViewModel
+    public class ArticleDataViewModel : ObservableViewModel, IPolymorphicViewModel
     {
 
         private readonly IArticleService _articleService;
@@ -102,13 +102,5 @@ namespace MiniERP.UI.ViewModel
                 _dialog.ShowError($"Delete failed: {ex.Message}");
             }
         }
-
-        #region Event Handling
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-
-        #endregion
     }
 }

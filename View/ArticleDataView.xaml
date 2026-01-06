@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:MiniERP.UI.View"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="450"
-    d:DesignWidth="1200"
+    d:DesignWidth="700"
     mc:Ignorable="d">
     <Grid>
         <Grid.RowDefinitions>

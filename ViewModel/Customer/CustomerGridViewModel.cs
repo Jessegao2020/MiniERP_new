@@ -1,4 +1,5 @@
 ﻿using MiniERP.ApplicationLayer.Services;
+using MiniERP.Domain;
 using MiniERP.UI.Helper;
 using MiniERP.UI.Interface;
 using MiniERP.UI.Model;
@@ -15,6 +16,8 @@ namespace MiniERP.UI.ViewModel.Customer
         public ObservableCollection<MiniERP.Domain.Customer> Customers { get; set; }
 
         public ICommand OpenCreateViewCommand { get; }
+        public ICommand OpenEditViewCommand { get; }
+
 
         public CustomerGridViewModel(ICustomerService customerService, INavigationService nav)
         {
@@ -22,7 +25,7 @@ namespace MiniERP.UI.ViewModel.Customer
             _nav = nav;
 
             OpenCreateViewCommand = new RelayCommand<PageType>(type => _nav.OpenTab(type, "Customer Details"));
-
+            OpenEditViewCommand = new RelayCommand<Domain.Customer?>(OpenDetails);
 
             _ = LoadCustomersAsync();
         }
@@ -31,6 +34,13 @@ namespace MiniERP.UI.ViewModel.Customer
         {
             var customers = await _customerService.GetAllCustomersAsync();
             Customers = new ObservableCollection<Domain.Customer>(customers);
+        }
+
+        private void OpenDetails(Domain.Customer? customer)
+        {
+            if (customer == null) return;
+
+            _nav.OpenTab(PageType.CustomerData, "Customer Details", customer);
         }
     }
 }

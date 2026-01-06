@@ -1,6 +1,9 @@
-﻿using MiniERP.UI.Interface;
+﻿using MiniERP.ApplicationLayer.Services;
+using MiniERP.Domain;
+using MiniERP.UI.Helper;
+using MiniERP.UI.Interface;
 using MiniERP.UI.Model;
-using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace MiniERP.UI.ViewModel.Customer
 {
@@ -8,12 +11,18 @@ namespace MiniERP.UI.ViewModel.Customer
     {
         private readonly INavigationService _nav;
         private readonly IViewModelFactory _viewModelFactory;
+        private readonly ICustomerService _customerService;
+
         private object currentPage;
         private CustomerAddressViewModel? _addressVm;
         private CustomerContactGridViewModel? _contactVm;
+        private readonly Dictionary<PageType, object> _pageCache = new();
+
+
+        public ICommand SaveCustomerCommand { get; }
+        public ICommand DeleteCustomerCommand { get; }
 
         public CustomerDTO CustomerDTO { get; } = new();
-        private readonly Dictionary<PageType, object> _pageCache = new();
 
         public object CurrentPage
         {
@@ -39,10 +48,12 @@ namespace MiniERP.UI.ViewModel.Customer
             },
         };
 
-        public CustomerDataViewModel(INavigationService nav, IViewModelFactory viewModelFactory)
+        public CustomerDataViewModel(INavigationService nav, IViewModelFactory viewModelFactory, ICustomerService customerService)
         {
             _nav = nav;
             _viewModelFactory = viewModelFactory;
+            _customerService = customerService;
+            SaveCustomerCommand = new RelayCommand(async () => await SaveCustomerAsync());
         }
 
         public void OnNavSelected(NavItem item)
@@ -56,10 +67,33 @@ namespace MiniERP.UI.ViewModel.Customer
             if (_pageCache.TryGetValue(pageType, out var vm))
                 return vm;
 
-            // 关键：子页面 parameter 统一传 Editor
             vm = _viewModelFactory.CreateViewModel(pageType, CustomerDTO);
             _pageCache[pageType] = vm;
             return vm;
+        }
+
+        private async Task SaveCustomerAsync()
+        {
+            MiniERP.Domain.Customer customer = new Domain.Customer
+            {
+                Id = CustomerDTO.Id,
+                Name = CustomerDTO.Name,
+                AddressLine1 = CustomerDTO.AddressLine1,
+                AddressLine2 = CustomerDTO.AddressLine2,
+                City = CustomerDTO.City,
+                State = CustomerDTO.State,
+                PostalCode = CustomerDTO.PostalCode,
+                IsActive = CustomerDTO.IsActive,
+                Country = CustomerDTO.CountryCode
+            };
+
+            if (CustomerDTO.Id == 0)
+            {
+                await _customerService.CreateCustomerAsync(customer);
+                CustomerDTO.Id = customer.Id;
+            }
+            else
+                await _customerService.UpdateCustomerAsync(customer);
         }
     }
 }

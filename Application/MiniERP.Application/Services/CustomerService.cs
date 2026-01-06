@@ -41,9 +41,9 @@ namespace MiniERP.ApplicationLayer.Services
             throw new NotImplementedException();
         }
 
-        public Task UpdateCustomerAsync(Customer customer)
+        public async Task UpdateCustomerAsync(Customer customer)
         {
-            throw new NotImplementedException();
+            await _customerRepository.UpdateAsync(customer);
         }
     }
 }

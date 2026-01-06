@@ -14,9 +14,8 @@ namespace MiniERP.UI.ViewModel.Customer
         public ICommand PickCountryCommand { get; }
         public CustomerDTO CustomerDTO { get; private set; } = null!;
 
-        public CustomerAddressViewModel(ICustomerService customerService, IDialogService dialog)
+        public CustomerAddressViewModel(IDialogService dialog)
         {
-            _customerService = customerService;
             _dialog = dialog;
 
             PickCountryCommand = new RelayCommand(PickCountry);
