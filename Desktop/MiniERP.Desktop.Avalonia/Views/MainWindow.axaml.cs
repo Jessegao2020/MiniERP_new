@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using MiniERP.Desktop.Views.Articles;
+using MiniERP.Desktop.Views.Settings;
 using MiniERP.Domain;
 
 namespace MiniERP.Desktop.Views;
@@ -46,7 +47,7 @@ public partial class MainWindow : Window
         => OpenPlaceholder("contract", "Contract", "Contract module is not migrated yet.");
 
     private void System_Click(object? sender, RoutedEventArgs e)
-        => OpenPlaceholder("system", "System", "System settings are not migrated yet.");
+        => OpenSystemSettings();
 
     private void User_Click(object? sender, RoutedEventArgs e)
         => OpenPlaceholder("user", "User", "User settings are not migrated yet.");
@@ -77,6 +78,27 @@ public partial class MainWindow : Window
         editor.Saved += async (_, _) => await RefreshArticleListAsync();
         editor.Deleted += async (_, _) => await RefreshArticleListAsync();
         editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+    }
+
+    private void OpenSystemSettings()
+    {
+        const string key = "system";
+
+        if (SelectExisting(key))
+            return;
+
+        var view = new SystemSettingsView();
+        view.Saved += (_, _) => RefreshOpenArticleExchangeRates();
+        AddWorkspace(key, "System", view);
+    }
+
+    private void RefreshOpenArticleExchangeRates()
+    {
+        foreach (var tab in _workspaceTabs)
+        {
+            if (tab.Content is ArticleEditorView editor)
+                editor.RefreshExchangeRate();
+        }
     }
 
     private async Task RefreshArticleListAsync()
