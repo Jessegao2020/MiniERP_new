@@ -27,6 +27,7 @@ public partial class App : Application
         var services = new ServiceCollection();
         services.AddInfrastructure($"Data Source={DatabasePath}");
         services.AddApplication();
+        services.AddSingleton(new AppSettingsService(AppDataPaths.GetSettingsPath()));
 
         Services = services.BuildServiceProvider();
 
