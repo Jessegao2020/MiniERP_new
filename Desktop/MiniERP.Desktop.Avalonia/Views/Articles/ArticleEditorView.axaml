@@ -1,0 +1,66 @@
+<UserControl
+    x:Class="MiniERP.Desktop.Views.Articles.ArticleEditorView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0" Spacing="3">
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="✓" />
+                    <TextBlock Text="Save" FontSize="10" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Discard_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="↶" />
+                    <TextBlock Text="Discard" FontSize="10" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Delete_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="×" />
+                    <TextBlock Text="Delete" FontSize="10" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1">
+            <Grid Margin="10,8,10,10"
+                  ColumnDefinitions="Auto,250,250"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+
+                <TextBlock Grid.Row="0" Grid.Column="1" Margin="5,2" HorizontalAlignment="Center" FontWeight="SemiBold" Text="CHN" />
+                <TextBlock Grid.Row="0" Grid.Column="2" Margin="5,2" HorizontalAlignment="Center" FontWeight="SemiBold" Text="EN" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Margin="5,5" HorizontalAlignment="Right" Text="Name" />
+                <TextBlock Grid.Row="2" Grid.Column="0" Margin="5,5" HorizontalAlignment="Right" Text="CNY Untaxed" />
+                <TextBlock Grid.Row="3" Grid.Column="0" Margin="5,5" HorizontalAlignment="Right" Text="USD Untaxed" />
+                <TextBlock Grid.Row="4" Grid.Column="0" Margin="5,5" HorizontalAlignment="Right" Text="Specification" />
+                <TextBlock Grid.Row="5" Grid.Column="0" Margin="5,5" HorizontalAlignment="Right" Text="Description" />
+                <TextBlock Grid.Row="6" Grid.Column="0" Margin="5,5" HorizontalAlignment="Right" Text="Discount" />
+                <TextBlock Grid.Row="7" Grid.Column="0" Margin="5,5" HorizontalAlignment="Right" Text="Note" />
+                <TextBlock Grid.Row="8" Grid.Column="0" Margin="5,5" HorizontalAlignment="Right" Text="Category" />
+
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="5,2" Text="{Binding Article.Name, Mode=TwoWay}" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="5,2" Text="{Binding Article.Price, Mode=TwoWay}" />
+                <TextBox Grid.Row="3" Grid.Column="1" Margin="5,2" IsEnabled="False" />
+                <TextBox Grid.Row="4" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Specification, Mode=TwoWay}" />
+                <TextBox Grid.Row="5" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Description, Mode=TwoWay}" />
+                <TextBox Grid.Row="6" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Discount, Mode=TwoWay}" />
+                <TextBox Grid.Row="7" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Note, Mode=TwoWay}" />
+                <TextBox Grid.Row="8" Grid.Column="1" Margin="5,2" Text="{Binding Article.Category, Mode=TwoWay}" />
+
+                <TextBox Grid.Row="1" Grid.Column="2" Margin="5,2" Text="{Binding Article.Name_EN, Mode=TwoWay}" />
+                <TextBox Grid.Row="4" Grid.Column="2" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Specs_EN, Mode=TwoWay}" />
+                <TextBox Grid.Row="5" Grid.Column="2" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Description_EN, Mode=TwoWay}" />
+            </Grid>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
+            <TextBlock Foreground="#CB004A" Text="{Binding Status}" />
+        </Border>
+    </Grid>
+</UserControl>
