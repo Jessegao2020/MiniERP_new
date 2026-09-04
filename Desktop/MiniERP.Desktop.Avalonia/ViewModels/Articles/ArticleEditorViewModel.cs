@@ -3,12 +3,14 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using MiniERP.ApplicationLayer.Services;
+using MiniERP.Desktop.Infrastructure;
 using MiniERP.Domain;
 
 namespace MiniERP.Desktop.ViewModels.Articles;
 
 public sealed class ArticleEditorViewModel : INotifyPropertyChanged
 {
+    private readonly AppSettingsService _settings;
     private string _status = string.Empty;
     private string _priceText = string.Empty;
 
@@ -23,6 +25,22 @@ public sealed class ArticleEditorViewModel : INotifyPropertyChanged
             if (_priceText == value) return;
             _priceText = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(UsdPriceText));
+        }
+    }
+
+    public string UsdPriceText
+    {
+        get
+        {
+            var rate = _settings.Current.CnyPerUsd;
+            if (rate is null || rate <= 0)
+                return string.Empty;
+
+            if (!decimal.TryParse(PriceText, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var cnyPrice))
+                return string.Empty;
+
+            return (cnyPrice / rate.Value).ToString("0.00", CultureInfo.InvariantCulture);
         }
     }
 
@@ -37,12 +55,16 @@ public sealed class ArticleEditorViewModel : INotifyPropertyChanged
         }
     }
 
-    public ArticleEditorViewModel(Article? source)
+    public ArticleEditorViewModel(Article? source, AppSettingsService settings)
     {
+        _settings = settings;
         IsNew = source is null;
         Article = source is null ? new Article() : Clone(source);
         PriceText = Article.Price?.ToString("0.############################", CultureInfo.InvariantCulture) ?? string.Empty;
     }
+
+    public void RefreshExchangeRate()
+        => OnPropertyChanged(nameof(UsdPriceText));
 
     public async Task<bool> SaveAsync()
     {
