@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using MiniERP.Desktop.Views.Articles;
+using MiniERP.Desktop.Views.Customers;
 using MiniERP.Desktop.Views.Settings;
 using MiniERP.Domain;
 
@@ -26,7 +27,7 @@ public partial class MainWindow : Window
         => OpenArticleList();
 
     private void Customer_Click(object? sender, RoutedEventArgs e)
-        => OpenPlaceholder("customer", "Customer", "Customer list and details will be migrated after Article.");
+        => OpenCustomerList();
 
     private void Quotation_Click(object? sender, RoutedEventArgs e)
         => OpenPlaceholder("quotation", "Quotation", "Quotation module is not migrated yet.");
@@ -80,6 +81,36 @@ public partial class MainWindow : Window
         editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
     }
 
+    private void OpenCustomerList()
+    {
+        const string key = "customer";
+
+        if (SelectExisting(key))
+            return;
+
+        var view = new CustomerListView();
+        view.OpenCustomerRequested += OpenCustomerEditor;
+        AddWorkspace(key, "Customer", view);
+    }
+
+    private void OpenCustomerEditor(Customer? customer)
+    {
+        // Identity is based on the entity id, not the displayed title. This fixes the
+        // old WPF behavior where every "Customer Details" request reused the same tab.
+        var key = customer is null ? "customer:new" : $"customer:{customer.Id}";
+        var title = customer is null ? "New Customer" : $"Customer Details: {customer.Name}";
+
+        if (SelectExisting(key))
+            return;
+
+        var editor = new CustomerEditorView(customer);
+        var tab = AddWorkspace(key, title, editor);
+
+        editor.Saved += async (_, _) => await RefreshCustomerListAsync();
+        editor.Deleted += async (_, _) => await RefreshCustomerListAsync();
+        editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+    }
+
     private void OpenSystemSettings()
     {
         const string key = "system";
@@ -104,6 +135,12 @@ public partial class MainWindow : Window
     private async Task RefreshArticleListAsync()
     {
         if (_openTabs.TryGetValue("article", out var tab) && tab.Content is ArticleListView list)
+            await list.ReloadAsync();
+    }
+
+    private async Task RefreshCustomerListAsync()
+    {
+        if (_openTabs.TryGetValue("customer", out var tab) && tab.Content is CustomerListView list)
             await list.ReloadAsync();
     }
 
