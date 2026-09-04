@@ -49,8 +49,8 @@
 
             <dg:DataGrid.Columns>
                 <dg:DataGridTextColumn Width="3*" Binding="{Binding Name}" Header="Name" />
-                <dg:DataGridTextColumn Width="*" Binding="{Binding Price, StringFormat={}{0:F2}}" Header="Price" />
-                <dg:DataGridTextColumn Width="*" Binding="{Binding MinimumPrice, StringFormat={}{0:F2}}" Header="Min. Price" />
+                <dg:DataGridTextColumn Width="*" Binding="{Binding Price}" Header="Price" />
+                <dg:DataGridTextColumn Width="*" Binding="{Binding MinimumPrice}" Header="Min. Price" />
                 <dg:DataGridTextColumn Width="2*" Binding="{Binding Description}" Header="Description" />
                 <dg:DataGridTextColumn Width="2*" Binding="{Binding Specification}" Header="Specification" />
                 <dg:DataGridTextColumn Width="2*" Binding="{Binding Discount}" Header="Discount" />
