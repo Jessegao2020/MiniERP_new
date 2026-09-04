@@ -1,0 +1,169 @@
+<UserControl
+    x:Class="MiniERP.Desktop.Views.Customers.CustomerEditorView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
+    Background="#F0F0F0">
+
+    <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="180,*">
+        <!-- Top toolbar -->
+        <StackPanel
+            Grid.Row="0"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Orientation="Horizontal"
+            Background="White"
+            Spacing="3">
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="✓" />
+                    <TextBlock Text="Save" FontSize="10" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Discard_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="↶" />
+                    <TextBlock Text="Discard" FontSize="10" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Delete_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="×" />
+                    <TextBlock Text="Delete" FontSize="10" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <!-- Left navigation, mirroring the original CustomerDataView tree -->
+        <Border
+            Grid.Row="1"
+            Grid.Column="0"
+            Margin="5"
+            Background="White"
+            BorderBrush="LightGray"
+            BorderThickness="1">
+            <StackPanel Margin="4" Spacing="2">
+                <Button HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="Address_Click" Content="Address" />
+                <Button HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="Contact_Click" Content="Contact" />
+
+                <TextBlock Margin="8,10,0,2" FontWeight="SemiBold" Opacity="0.65" Text="History" />
+                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="QuoteHistory_Click" Content="Quote" />
+                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="OrderHistory_Click" Content="Order" />
+            </StackPanel>
+        </Border>
+
+        <!-- Right content -->
+        <Border
+            Grid.Row="1"
+            Grid.Column="1"
+            Margin="0,5,5,5"
+            Background="White"
+            BorderBrush="LightGray"
+            BorderThickness="1">
+            <Grid>
+                <!-- Address page -->
+                <ScrollViewer x:Name="AddressPanel" IsVisible="True">
+                    <Grid
+                        Margin="30,20,30,20"
+                        HorizontalAlignment="Left"
+                        ColumnDefinitions="Auto,280"
+                        RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+
+                        <CheckBox
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Margin="0,0,0,10"
+                            HorizontalAlignment="Right"
+                            Content="Active"
+                            IsChecked="{Binding Customer.IsActive, Mode=TwoWay}" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Name" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{Binding Customer.Name, Mode=TwoWay}" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Address Line 1" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{Binding Customer.AddressLine1, Mode=TwoWay}" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Address Line 2" />
+                        <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{Binding Customer.AddressLine2, Mode=TwoWay}" />
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Country" />
+                        <TextBox Grid.Row="4" Grid.Column="1" Width="90" HorizontalAlignment="Left" Margin="0,2" MaxLength="2" Watermark="US" Text="{Binding Customer.Country, Mode=TwoWay}" />
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Postal Code" />
+                        <TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{Binding Customer.PostalCode, Mode=TwoWay}" />
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="City" />
+                        <TextBox Grid.Row="6" Grid.Column="1" Margin="0,2" Text="{Binding Customer.City, Mode=TwoWay}" />
+
+                        <TextBlock Grid.Row="7" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="State" />
+                        <TextBox Grid.Row="7" Grid.Column="1" Margin="0,2" Text="{Binding Customer.State, Mode=TwoWay}" />
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- Contact page -->
+                <Grid x:Name="ContactPanel" IsVisible="False" RowDefinitions="Auto,*,Auto">
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="3" Spacing="3">
+                        <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="NewContact_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="＋" />
+                                <TextBlock Text="New" FontSize="10" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="DeleteContact_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="×" />
+                                <TextBlock Text="Delete" FontSize="10" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <dg:DataGrid
+                        Grid.Row="1"
+                        Margin="5"
+                        AutoGenerateColumns="False"
+                        CanUserResizeColumns="True"
+                        CanUserSortColumns="True"
+                        GridLinesVisibility="All"
+                        ItemsSource="{Binding Contacts}"
+                        SelectedItem="{Binding SelectedContact, Mode=TwoWay}">
+                        <dg:DataGrid.Columns>
+                            <dg:DataGridTextColumn Width="2*" Binding="{Binding Title, Mode=TwoWay}" Header="Title" />
+                            <dg:DataGridTextColumn Width="4*" Binding="{Binding Name, Mode=TwoWay}" Header="Name" />
+                        </dg:DataGrid.Columns>
+                    </dg:DataGrid>
+
+                    <TextBlock
+                        Grid.Row="2"
+                        Margin="8,4"
+                        Opacity="0.6"
+                        Text="Contacts are saved together with the customer. Double-click a cell to edit it." />
+                </Grid>
+
+                <!-- Quote / Order history placeholders -->
+                <StackPanel
+                    x:Name="HistoryPanel"
+                    IsVisible="False"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="6">
+                    <TextBlock x:Name="HistoryTitle" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" Text="History" />
+                    <TextBlock Opacity="0.55" Text="This history view will be connected when the document modules are migrated." />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border
+            Grid.Row="2"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Padding="6,3"
+            Background="#E8E8E8"
+            BorderBrush="LightGray"
+            BorderThickness="1">
+            <TextBlock Foreground="#CB004A" Text="{Binding Status}" />
+        </Border>
+    </Grid>
+</UserControl>
