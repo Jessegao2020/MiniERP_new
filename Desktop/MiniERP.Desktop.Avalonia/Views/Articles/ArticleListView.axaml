@@ -28,9 +28,6 @@
             </Button>
 
             <Border Width="1" Margin="5,3" Background="#D0D0D0" />
-
-            <TextBox Width="220" Watermark="Search articles..." Text="{Binding SearchText, Mode=TwoWay}" />
-            <Button Padding="8,2" Click="Search_Click" Content="Search" />
             <Button Padding="8,2" Click="Refresh_Click" Content="Refresh" />
         </StackPanel>
 
@@ -48,13 +45,68 @@
             DoubleTapped="ArticleGrid_DoubleTapped">
 
             <dg:DataGrid.Columns>
-                <dg:DataGridTextColumn Width="3*" Binding="{Binding Name}" Header="Name" />
-                <dg:DataGridTextColumn Width="*" Binding="{Binding Price}" Header="Price" />
-                <dg:DataGridTextColumn Width="*" Binding="{Binding MinimumPrice}" Header="Min. Price" />
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding Description}" Header="Description" />
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding Specification}" Header="Specification" />
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding Discount}" Header="Discount" />
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding Note}" Header="Note" />
+                <dg:DataGridTextColumn Width="3*" Binding="{Binding Name}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Name" />
+                            <TextBox MinWidth="80" Height="24" Tag="Name" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="*" Binding="{Binding Price}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Price" />
+                            <TextBox MinWidth="60" Height="24" Tag="Price" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="*" Binding="{Binding MinimumPrice}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Min. Price" />
+                            <TextBox MinWidth="60" Height="24" Tag="MinimumPrice" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="2*" Binding="{Binding Description}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Description" />
+                            <TextBox MinWidth="70" Height="24" Tag="Description" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="2*" Binding="{Binding Specification}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Specification" />
+                            <TextBox MinWidth="70" Height="24" Tag="Specification" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="2*" Binding="{Binding Discount}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Discount" />
+                            <TextBox MinWidth="70" Height="24" Tag="Discount" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="2*" Binding="{Binding Note}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Note" />
+                            <TextBox MinWidth="70" Height="24" Tag="Note" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
             </dg:DataGrid.Columns>
         </dg:DataGrid>
 
