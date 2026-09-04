@@ -2,7 +2,7 @@ namespace MiniERP.Desktop.Infrastructure;
 
 internal static class AppDataPaths
 {
-    public static string GetDatabasePath()
+    public static string GetDataDirectory()
     {
         var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
@@ -11,7 +11,12 @@ internal static class AppDataPaths
 
         var dataDirectory = Path.Combine(basePath, "MiniERP");
         Directory.CreateDirectory(dataDirectory);
-
-        return Path.Combine(dataDirectory, "erp.db");
+        return dataDirectory;
     }
+
+    public static string GetDatabasePath()
+        => Path.Combine(GetDataDirectory(), "erp.db");
+
+    public static string GetSettingsPath()
+        => Path.Combine(GetDataDirectory(), "settings.json");
 }
