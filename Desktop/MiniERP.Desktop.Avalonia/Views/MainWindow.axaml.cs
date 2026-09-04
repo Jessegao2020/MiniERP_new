@@ -11,11 +11,6 @@ namespace MiniERP.Desktop.Views;
 public partial class MainWindow : Window
 {
     private readonly Dictionary<string, TabItem> _openTabs = new();
-    private TabControl? _contentTabControl;
-
-    private TabControl ContentTabControl =>
-        _contentTabControl ??= this.FindControl<TabControl>("ContentTabControl")
-            ?? throw new InvalidOperationException("ContentTabControl was not found.");
 
     public MainWindow()
     {
