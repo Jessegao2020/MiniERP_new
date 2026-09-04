@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using MiniERP.ApplicationLayer.Services;
@@ -9,9 +10,21 @@ namespace MiniERP.Desktop.ViewModels.Articles;
 public sealed class ArticleEditorViewModel : INotifyPropertyChanged
 {
     private string _status = string.Empty;
+    private string _priceText = string.Empty;
 
     public Article Article { get; }
     public bool IsNew { get; private set; }
+
+    public string PriceText
+    {
+        get => _priceText;
+        set
+        {
+            if (_priceText == value) return;
+            _priceText = value;
+            OnPropertyChanged();
+        }
+    }
 
     public string Status
     {
@@ -28,6 +41,7 @@ public sealed class ArticleEditorViewModel : INotifyPropertyChanged
     {
         IsNew = source is null;
         Article = source is null ? new Article() : Clone(source);
+        PriceText = Article.Price?.ToString("0.############################", CultureInfo.InvariantCulture) ?? string.Empty;
     }
 
     public async Task<bool> SaveAsync()
@@ -35,6 +49,20 @@ public sealed class ArticleEditorViewModel : INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(Article.Name))
         {
             Status = "Name is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(PriceText))
+        {
+            Article.Price = null;
+        }
+        else if (decimal.TryParse(PriceText, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var price) && price >= 0)
+        {
+            Article.Price = price;
+        }
+        else
+        {
+            Status = "Price must be a valid non-negative number.";
             return false;
         }
 
