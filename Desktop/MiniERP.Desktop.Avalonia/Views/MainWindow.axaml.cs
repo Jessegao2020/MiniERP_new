@@ -1,60 +1,109 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
-using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using MiniERP.Desktop.Views.Articles;
+using MiniERP.Domain;
 
 namespace MiniERP.Desktop.Views;
 
 public partial class MainWindow : Window
 {
     private readonly Dictionary<string, TabItem> _openTabs = new();
+    private readonly ObservableCollection<TabItem> _workspaceTabs = new();
 
     public MainWindow()
     {
-        AvaloniaXamlLoader.Load(this);
+        InitializeComponent();
+        ContentTabControl.ItemsSource = _workspaceTabs;
     }
 
     private void Article_Click(object? sender, RoutedEventArgs e)
-        => OpenWorkspace("article", "Article", "Article list will be migrated here next.");
+        => OpenArticleList();
 
     private void Customer_Click(object? sender, RoutedEventArgs e)
-        => OpenWorkspace("customer", "Customer", "Customer list and details will be migrated after Article.");
+        => OpenPlaceholder("customer", "Customer", "Customer list and details will be migrated after Article.");
 
     private void Quotation_Click(object? sender, RoutedEventArgs e)
-        => OpenWorkspace("quotation", "Quotation", "Quotation module is not migrated yet.");
+        => OpenPlaceholder("quotation", "Quotation", "Quotation module is not migrated yet.");
 
     private void Order_Click(object? sender, RoutedEventArgs e)
-        => OpenWorkspace("order", "Order", "Order module is not migrated yet.");
+        => OpenPlaceholder("order", "Order", "Order module is not migrated yet.");
 
     private void Invoice_Click(object? sender, RoutedEventArgs e)
-        => OpenWorkspace("invoice", "Invoice", "Invoice module is not migrated yet.");
+        => OpenPlaceholder("invoice", "Invoice", "Invoice module is not migrated yet.");
 
     private void PackingList_Click(object? sender, RoutedEventArgs e)
-        => OpenWorkspace("packing-list", "P/L", "Packing List module is not migrated yet.");
+        => OpenPlaceholder("packing-list", "P/L", "Packing List module is not migrated yet.");
 
     private void ProformaInvoice_Click(object? sender, RoutedEventArgs e)
-        => OpenWorkspace("proforma-invoice", "P/I", "Proforma Invoice module is not migrated yet.");
+        => OpenPlaceholder("proforma-invoice", "P/I", "Proforma Invoice module is not migrated yet.");
 
     private void Contract_Click(object? sender, RoutedEventArgs e)
-        => OpenWorkspace("contract", "Contract", "Contract module is not migrated yet.");
+        => OpenPlaceholder("contract", "Contract", "Contract module is not migrated yet.");
 
     private void System_Click(object? sender, RoutedEventArgs e)
-        => OpenWorkspace("system", "System", "System settings are not migrated yet.");
+        => OpenPlaceholder("system", "System", "System settings are not migrated yet.");
 
     private void User_Click(object? sender, RoutedEventArgs e)
-        => OpenWorkspace("user", "User", "User settings are not migrated yet.");
+        => OpenPlaceholder("user", "User", "User settings are not migrated yet.");
 
-    private void OpenWorkspace(string key, string title, string description)
+    private void OpenArticleList()
     {
-        if (_openTabs.TryGetValue(key, out var existing))
-        {
-            ContentTabControl.SelectedItem = existing;
-            return;
-        }
+        const string key = "article";
 
+        if (SelectExisting(key))
+            return;
+
+        var view = new ArticleListView();
+        view.OpenArticleRequested += OpenArticleEditor;
+        AddWorkspace(key, "Article", view);
+    }
+
+    private void OpenArticleEditor(Article? article)
+    {
+        var key = article is null ? "article:new" : $"article:{article.Id}";
+        var title = article is null ? "New Article" : "Article Details";
+
+        if (SelectExisting(key))
+            return;
+
+        var editor = new ArticleEditorView(article);
+        var tab = AddWorkspace(key, title, editor);
+
+        editor.Saved += async (_, _) => await RefreshArticleListAsync();
+        editor.Deleted += async (_, _) => await RefreshArticleListAsync();
+        editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+    }
+
+    private async Task RefreshArticleListAsync()
+    {
+        if (_openTabs.TryGetValue("article", out var tab) && tab.Content is ArticleListView list)
+            await list.ReloadAsync();
+    }
+
+    private void OpenPlaceholder(string key, string title, string description)
+    {
+        if (SelectExisting(key))
+            return;
+
+        AddWorkspace(key, title, CreatePlaceholder(title, description));
+    }
+
+    private bool SelectExisting(string key)
+    {
+        if (!_openTabs.TryGetValue(key, out var existing))
+            return false;
+
+        ContentTabControl.SelectedItem = existing;
+        return true;
+    }
+
+    private TabItem AddWorkspace(string key, string title, Control content)
+    {
         var closeButton = new Button
         {
             Content = "×",
@@ -85,14 +134,16 @@ public partial class MainWindow : Window
         var tab = new TabItem
         {
             Header = header,
-            Content = CreatePlaceholder(title, description)
+            Content = content
         };
 
         closeButton.Click += (_, _) => CloseWorkspace(key, tab);
 
         _openTabs[key] = tab;
-        ContentTabControl.Items.Add(tab);
+        _workspaceTabs.Add(tab);
         ContentTabControl.SelectedItem = tab;
+
+        return tab;
     }
 
     private static Control CreatePlaceholder(string title, string description)
@@ -124,7 +175,7 @@ public partial class MainWindow : Window
 
     private void CloseWorkspace(string key, TabItem tab)
     {
-        ContentTabControl.Items.Remove(tab);
+        _workspaceTabs.Remove(tab);
         _openTabs.Remove(key);
     }
 }
