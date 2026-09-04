@@ -1,0 +1,92 @@
+<Window
+    x:Class="MiniERP.Desktop.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="MiniERP"
+    Width="1200"
+    Height="800"
+    MinWidth="900"
+    MinHeight="600">
+
+    <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,*">
+        <Border Grid.ColumnSpan="2" Padding="18,12" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel>
+                    <TextBlock FontSize="22" FontWeight="SemiBold" Text="MiniERP" />
+                    <TextBlock Opacity="0.65" Text="Avalonia Linux migration bootstrap" />
+                </StackPanel>
+
+                <Button
+                    Grid.Column="1"
+                    Padding="18,8"
+                    VerticalAlignment="Center"
+                    Click="Refresh_Click"
+                    Content="Refresh" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Padding="14" BorderThickness="0,0,1,0">
+            <StackPanel Spacing="8">
+                <TextBlock
+                    Margin="8,4,8,12"
+                    FontSize="12"
+                    FontWeight="SemiBold"
+                    Opacity="0.55"
+                    Text="GENERAL" />
+
+                <Button HorizontalContentAlignment="Left" Padding="14,10" Content="Articles" />
+                <Button HorizontalContentAlignment="Left" Padding="14,10" Content="Customers" />
+                <Button HorizontalContentAlignment="Left" Padding="14,10" Content="Quotations" IsEnabled="False" />
+                <Button HorizontalContentAlignment="Left" Padding="14,10" Content="Orders" IsEnabled="False" />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" Grid.Column="1">
+            <StackPanel Margin="28" Spacing="22">
+                <StackPanel>
+                    <TextBlock FontSize="28" FontWeight="SemiBold" Text="Migration status" />
+                    <TextBlock Margin="0,6,0,0" Opacity="0.65" Text="{Binding Status}" />
+                </StackPanel>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                    <Border Padding="22" CornerRadius="8" BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <TextBlock Opacity="0.6" Text="Articles" />
+                            <TextBlock FontSize="34" FontWeight="SemiBold" Text="{Binding ArticleCount}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Padding="22" CornerRadius="8" BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <TextBlock Opacity="0.6" Text="Customers" />
+                            <TextBlock FontSize="34" FontWeight="SemiBold" Text="{Binding CustomerCount}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Padding="20" CornerRadius="8" BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock FontWeight="SemiBold" Text="Database" />
+                        <TextBlock
+                            FontFamily="monospace"
+                            Opacity="0.72"
+                            TextWrapping="Wrap"
+                            Text="{Binding DatabasePath}" />
+                        <TextBlock
+                            Margin="0,8,0,0"
+                            Opacity="0.6"
+                            Text="The Linux port uses the per-user application-data directory instead of writing erp.db beside the executable."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <TextBlock
+                    MaxWidth="760"
+                    HorizontalAlignment="Left"
+                    Opacity="0.65"
+                    Text="Phase 1 deliberately leaves the WPF UI untouched. Domain, Application and Infrastructure are reused as-is; Article and Customer screens can now be migrated one feature at a time."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
