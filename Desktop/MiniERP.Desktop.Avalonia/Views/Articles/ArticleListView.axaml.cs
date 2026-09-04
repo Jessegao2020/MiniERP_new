@@ -27,13 +27,15 @@ public partial class ArticleListView : UserControl
     private async void Delete_Click(object? sender, RoutedEventArgs e)
         => await ViewModel.DeleteSelectedAsync();
 
-    private async void Search_Click(object? sender, RoutedEventArgs e)
+    private async void Refresh_Click(object? sender, RoutedEventArgs e)
         => await ViewModel.LoadAsync();
 
-    private async void Refresh_Click(object? sender, RoutedEventArgs e)
+    private void Filter_TextChanged(object? sender, TextChangedEventArgs e)
     {
-        ViewModel.SearchText = string.Empty;
-        await ViewModel.LoadAsync();
+        if (sender is not TextBox textBox || textBox.Tag is not string field)
+            return;
+
+        ViewModel.SetFilter(field, textBox.Text);
     }
 
     private void ArticleGrid_DoubleTapped(object? sender, TappedEventArgs e)
