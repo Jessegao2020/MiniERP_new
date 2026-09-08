@@ -19,7 +19,7 @@ public sealed class PackingPackageRowViewModel : INotifyPropertyChanged
 
     public int Id { get; }
     public string CartonNumber { get => _cartonNumber; set => SetField(ref _cartonNumber, value ?? string.Empty); }
-    public string PackageCountText { get => _packageCountText; set => SetDecimalText(ref _packageCountText, value); }
+    public string PackageCountText { get => _packageCountText; set => SetIntegerText(ref _packageCountText, value); }
     public string? Contents { get => _contents; set => SetField(ref _contents, value); }
     public string LengthText { get => _lengthText; set => SetDecimalText(ref _lengthText, value); }
     public string WidthText { get => _widthText; set => SetDecimalText(ref _widthText, value); }
@@ -27,7 +27,7 @@ public sealed class PackingPackageRowViewModel : INotifyPropertyChanged
     public string NetWeightText { get => _netWeightText; set => SetDecimalText(ref _netWeightText, value); }
     public string GrossWeightText { get => _grossWeightText; set => SetDecimalText(ref _grossWeightText, value); }
 
-    public int PackageCount => Math.Max(1, (int)ParseDecimal(PackageCountText));
+    public int PackageCount => int.TryParse(PackageCountText, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0;
     public decimal LengthCm => ParseDecimal(LengthText);
     public decimal WidthCm => ParseDecimal(WidthText);
     public decimal HeightCm => ParseDecimal(HeightText);
@@ -54,7 +54,7 @@ public sealed class PackingPackageRowViewModel : INotifyPropertyChanged
     public bool TryValidate(out string error)
     {
         if (string.IsNullOrWhiteSpace(CartonNumber)) { error = "Every package row needs a carton number or range."; return false; }
-        if (PackageCount <= 0) { error = $"Package count for '{CartonNumber}' must be greater than zero."; return false; }
+        if (PackageCount <= 0) { error = $"Package count for '{CartonNumber}' must be a whole number greater than zero."; return false; }
         if (LengthCm < 0 || WidthCm < 0 || HeightCm < 0 || NetWeightKg < 0 || GrossWeightKg < 0)
         { error = $"Dimensions and weights for '{CartonNumber}' cannot be negative."; return false; }
         error = string.Empty;
@@ -75,13 +75,27 @@ public sealed class PackingPackageRowViewModel : INotifyPropertyChanged
         GrossWeightKg = GrossWeightKg
     };
 
+    private void SetIntegerText(ref string field, string? value, [CallerMemberName] string? propertyName = null)
+    {
+        var normalized = string.IsNullOrEmpty(value)
+            ? string.Empty
+            : new string(value.Where(char.IsDigit).ToArray());
+
+        if (field == normalized) return;
+        field = normalized;
+        OnPropertyChanged(propertyName);
+        OnPropertyChanged(nameof(PackageCount));
+        OnPropertyChanged(nameof(TotalCbm));
+        OnPropertyChanged(nameof(TotalNetWeight));
+        OnPropertyChanged(nameof(TotalGrossWeight));
+    }
+
     private void SetDecimalText(ref string field, string? value, [CallerMemberName] string? propertyName = null)
     {
         var normalized = NormalizeDecimalInput(value);
         if (field == normalized) return;
         field = normalized;
         OnPropertyChanged(propertyName);
-        OnPropertyChanged(nameof(PackageCount));
         OnPropertyChanged(nameof(Cbm));
         OnPropertyChanged(nameof(TotalCbm));
         OnPropertyChanged(nameof(TotalNetWeight));
