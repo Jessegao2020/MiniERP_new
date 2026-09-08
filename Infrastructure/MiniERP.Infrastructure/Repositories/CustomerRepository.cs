@@ -26,8 +26,6 @@ namespace MiniERP.Infrastructure.Repositories
 
         public async Task<Customer?> GetByCodeAsync(string code)
         {
-            // Customer does not currently have a dedicated Code property.
-            // Keep this legacy API useful by treating an exact name as the lookup key.
             var normalized = code?.Trim();
             if (string.IsNullOrEmpty(normalized))
                 return null;
@@ -120,6 +118,9 @@ namespace MiniERP.Infrastructure.Repositories
 
         public override async Task DeleteAsync(int id)
         {
+            if (await _context.Quotations.AnyAsync(q => q.CustomerId == id))
+                throw new InvalidOperationException("This customer is referenced by one or more quotations and cannot be deleted.");
+
             var existing = await _dbSet
                 .Include(customer => customer.Contacts)
                 .FirstOrDefaultAsync(customer => customer.Id == id);
