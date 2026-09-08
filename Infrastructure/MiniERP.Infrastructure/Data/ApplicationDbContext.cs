@@ -21,5 +21,12 @@ namespace MiniERP.Infrastructure.Data
         public DbSet<PackingListItem> PackingListItems { get; set; }
         public DbSet<PackingPackage> PackingPackages { get; set; }
         public DbSet<User> Users { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Invoice>().HasIndex(invoice => invoice.InvoiceNumber).IsUnique();
+            modelBuilder.Entity<PackingList>().HasIndex(packingList => packingList.PackingListNumber).IsUnique();
+        }
     }
 }

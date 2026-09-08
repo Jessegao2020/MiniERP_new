@@ -73,6 +73,140 @@ namespace MiniERP.Infrastructure.Migrations
                     b.ToTable("Contacts", (string)null);
                 });
 
+            modelBuilder.Entity("MiniERP.Domain.Invoice", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<string>("BankInformation").HasColumnType("TEXT");
+                    b.Property<DateTime?>("CreatedAt").HasColumnType("TEXT");
+                    b.Property<string>("CreatedBy").HasColumnType("TEXT");
+                    b.Property<string>("Currency").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("CustomerAddressSnapshot").HasColumnType("TEXT");
+                    b.Property<string>("CustomerContactSnapshot").HasColumnType("TEXT");
+                    b.Property<int>("CustomerId").HasColumnType("INTEGER");
+                    b.Property<string>("CustomerNameSnapshot").HasColumnType("TEXT");
+                    b.Property<DateTime?>("CustomerPoDate").HasColumnType("TEXT");
+                    b.Property<string>("CustomerPoNumber").HasColumnType("TEXT");
+                    b.Property<string>("DeliveryTerm").HasColumnType("TEXT");
+                    b.Property<DateTime?>("DueDate").HasColumnType("TEXT");
+                    b.Property<decimal>("ExchangeRate").HasColumnType("TEXT");
+                    b.Property<DateTime>("InvoiceDate").HasColumnType("TEXT");
+                    b.Property<string>("InvoiceNumber").IsRequired().HasColumnType("TEXT");
+                    b.Property<DateTime?>("LastModifiedAt").HasColumnType("TEXT");
+                    b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
+                    b.Property<string>("PaymentTerm").HasColumnType("TEXT");
+                    b.Property<string>("Remarks").HasColumnType("TEXT");
+                    b.Property<string>("SalesContactEmailSnapshot").HasColumnType("TEXT");
+                    b.Property<string>("SalesContactNameSnapshot").HasColumnType("TEXT");
+                    b.Property<string>("SalesContactPhoneSnapshot").HasColumnType("TEXT");
+                    b.Property<int?>("SourceDocumentId").HasColumnType("INTEGER");
+                    b.Property<string>("SourceDocumentNumber").HasColumnType("TEXT");
+                    b.Property<int>("SourceDocumentType").HasColumnType("INTEGER");
+                    b.Property<int>("Type").HasColumnType("INTEGER");
+                    b.Property<int>("UserId").HasColumnType("INTEGER");
+                    b.HasKey("Id");
+                    b.HasIndex("CustomerId");
+                    b.HasIndex("InvoiceNumber").IsUnique();
+                    b.HasIndex("UserId");
+                    b.ToTable("Invoices", (string)null);
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.InvoiceItem", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<string>("ArticleName").IsRequired().HasColumnType("TEXT");
+                    b.Property<DateTime?>("CreatedAt").HasColumnType("TEXT");
+                    b.Property<string>("CreatedBy").HasColumnType("TEXT");
+                    b.Property<string>("Currency").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("Description").HasColumnType("TEXT");
+                    b.Property<decimal>("DiscountPercent").HasColumnType("TEXT");
+                    b.Property<decimal>("ExchangeRateSnapshot").HasColumnType("TEXT");
+                    b.Property<int>("InvoiceId").HasColumnType("INTEGER");
+                    b.Property<DateTime?>("LastModifiedAt").HasColumnType("TEXT");
+                    b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
+                    b.Property<decimal>("Quantity").HasColumnType("TEXT");
+                    b.Property<int>("SortOrder").HasColumnType("INTEGER");
+                    b.Property<int?>("SourceArticleId").HasColumnType("INTEGER");
+                    b.Property<string>("Specification").HasColumnType("TEXT");
+                    b.Property<string>("Unit").IsRequired().HasColumnType("TEXT");
+                    b.Property<decimal>("UnitPrice").HasColumnType("TEXT");
+                    b.HasKey("Id");
+                    b.HasIndex("InvoiceId");
+                    b.ToTable("InvoiceItems", (string)null);
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.PackingList", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<DateTime?>("CreatedAt").HasColumnType("TEXT");
+                    b.Property<string>("CreatedBy").HasColumnType("TEXT");
+                    b.Property<string>("CustomerAddressSnapshot").HasColumnType("TEXT");
+                    b.Property<string>("CustomerContactSnapshot").HasColumnType("TEXT");
+                    b.Property<int>("CustomerId").HasColumnType("INTEGER");
+                    b.Property<string>("CustomerNameSnapshot").HasColumnType("TEXT");
+                    b.Property<DateTime?>("CustomerPoDate").HasColumnType("TEXT");
+                    b.Property<string>("CustomerPoNumber").HasColumnType("TEXT");
+                    b.Property<string>("DeliveryTerm").HasColumnType("TEXT");
+                    b.Property<DateTime?>("LastModifiedAt").HasColumnType("TEXT");
+                    b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
+                    b.Property<DateTime>("PackingDate").HasColumnType("TEXT");
+                    b.Property<string>("PackingListNumber").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("Remarks").HasColumnType("TEXT");
+                    b.Property<string>("SalesContactEmailSnapshot").HasColumnType("TEXT");
+                    b.Property<string>("SalesContactNameSnapshot").HasColumnType("TEXT");
+                    b.Property<string>("SalesContactPhoneSnapshot").HasColumnType("TEXT");
+                    b.Property<int?>("SourceDocumentId").HasColumnType("INTEGER");
+                    b.Property<string>("SourceDocumentNumber").HasColumnType("TEXT");
+                    b.Property<int>("SourceDocumentType").HasColumnType("INTEGER");
+                    b.Property<int>("UserId").HasColumnType("INTEGER");
+                    b.HasKey("Id");
+                    b.HasIndex("CustomerId");
+                    b.HasIndex("PackingListNumber").IsUnique();
+                    b.HasIndex("UserId");
+                    b.ToTable("PackingLists", (string)null);
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.PackingListItem", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<string>("ArticleName").IsRequired().HasColumnType("TEXT");
+                    b.Property<DateTime?>("CreatedAt").HasColumnType("TEXT");
+                    b.Property<string>("CreatedBy").HasColumnType("TEXT");
+                    b.Property<string>("Description").HasColumnType("TEXT");
+                    b.Property<DateTime?>("LastModifiedAt").HasColumnType("TEXT");
+                    b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
+                    b.Property<int>("PackingListId").HasColumnType("INTEGER");
+                    b.Property<decimal>("Quantity").HasColumnType("TEXT");
+                    b.Property<int>("SortOrder").HasColumnType("INTEGER");
+                    b.Property<int?>("SourceArticleId").HasColumnType("INTEGER");
+                    b.Property<string>("Specification").HasColumnType("TEXT");
+                    b.Property<string>("Unit").IsRequired().HasColumnType("TEXT");
+                    b.HasKey("Id");
+                    b.HasIndex("PackingListId");
+                    b.ToTable("PackingListItems", (string)null);
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.PackingPackage", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<string>("CartonNumber").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("Contents").HasColumnType("TEXT");
+                    b.Property<DateTime?>("CreatedAt").HasColumnType("TEXT");
+                    b.Property<string>("CreatedBy").HasColumnType("TEXT");
+                    b.Property<decimal>("GrossWeightKg").HasColumnType("TEXT");
+                    b.Property<decimal>("HeightCm").HasColumnType("TEXT");
+                    b.Property<DateTime?>("LastModifiedAt").HasColumnType("TEXT");
+                    b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
+                    b.Property<decimal>("LengthCm").HasColumnType("TEXT");
+                    b.Property<decimal>("NetWeightKg").HasColumnType("TEXT");
+                    b.Property<int>("PackageCount").HasColumnType("INTEGER");
+                    b.Property<int>("PackingListId").HasColumnType("INTEGER");
+                    b.Property<int>("SortOrder").HasColumnType("INTEGER");
+                    b.Property<decimal>("WidthCm").HasColumnType("TEXT");
+                    b.HasKey("Id");
+                    b.HasIndex("PackingListId");
+                    b.ToTable("PackingPackages", (string)null);
+                });
+
             modelBuilder.Entity("MiniERP.Domain.Quotation", b =>
                 {
                     b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
@@ -140,26 +274,51 @@ namespace MiniERP.Infrastructure.Migrations
 
             modelBuilder.Entity("MiniERP.Domain.CustomerContact", b =>
                 {
-                    b.HasOne("MiniERP.Domain.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("MiniERP.Domain.Customer", "Customer").WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Cascade).IsRequired();
                     b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.Invoice", b =>
+                {
+                    b.HasOne("MiniERP.Domain.Customer", "Customer").WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("MiniERP.Domain.User", "User").WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.Navigation("Customer");
+                    b.Navigation("Items");
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.InvoiceItem", b =>
+                {
+                    b.HasOne("MiniERP.Domain.Invoice", "Invoice").WithMany("Items").HasForeignKey("InvoiceId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.PackingList", b =>
+                {
+                    b.HasOne("MiniERP.Domain.Customer", "Customer").WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("MiniERP.Domain.User", "User").WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.Navigation("Customer");
+                    b.Navigation("Items");
+                    b.Navigation("Packages");
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.PackingListItem", b =>
+                {
+                    b.HasOne("MiniERP.Domain.PackingList", "PackingList").WithMany("Items").HasForeignKey("PackingListId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.Navigation("PackingList");
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.PackingPackage", b =>
+                {
+                    b.HasOne("MiniERP.Domain.PackingList", "PackingList").WithMany("Packages").HasForeignKey("PackingListId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.Navigation("PackingList");
                 });
 
             modelBuilder.Entity("MiniERP.Domain.Quotation", b =>
                 {
-                    b.HasOne("MiniERP.Domain.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                    b.HasOne("MiniERP.Domain.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("MiniERP.Domain.Customer", "Customer").WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("MiniERP.Domain.User", "User").WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
                     b.Navigation("Customer");
                     b.Navigation("Items");
                     b.Navigation("User");
@@ -167,11 +326,7 @@ namespace MiniERP.Infrastructure.Migrations
 
             modelBuilder.Entity("MiniERP.Domain.QuotationItem", b =>
                 {
-                    b.HasOne("MiniERP.Domain.Quotation", "Quotation")
-                        .WithMany("Items")
-                        .HasForeignKey("QuotationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("MiniERP.Domain.Quotation", "Quotation").WithMany("Items").HasForeignKey("QuotationId").OnDelete(DeleteBehavior.Cascade).IsRequired();
                     b.Navigation("Quotation");
                 });
 #pragma warning restore 612, 618

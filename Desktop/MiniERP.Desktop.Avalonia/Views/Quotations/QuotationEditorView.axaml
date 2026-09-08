@@ -6,18 +6,14 @@
 
     <Grid RowDefinitions="Auto,*,Auto">
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0" Spacing="3">
-            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click">
-                <StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="✓" /><TextBlock Text="Save" FontSize="10" VerticalAlignment="Center" /></StackPanel>
-            </Button>
-            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Discard_Click">
-                <StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↶" /><TextBlock Text="Discard" FontSize="10" VerticalAlignment="Center" /></StackPanel>
-            </Button>
-            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Delete_Click">
-                <StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="×" /><TextBlock Text="Delete" FontSize="10" VerticalAlignment="Center" /></StackPanel>
-            </Button>
-            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="ExportPdf_Click">
-                <StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↓" /><TextBlock Text="Export PDF" FontSize="10" VerticalAlignment="Center" /></StackPanel>
-            </Button>
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="✓" /><TextBlock Text="Save" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Discard_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↶" /><TextBlock Text="Discard" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Delete_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="×" /><TextBlock Text="Delete" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="ExportPdf_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↓" /><TextBlock Text="Export PDF" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
+            <Border Width="1" Margin="5,3" Background="LightGray" />
+            <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreatePi_Click" Content="Create P/I" />
+            <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreateInvoice_Click" Content="Create Invoice" />
+            <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreatePackingList_Click" Content="Create P/L" />
         </StackPanel>
 
         <ScrollViewer Grid.Row="1">
@@ -28,32 +24,12 @@
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Quotation No." />
                     <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Quotation.QuotationNumber, Mode=TwoWay}" />
                     <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="User" />
-                    <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
-                    </ComboBox>
+                    <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
 
                     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Customer" />
                     <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,34">
-                        <AutoCompleteBox
-                            x:Name="CustomerAutoComplete"
-                            Grid.Column="0"
-                            Margin="0,0,4,0"
-                            ItemsSource="{Binding Customers}"
-                            SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
-                            ValueMemberBinding="{Binding Name}"
-                            FilterMode="ContainsOrdinal"
-                            MinimumPrefixLength="0"
-                            MaxDropDownHeight="260"
-                            Watermark="Type customer name">
-                            <AutoCompleteBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid ColumnDefinitions="2*,*,Auto" ColumnSpacing="8" MinWidth="250">
-                                        <TextBlock Grid.Column="0" Text="{Binding Name}" />
-                                        <TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding City}" />
-                                        <TextBlock Grid.Column="2" Opacity="0.6" Text="{Binding Country}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </AutoCompleteBox.ItemTemplate>
+                        <AutoCompleteBox x:Name="CustomerAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type customer name">
+                            <AutoCompleteBox.ItemTemplate><DataTemplate><Grid ColumnDefinitions="2*,*,Auto" ColumnSpacing="8" MinWidth="250"><TextBlock Grid.Column="0" Text="{Binding Name}" /><TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding City}" /><TextBlock Grid.Column="2" Opacity="0.6" Text="{Binding Country}" /></Grid></DataTemplate></AutoCompleteBox.ItemTemplate>
                         </AutoCompleteBox>
                         <Button Grid.Column="1" Padding="0" Click="PickCustomer_Click" Content="..." ToolTip.Tip="Open customer list" />
                     </Grid>
@@ -62,25 +38,8 @@
 
                     <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Customer Contact" />
                     <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,34">
-                        <AutoCompleteBox
-                            x:Name="ContactAutoComplete"
-                            Grid.Column="0"
-                            Margin="0,0,4,0"
-                            ItemsSource="{Binding CustomerContacts}"
-                            SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}"
-                            ValueMemberBinding="{Binding Name}"
-                            FilterMode="ContainsOrdinal"
-                            MinimumPrefixLength="0"
-                            MaxDropDownHeight="220"
-                            Watermark="Type contact name">
-                            <AutoCompleteBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                        <TextBlock Opacity="0.6" Text="{Binding Title}" />
-                                        <TextBlock Text="{Binding Name}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </AutoCompleteBox.ItemTemplate>
+                        <AutoCompleteBox x:Name="ContactAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name">
+                            <AutoCompleteBox.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal" Spacing="5"><TextBlock Opacity="0.6" Text="{Binding Title}" /><TextBlock Text="{Binding Name}" /></StackPanel></DataTemplate></AutoCompleteBox.ItemTemplate>
                         </AutoCompleteBox>
                         <Button Grid.Column="1" Padding="0" Click="PickContact_Click" Content="..." ToolTip.Tip="Open contact list" />
                     </Grid>
@@ -101,10 +60,7 @@
                     <TextBox Grid.Row="5" Grid.Column="1" IsReadOnly="True" Text="{Binding ExchangeRateDisplay}" />
                 </Grid>
 
-                <StackPanel Spacing="5">
-                    <TextBlock Text="Remarks" />
-                    <TextBox MinHeight="75" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Quotation.Remarks, Mode=TwoWay}" />
-                </StackPanel>
+                <StackPanel Spacing="5"><TextBlock Text="Remarks" /><TextBox MinHeight="75" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Quotation.Remarks, Mode=TwoWay}" /></StackPanel>
 
                 <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
                     <Grid RowDefinitions="Auto,Auto,280,Auto" RowSpacing="8">
@@ -112,25 +68,8 @@
                         <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto,Auto,Auto" ColumnSpacing="6">
                             <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Article" />
                             <Grid Grid.Column="1" ColumnDefinitions="*,34">
-                                <AutoCompleteBox
-                                    x:Name="ArticleAutoComplete"
-                                    Grid.Column="0"
-                                    Margin="0,0,4,0"
-                                    ItemsSource="{Binding Articles}"
-                                    SelectedItem="{Binding SelectedArticle, Mode=TwoWay}"
-                                    ValueMemberBinding="{Binding Name}"
-                                    FilterMode="ContainsOrdinal"
-                                    MinimumPrefixLength="0"
-                                    MaxDropDownHeight="260"
-                                    Watermark="Type article name">
-                                    <AutoCompleteBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid ColumnDefinitions="2*,Auto" ColumnSpacing="12" MinWidth="280">
-                                                <TextBlock Grid.Column="0" Text="{Binding Name}" />
-                                                <TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding Price, StringFormat='CNY {0:N2}'}" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </AutoCompleteBox.ItemTemplate>
+                                <AutoCompleteBox x:Name="ArticleAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type article name">
+                                    <AutoCompleteBox.ItemTemplate><DataTemplate><Grid ColumnDefinitions="2*,Auto" ColumnSpacing="12" MinWidth="280"><TextBlock Grid.Column="0" Text="{Binding Name}" /><TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding Price, StringFormat='CNY {0:N2}'}" /></Grid></DataTemplate></AutoCompleteBox.ItemTemplate>
                                 </AutoCompleteBox>
                                 <Button Grid.Column="1" Padding="0" Click="PickArticle_Click" Content="..." ToolTip.Tip="Open article list" />
                             </Grid>
@@ -144,47 +83,15 @@
                             <dg:DataGrid.Columns>
                                 <dg:DataGridTextColumn Width="1.7*" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
                                 <dg:DataGridTextColumn Width="2.6*" Header="Description EN" Binding="{Binding Description, Mode=TwoWay}" />
-
-                                <dg:DataGridTemplateColumn Width="80" Header="Qty">
-                                    <dg:DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding QuantityText, Mode=TwoWay}" />
-                                        </DataTemplate>
-                                    </dg:DataGridTemplateColumn.CellTemplate>
-                                </dg:DataGridTemplateColumn>
-
-                                <dg:DataGridTemplateColumn Width="70" Header="Unit">
-                                    <dg:DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding Unit, Mode=TwoWay}" />
-                                        </DataTemplate>
-                                    </dg:DataGridTemplateColumn.CellTemplate>
-                                </dg:DataGridTemplateColumn>
-
-                                <dg:DataGridTemplateColumn Width="105" Header="Unit Price">
-                                    <dg:DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding UnitPriceText, Mode=TwoWay}" />
-                                        </DataTemplate>
-                                    </dg:DataGridTemplateColumn.CellTemplate>
-                                </dg:DataGridTemplateColumn>
-
-                                <dg:DataGridTemplateColumn Width="85" Header="Disc. %">
-                                    <dg:DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding DiscountText, Mode=TwoWay}" />
-                                        </DataTemplate>
-                                    </dg:DataGridTemplateColumn.CellTemplate>
-                                </dg:DataGridTemplateColumn>
-
+                                <dg:DataGridTemplateColumn Width="80" Header="Qty"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding QuantityText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="70" Header="Unit"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding Unit, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="105" Header="Unit Price"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding UnitPriceText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="85" Header="Disc. %"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding DiscountText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
                                 <dg:DataGridTextColumn Width="115" Header="Amount" IsReadOnly="True" Binding="{Binding LineTotal, StringFormat='{}{0:N2}'}" />
                             </dg:DataGrid.Columns>
                         </dg:DataGrid>
 
-                        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,4,0,0">
-                            <TextBlock Opacity="0.55" VerticalAlignment="Center" Text="PDF product detail uses the snapshotted Article.Description_EN beneath the bold product name." />
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><TextBlock FontSize="16" FontWeight="SemiBold" Text="Total" /><TextBlock FontSize="16" FontWeight="Bold" Text="{Binding TotalText}" /></StackPanel>
-                        </Grid>
+                        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,4,0,0"><TextBlock Opacity="0.55" VerticalAlignment="Center" Text="PDF product detail uses the snapshotted Article.Description_EN beneath the bold product name." /><StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><TextBlock FontSize="16" FontWeight="SemiBold" Text="Total" /><TextBlock FontSize="16" FontWeight="Bold" Text="{Binding TotalText}" /></StackPanel></Grid>
                     </Grid>
                 </Border>
             </StackPanel>
