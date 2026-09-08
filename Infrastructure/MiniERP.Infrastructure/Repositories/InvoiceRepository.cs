@@ -44,7 +44,11 @@ public sealed class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
             await _context.PackingLists.AnyAsync(packingList =>
                 packingList.SourceDocumentId == id &&
                 (packingList.SourceDocumentType == DocumentSourceType.ProformaInvoice ||
-                 packingList.SourceDocumentType == DocumentSourceType.CommercialInvoice));
+                 packingList.SourceDocumentType == DocumentSourceType.CommercialInvoice)) ||
+            await _context.Contracts.AnyAsync(contract =>
+                contract.SourceDocumentId == id &&
+                (contract.SourceDocumentType == DocumentSourceType.ProformaInvoice ||
+                 contract.SourceDocumentType == DocumentSourceType.CommercialInvoice));
 
         if (isUsedAsInvoiceSource)
             throw new InvalidOperationException("This invoice has downstream sales documents and cannot be deleted.");
