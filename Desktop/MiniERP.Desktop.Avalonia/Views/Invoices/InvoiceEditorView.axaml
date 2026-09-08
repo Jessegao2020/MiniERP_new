@@ -12,6 +12,7 @@
             <Border Width="1" Margin="5,3" Background="LightGray" />
             <Button x:Name="CreateCommercialButton" Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreateCommercial_Click" Content="Create Commercial Invoice" />
             <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreatePackingList_Click" Content="Create Packing List" />
+            <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreateContract_Click" Content="Create Contract" />
         </StackPanel>
 
         <ScrollViewer Grid.Row="1">
