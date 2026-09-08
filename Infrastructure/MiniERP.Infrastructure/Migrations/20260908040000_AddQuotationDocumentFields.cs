@@ -12,77 +12,23 @@ public partial class AddQuotationDocumentFields : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        // 20260908030000 was briefly published and may already exist in user databases.
-        // Keep that migration in the chain forever, then remove only the fields that
-        // belonged to the abandoned three-tier quotation design. The document snapshot
-        // fields and Unit column introduced by 030000 are intentionally retained.
-        migrationBuilder.DropColumn(name: "Tier1Label", table: "Quotations");
-        migrationBuilder.DropColumn(name: "Tier2Label", table: "Quotations");
-        migrationBuilder.DropColumn(name: "Tier3Label", table: "Quotations");
-
-        migrationBuilder.DropColumn(name: "Quantity2", table: "QuotationItems");
-        migrationBuilder.DropColumn(name: "UnitPrice2", table: "QuotationItems");
-        migrationBuilder.DropColumn(name: "Quantity3", table: "QuotationItems");
-        migrationBuilder.DropColumn(name: "UnitPrice3", table: "QuotationItems");
+        // Compatibility marker only.
+        //
+        // 20260908030000_AddQuotationTemplateTiers was briefly published and may
+        // already be recorded in user databases. It introduced the document snapshot
+        // fields and QuotationItem.Unit that the current single-tier PDF design needs,
+        // along with several abandoned tier columns.
+        //
+        // Do not add the required columns again: that caused duplicate-column errors
+        // for databases which had already run 030000. Also do not DropColumn here:
+        // EF Core's SQLite migrations provider does not support DropColumnOperation.
+        // The obsolete physical columns are harmless because the current EF model does
+        // not map them. Keeping them is safer than rebuilding tables and preserves data.
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.AddColumn<string>(
-            name: "Tier1Label",
-            table: "Quotations",
-            type: "TEXT",
-            nullable: false,
-            defaultValue: "100 Sets");
-
-        migrationBuilder.AddColumn<string>(
-            name: "Tier2Label",
-            table: "Quotations",
-            type: "TEXT",
-            nullable: false,
-            defaultValue: "500 Sets");
-
-        migrationBuilder.AddColumn<string>(
-            name: "Tier3Label",
-            table: "Quotations",
-            type: "TEXT",
-            nullable: false,
-            defaultValue: "1000 Sets");
-
-        migrationBuilder.AddColumn<decimal>(
-            name: "Quantity2",
-            table: "QuotationItems",
-            type: "TEXT",
-            nullable: false,
-            defaultValue: 0m);
-
-        migrationBuilder.AddColumn<decimal>(
-            name: "UnitPrice2",
-            table: "QuotationItems",
-            type: "TEXT",
-            nullable: false,
-            defaultValue: 0m);
-
-        migrationBuilder.AddColumn<decimal>(
-            name: "Quantity3",
-            table: "QuotationItems",
-            type: "TEXT",
-            nullable: false,
-            defaultValue: 0m);
-
-        migrationBuilder.AddColumn<decimal>(
-            name: "UnitPrice3",
-            table: "QuotationItems",
-            type: "TEXT",
-            nullable: false,
-            defaultValue: 0m);
-
-        migrationBuilder.Sql("""
-            UPDATE QuotationItems
-            SET Quantity2 = Quantity,
-                UnitPrice2 = UnitPrice,
-                Quantity3 = Quantity,
-                UnitPrice3 = UnitPrice;
-            """);
+        // No-op for the same compatibility reason. The schema additions belong to
+        // migration 030000 and must remain owned by that published migration.
     }
 }
