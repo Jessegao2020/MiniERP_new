@@ -121,7 +121,8 @@ namespace MiniERP.Infrastructure.Repositories
             var isReferenced =
                 await _context.Quotations.AnyAsync(q => q.CustomerId == id) ||
                 await _context.Invoices.AnyAsync(i => i.CustomerId == id) ||
-                await _context.PackingLists.AnyAsync(p => p.CustomerId == id);
+                await _context.PackingLists.AnyAsync(p => p.CustomerId == id) ||
+                await _context.Contracts.AnyAsync(c => c.CustomerId == id);
 
             if (isReferenced)
                 throw new InvalidOperationException("This customer is referenced by one or more sales documents and cannot be deleted.");
