@@ -19,285 +19,121 @@ namespace MiniERP.Infrastructure.Migrations
 
             modelBuilder.Entity("MiniERP.Domain.Article", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Category")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description_EN")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Discount")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("MinimumPrice")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name_EN")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("Price")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Specification")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Specs_EN")
-                        .HasColumnType("TEXT");
-
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<string>("Category").HasColumnType("TEXT");
+                    b.Property<DateTime?>("CreatedAt").HasColumnType("TEXT");
+                    b.Property<string>("CreatedBy").HasColumnType("TEXT");
+                    b.Property<string>("Description").HasColumnType("TEXT");
+                    b.Property<string>("Description_EN").HasColumnType("TEXT");
+                    b.Property<string>("Discount").HasColumnType("TEXT");
+                    b.Property<DateTime?>("LastModifiedAt").HasColumnType("TEXT");
+                    b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
+                    b.Property<decimal?>("MinimumPrice").HasColumnType("TEXT");
+                    b.Property<string>("Name").HasColumnType("TEXT");
+                    b.Property<string>("Name_EN").HasColumnType("TEXT");
+                    b.Property<string>("Note").HasColumnType("TEXT");
+                    b.Property<decimal?>("Price").HasColumnType("TEXT");
+                    b.Property<string>("Specification").HasColumnType("TEXT");
+                    b.Property<string>("Specs_EN").HasColumnType("TEXT");
                     b.HasKey("Id");
-
                     b.ToTable("Articles", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.Customer", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("AddressLine1")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("AddressLine2")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("City")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Country")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PostalCode")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("State")
-                        .HasColumnType("TEXT");
-
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<string>("AddressLine1").HasColumnType("TEXT");
+                    b.Property<string>("AddressLine2").HasColumnType("TEXT");
+                    b.Property<string>("City").HasColumnType("TEXT");
+                    b.Property<string>("Country").HasColumnType("TEXT");
+                    b.Property<DateTime?>("CreatedAt").HasColumnType("TEXT");
+                    b.Property<string>("CreatedBy").HasColumnType("TEXT");
+                    b.Property<bool>("IsActive").HasColumnType("INTEGER");
+                    b.Property<DateTime?>("LastModifiedAt").HasColumnType("TEXT");
+                    b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
+                    b.Property<string>("Name").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("PostalCode").HasColumnType("TEXT");
+                    b.Property<string>("State").HasColumnType("TEXT");
                     b.HasKey("Id");
-
                     b.ToTable("Customers", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.CustomerContact", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Title")
-                        .HasColumnType("TEXT");
-
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<DateTime?>("CreatedAt").HasColumnType("TEXT");
+                    b.Property<string>("CreatedBy").HasColumnType("TEXT");
+                    b.Property<int>("CustomerId").HasColumnType("INTEGER");
+                    b.Property<DateTime?>("LastModifiedAt").HasColumnType("TEXT");
+                    b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
+                    b.Property<string>("Name").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("Title").HasColumnType("TEXT");
                     b.HasKey("Id");
-
                     b.HasIndex("CustomerId");
-
                     b.ToTable("Contacts", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.Quotation", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("DeliveryTerm")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("ExchangeRate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LeadTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PaymentTerm")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("QuotationDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("QuotationNumber")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Remarks")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("ValidUntil")
-                        .HasColumnType("TEXT");
-
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<DateTime?>("CreatedAt").HasColumnType("TEXT");
+                    b.Property<string>("CreatedBy").HasColumnType("TEXT");
+                    b.Property<string>("Currency").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("CustomerAddressSnapshot").HasColumnType("TEXT");
+                    b.Property<string>("CustomerContactSnapshot").HasColumnType("TEXT");
+                    b.Property<int>("CustomerId").HasColumnType("INTEGER");
+                    b.Property<string>("CustomerNameSnapshot").HasColumnType("TEXT");
+                    b.Property<string>("DeliveryTerm").HasColumnType("TEXT");
+                    b.Property<decimal>("ExchangeRate").HasColumnType("TEXT");
+                    b.Property<DateTime?>("LastModifiedAt").HasColumnType("TEXT");
+                    b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
+                    b.Property<string>("LeadTime").HasColumnType("TEXT");
+                    b.Property<string>("PaymentTerm").HasColumnType("TEXT");
+                    b.Property<DateTime>("QuotationDate").HasColumnType("TEXT");
+                    b.Property<string>("QuotationNumber").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("Remarks").HasColumnType("TEXT");
+                    b.Property<string>("SalesContactEmailSnapshot").HasColumnType("TEXT");
+                    b.Property<string>("SalesContactNameSnapshot").HasColumnType("TEXT");
+                    b.Property<string>("SalesContactPhoneSnapshot").HasColumnType("TEXT");
+                    b.Property<int>("UserId").HasColumnType("INTEGER");
+                    b.Property<DateTime?>("ValidUntil").HasColumnType("TEXT");
                     b.HasKey("Id");
-
                     b.HasIndex("CustomerId");
-
                     b.HasIndex("UserId");
-
                     b.ToTable("Quotations", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.QuotationItem", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ArticleName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("DiscountPercent")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("ExchangeRateSnapshot")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("QuotationId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("SourceArticleId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Specification")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("TEXT");
-
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<string>("ArticleName").IsRequired().HasColumnType("TEXT");
+                    b.Property<DateTime?>("CreatedAt").HasColumnType("TEXT");
+                    b.Property<string>("CreatedBy").HasColumnType("TEXT");
+                    b.Property<string>("Currency").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("Description").HasColumnType("TEXT");
+                    b.Property<decimal>("DiscountPercent").HasColumnType("TEXT");
+                    b.Property<decimal>("ExchangeRateSnapshot").HasColumnType("TEXT");
+                    b.Property<DateTime?>("LastModifiedAt").HasColumnType("TEXT");
+                    b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
+                    b.Property<decimal>("Quantity").HasColumnType("TEXT");
+                    b.Property<int>("QuotationId").HasColumnType("INTEGER");
+                    b.Property<int?>("SourceArticleId").HasColumnType("INTEGER");
+                    b.Property<string>("Specification").HasColumnType("TEXT");
+                    b.Property<string>("Unit").IsRequired().HasColumnType("TEXT");
+                    b.Property<decimal>("UnitPrice").HasColumnType("TEXT");
                     b.HasKey("Id");
-
                     b.HasIndex("QuotationId");
-
                     b.ToTable("QuotationItems", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.User", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Code")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+                    b.Property<int>("Code").HasColumnType("INTEGER");
+                    b.Property<string>("Email").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("Name").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("Phone").IsRequired().HasColumnType("TEXT");
                     b.HasKey("Id");
-
                     b.ToTable("Users", (string)null);
                 });
 
@@ -308,7 +144,6 @@ namespace MiniERP.Infrastructure.Migrations
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
                     b.Navigation("Customer");
                 });
 
@@ -319,17 +154,13 @@ namespace MiniERP.Infrastructure.Migrations
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
                     b.HasOne("MiniERP.Domain.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
                     b.Navigation("Customer");
-
                     b.Navigation("Items");
-
                     b.Navigation("User");
                 });
 
@@ -340,7 +171,6 @@ namespace MiniERP.Infrastructure.Migrations
                         .HasForeignKey("QuotationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
                     b.Navigation("Quotation");
                 });
 #pragma warning restore 612, 618
