@@ -48,8 +48,8 @@ public partial class AddSalesDocuments : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_Invoices", x => x.Id);
-                table.ForeignKey("FK_Invoices_Customers_CustomerId", x => x.CustomerId, "Customers", "Id", onDelete: ReferentialAction.Cascade);
-                table.ForeignKey("FK_Invoices_Users_UserId", x => x.UserId, "Users", "Id", onDelete: ReferentialAction.Cascade);
+                table.ForeignKey("FK_Invoices_Customers_CustomerId", x => x.CustomerId, "Customers", "Id", onDelete: ReferentialAction.Restrict);
+                table.ForeignKey("FK_Invoices_Users_UserId", x => x.UserId, "Users", "Id", onDelete: ReferentialAction.Restrict);
             });
 
         migrationBuilder.CreateTable(
@@ -82,8 +82,8 @@ public partial class AddSalesDocuments : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_PackingLists", x => x.Id);
-                table.ForeignKey("FK_PackingLists_Customers_CustomerId", x => x.CustomerId, "Customers", "Id", onDelete: ReferentialAction.Cascade);
-                table.ForeignKey("FK_PackingLists_Users_UserId", x => x.UserId, "Users", "Id", onDelete: ReferentialAction.Cascade);
+                table.ForeignKey("FK_PackingLists_Customers_CustomerId", x => x.CustomerId, "Customers", "Id", onDelete: ReferentialAction.Restrict);
+                table.ForeignKey("FK_PackingLists_Users_UserId", x => x.UserId, "Users", "Id", onDelete: ReferentialAction.Restrict);
             });
 
         migrationBuilder.CreateTable(
