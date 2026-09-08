@@ -1,4 +1,6 @@
-﻿namespace MiniERP.Domain
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiniERP.Domain
 {
     public class Quotation : AuditableEntity
     {
@@ -15,7 +17,14 @@
         public DateTime QuotationDate { get; set; } = DateTime.Now;
         public DateTime? ValidUntil { get; set; }
 
-        // 报价明细（如果需要，可以创建QuotationItem实体）
-        // public ICollection<QuotationItem> Items { get; set; } = new List<QuotationItem>();
+        // Currency and exchange rate are snapshots belonging to this quotation.
+        // ExchangeRate means CNY per 1 USD.
+        public string Currency { get; set; } = "USD";
+        public decimal ExchangeRate { get; set; } = 1m;
+
+        public ICollection<QuotationItem> Items { get; set; } = new List<QuotationItem>();
+
+        [NotMapped]
+        public decimal TotalAmount => Items.Sum(item => item.LineTotal);
     }
 }

@@ -1,7 +1,8 @@
 <UserControl
     x:Class="MiniERP.Desktop.Views.Quotations.QuotationEditorView"
     xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
 
     <Grid RowDefinitions="Auto,*,Auto">
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0" Spacing="3">
@@ -28,10 +29,10 @@
         </StackPanel>
 
         <ScrollViewer Grid.Row="1">
-            <StackPanel Margin="24,18" Spacing="18" MaxWidth="900" HorizontalAlignment="Left">
-                <TextBlock FontSize="24" FontWeight="SemiBold" Text="Quotation Header" />
+            <StackPanel Margin="24,18" Spacing="18" MaxWidth="1120" HorizontalAlignment="Left">
+                <TextBlock FontSize="24" FontWeight="SemiBold" Text="Quotation" />
 
-                <Grid ColumnDefinitions="140,280,140,280" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
+                <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Quotation No." />
                     <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Quotation.QuotationNumber, Mode=TwoWay}" />
 
@@ -67,25 +68,92 @@
 
                     <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" Text="Payment Term" />
                     <TextBox Grid.Row="3" Grid.Column="3" Text="{Binding Quotation.PaymentTerm, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="Currency" />
+                    <ComboBox Grid.Row="4" Grid.Column="1" Width="120" HorizontalAlignment="Left" ItemsSource="{Binding Currencies}" SelectedItem="{Binding Currency, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" Text="Rate Snapshot" />
+                    <TextBox Grid.Row="4" Grid.Column="3" IsReadOnly="True" Text="{Binding ExchangeRateDisplay}" />
                 </Grid>
 
                 <StackPanel Spacing="5">
                     <TextBlock Text="Remarks" />
                     <TextBox
-                        MinHeight="100"
+                        MinHeight="75"
                         AcceptsReturn="True"
                         TextWrapping="Wrap"
                         Text="{Binding Quotation.Remarks, Mode=TwoWay}" />
                 </StackPanel>
 
-                <Border Padding="18" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
-                    <StackPanel Spacing="5">
-                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="Quotation Items" />
-                        <TextBlock
-                            Opacity="0.6"
-                            TextWrapping="Wrap"
-                            Text="The original project only defined the quotation header; line items were never implemented. The item model and price snapshot will be added in the next quotation phase." />
-                    </StackPanel>
+                <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
+                    <Grid RowDefinitions="Auto,Auto,260,Auto" RowSpacing="8">
+                        <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Quotation Items" />
+
+                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto" ColumnSpacing="6">
+                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Article" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding Name}" />
+                                            <TextBlock Opacity="0.55" Text="{Binding Price, StringFormat='CNY {0:N2}'}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Grid.Column="2" Padding="10,2" Click="AddItem_Click" Content="Add" />
+                            <Button Grid.Column="3" Padding="10,2" Click="RemoveItem_Click" Content="Remove" />
+                        </Grid>
+
+                        <dg:DataGrid
+                            Grid.Row="2"
+                            AutoGenerateColumns="False"
+                            CanUserResizeColumns="True"
+                            CanUserSortColumns="False"
+                            GridLinesVisibility="All"
+                            ItemsSource="{Binding Items}"
+                            SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                            <dg:DataGrid.Columns>
+                                <dg:DataGridTextColumn Width="1.8*" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
+                                <dg:DataGridTextColumn Width="2.2*" Header="Description" Binding="{Binding Description, Mode=TwoWay}" />
+                                <dg:DataGridTextColumn Width="2.2*" Header="Specification" Binding="{Binding Specification, Mode=TwoWay}" />
+
+                                <dg:DataGridTemplateColumn Width="85" Header="Qty">
+                                    <dg:DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Margin="2" Text="{Binding QuantityText, Mode=TwoWay}" />
+                                        </DataTemplate>
+                                    </dg:DataGridTemplateColumn.CellTemplate>
+                                </dg:DataGridTemplateColumn>
+
+                                <dg:DataGridTemplateColumn Width="105" Header="Unit Price">
+                                    <dg:DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Margin="2" Text="{Binding UnitPriceText, Mode=TwoWay}" />
+                                        </DataTemplate>
+                                    </dg:DataGridTemplateColumn.CellTemplate>
+                                </dg:DataGridTemplateColumn>
+
+                                <dg:DataGridTemplateColumn Width="90" Header="Disc. %">
+                                    <dg:DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Margin="2" Text="{Binding DiscountText, Mode=TwoWay}" />
+                                        </DataTemplate>
+                                    </dg:DataGridTemplateColumn.CellTemplate>
+                                </dg:DataGridTemplateColumn>
+
+                                <dg:DataGridTextColumn Width="115" Header="Line Total" IsReadOnly="True" Binding="{Binding LineTotal, StringFormat='{}{0:N2}'}" />
+                            </dg:DataGrid.Columns>
+                        </dg:DataGrid>
+
+                        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                            <TextBlock Opacity="0.55" VerticalAlignment="Center" Text="Article text and price are copied as snapshots; later catalogue changes will not rewrite this quotation." />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <TextBlock FontSize="16" FontWeight="SemiBold" Text="Total" />
+                                <TextBlock FontSize="16" FontWeight="Bold" Text="{Binding TotalText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
                 </Border>
             </StackPanel>
         </ScrollViewer>

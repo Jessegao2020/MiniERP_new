@@ -16,6 +16,7 @@ namespace MiniERP.Infrastructure.Repositories
                 .AsNoTracking()
                 .Include(q => q.Customer)
                 .Include(q => q.User)
+                .Include(q => q.Items)
                 .OrderByDescending(q => q.QuotationDate)
                 .ThenByDescending(q => q.Id)
                 .ToListAsync();
@@ -25,6 +26,7 @@ namespace MiniERP.Infrastructure.Repositories
                 .AsNoTracking()
                 .Include(q => q.Customer)
                 .Include(q => q.User)
+                .Include(q => q.Items)
                 .FirstOrDefaultAsync(q => q.Id == id);
 
         public async Task<Quotation?> GetByNumberAsync(string quotationNumber)
@@ -33,6 +35,7 @@ namespace MiniERP.Infrastructure.Repositories
                 .AsNoTracking()
                 .Include(q => q.Customer)
                 .Include(q => q.User)
+                .Include(q => q.Items)
                 .FirstOrDefaultAsync(q => q.QuotationNumber == quotationNumber);
         }
 
@@ -42,6 +45,7 @@ namespace MiniERP.Infrastructure.Repositories
                 .AsNoTracking()
                 .Include(q => q.Customer)
                 .Include(q => q.User)
+                .Include(q => q.Items)
                 .Where(q => q.CustomerId == customerId)
                 .OrderByDescending(q => q.QuotationDate)
                 .ToListAsync();
@@ -49,7 +53,9 @@ namespace MiniERP.Infrastructure.Repositories
 
         public override async Task UpdateAsync(Quotation quotation)
         {
-            var existing = await _dbSet.FirstOrDefaultAsync(item => item.Id == quotation.Id)
+            var existing = await _dbSet
+                .Include(item => item.Items)
+                .FirstOrDefaultAsync(item => item.Id == quotation.Id)
                 ?? throw new InvalidOperationException($"Quotation {quotation.Id} no longer exists.");
 
             existing.QuotationNumber = quotation.QuotationNumber;
@@ -61,10 +67,66 @@ namespace MiniERP.Infrastructure.Repositories
             existing.Remarks = quotation.Remarks;
             existing.QuotationDate = quotation.QuotationDate;
             existing.ValidUntil = quotation.ValidUntil;
+            existing.Currency = quotation.Currency;
+            existing.ExchangeRate = quotation.ExchangeRate;
             existing.LastModifiedBy = quotation.LastModifiedBy;
             existing.LastModifiedAt = DateTime.Now;
 
+            var incomingItems = quotation.Items.ToList();
+            var incomingIds = incomingItems
+                .Where(item => item.Id > 0)
+                .Select(item => item.Id)
+                .ToHashSet();
+
+            foreach (var oldItem in existing.Items.Where(item => !incomingIds.Contains(item.Id)).ToList())
+                _context.QuotationItems.Remove(oldItem);
+
+            foreach (var incoming in incomingItems)
+            {
+                var tracked = incoming.Id > 0
+                    ? existing.Items.FirstOrDefault(item => item.Id == incoming.Id)
+                    : null;
+
+                if (tracked is not null)
+                {
+                    CopyItem(incoming, tracked);
+                    tracked.LastModifiedAt = DateTime.Now;
+                    continue;
+                }
+
+                existing.Items.Add(new QuotationItem
+                {
+                    SourceArticleId = incoming.SourceArticleId,
+                    ArticleName = incoming.ArticleName,
+                    Description = incoming.Description,
+                    Specification = incoming.Specification,
+                    Quantity = incoming.Quantity,
+                    UnitPrice = incoming.UnitPrice,
+                    DiscountPercent = incoming.DiscountPercent,
+                    Currency = incoming.Currency,
+                    ExchangeRateSnapshot = incoming.ExchangeRateSnapshot,
+                    CreatedBy = incoming.CreatedBy,
+                    CreatedAt = incoming.CreatedAt ?? DateTime.Now,
+                    LastModifiedBy = incoming.LastModifiedBy,
+                    LastModifiedAt = DateTime.Now
+                });
+            }
+
             await _context.SaveChangesAsync();
+        }
+
+        private static void CopyItem(QuotationItem source, QuotationItem target)
+        {
+            target.SourceArticleId = source.SourceArticleId;
+            target.ArticleName = source.ArticleName;
+            target.Description = source.Description;
+            target.Specification = source.Specification;
+            target.Quantity = source.Quantity;
+            target.UnitPrice = source.UnitPrice;
+            target.DiscountPercent = source.DiscountPercent;
+            target.Currency = source.Currency;
+            target.ExchangeRateSnapshot = source.ExchangeRateSnapshot;
+            target.LastModifiedBy = source.LastModifiedBy;
         }
     }
 }

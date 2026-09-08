@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Microsoft.Extensions.DependencyInjection;
 using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Quotations;
 using MiniERP.Domain;
@@ -17,9 +18,16 @@ public partial class QuotationEditorView : UserControl
     public QuotationEditorView(Quotation? quotation)
     {
         InitializeComponent();
-        DataContext = new QuotationEditorViewModel(quotation);
+        var settings = App.Services.GetRequiredService<AppSettingsService>();
+        DataContext = new QuotationEditorViewModel(quotation, settings);
         AttachedToVisualTree += async (_, _) => await ViewModel.LoadLookupsAsync();
     }
+
+    private void AddItem_Click(object? sender, RoutedEventArgs e)
+        => ViewModel.AddSelectedArticle();
+
+    private void RemoveItem_Click(object? sender, RoutedEventArgs e)
+        => ViewModel.RemoveSelectedItem();
 
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {

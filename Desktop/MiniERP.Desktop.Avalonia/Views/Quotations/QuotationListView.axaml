@@ -43,56 +43,67 @@
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
-                <dg:DataGridTextColumn Width="1.4*" Binding="{Binding User.Name}">
+                <dg:DataGridTextColumn Width="1.3*" Binding="{Binding User.Name}">
                     <dg:DataGridTextColumn.Header>
                         <StackPanel Spacing="2">
                             <TextBlock Text="User" />
-                            <TextBox MinWidth="80" Height="24" Tag="User" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                            <TextBox MinWidth="75" Height="24" Tag="User" Watermark="Filter" TextChanged="Filter_TextChanged" />
                         </StackPanel>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
-                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding QuotationDate, StringFormat='{}{0:yyyy-MM-dd}'}">
+                <dg:DataGridTextColumn Width="1.1*" Binding="{Binding QuotationDate, StringFormat='{}{0:yyyy-MM-dd}'}">
                     <dg:DataGridTextColumn.Header>
                         <StackPanel Spacing="2">
                             <TextBlock Text="Date" />
-                            <TextBox MinWidth="80" Height="24" Tag="Date" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                            <TextBox MinWidth="75" Height="24" Tag="Date" Watermark="Filter" TextChanged="Filter_TextChanged" />
                         </StackPanel>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
-                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding ValidUntil, StringFormat='{}{0:yyyy-MM-dd}'}">
+                <dg:DataGridTextColumn Width="0.8*" Binding="{Binding Currency}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Currency" />
+                            <TextBox MinWidth="55" Height="24" Tag="Currency" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="1.1*" Header="Total" Binding="{Binding TotalAmount, StringFormat='{}{0:N2}'}" />
+
+                <dg:DataGridTextColumn Width="1.1*" Binding="{Binding ValidUntil, StringFormat='{}{0:yyyy-MM-dd}'}">
                     <dg:DataGridTextColumn.Header>
                         <StackPanel Spacing="2">
                             <TextBlock Text="Valid Until" />
-                            <TextBox MinWidth="80" Height="24" Tag="ValidUntil" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                            <TextBox MinWidth="75" Height="24" Tag="ValidUntil" Watermark="Filter" TextChanged="Filter_TextChanged" />
                         </StackPanel>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
-                <dg:DataGridTextColumn Width="1.3*" Binding="{Binding DeliveryTerm}">
+                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding DeliveryTerm}">
                     <dg:DataGridTextColumn.Header>
                         <StackPanel Spacing="2">
                             <TextBlock Text="Delivery Term" />
-                            <TextBox MinWidth="80" Height="24" Tag="DeliveryTerm" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                            <TextBox MinWidth="75" Height="24" Tag="DeliveryTerm" Watermark="Filter" TextChanged="Filter_TextChanged" />
                         </StackPanel>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
-                <dg:DataGridTextColumn Width="1.3*" Binding="{Binding LeadTime}">
+                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding LeadTime}">
                     <dg:DataGridTextColumn.Header>
                         <StackPanel Spacing="2">
                             <TextBlock Text="Lead Time" />
-                            <TextBox MinWidth="80" Height="24" Tag="LeadTime" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                            <TextBox MinWidth="75" Height="24" Tag="LeadTime" Watermark="Filter" TextChanged="Filter_TextChanged" />
                         </StackPanel>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
-                <dg:DataGridTextColumn Width="1.5*" Binding="{Binding PaymentTerm}">
+                <dg:DataGridTextColumn Width="1.4*" Binding="{Binding PaymentTerm}">
                     <dg:DataGridTextColumn.Header>
                         <StackPanel Spacing="2">
                             <TextBlock Text="Payment Term" />
-                            <TextBox MinWidth="90" Height="24" Tag="PaymentTerm" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                            <TextBox MinWidth="85" Height="24" Tag="PaymentTerm" Watermark="Filter" TextChanged="Filter_TextChanged" />
                         </StackPanel>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>

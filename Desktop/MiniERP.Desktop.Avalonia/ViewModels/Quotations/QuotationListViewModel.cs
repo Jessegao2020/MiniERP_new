@@ -106,6 +106,7 @@ public sealed class QuotationListViewModel : INotifyPropertyChanged
                 "User" => Matches(q.User?.Name, filter),
                 "Date" => Matches(q.QuotationDate.ToString("yyyy-MM-dd"), filter),
                 "ValidUntil" => Matches(q.ValidUntil?.ToString("yyyy-MM-dd"), filter),
+                "Currency" => Matches(q.Currency, filter),
                 "DeliveryTerm" => Matches(q.DeliveryTerm, filter),
                 "LeadTime" => Matches(q.LeadTime, filter),
                 "PaymentTerm" => Matches(q.PaymentTerm, filter),
