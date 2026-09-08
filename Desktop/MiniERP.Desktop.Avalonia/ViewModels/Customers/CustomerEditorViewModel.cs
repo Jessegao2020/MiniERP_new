@@ -11,6 +11,7 @@ public sealed class CustomerEditorViewModel : INotifyPropertyChanged
 {
     private string _status = string.Empty;
     private CustomerContact? _selectedContact;
+    private string? _countryCode;
 
     public Customer Customer { get; }
     public bool IsNew { get; private set; }
@@ -23,6 +24,24 @@ public sealed class CustomerEditorViewModel : INotifyPropertyChanged
         {
             if (ReferenceEquals(_selectedContact, value)) return;
             _selectedContact = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string? CountryCode
+    {
+        get => _countryCode;
+        private set
+        {
+            var normalized = string.IsNullOrWhiteSpace(value)
+                ? null
+                : value.Trim().ToUpperInvariant();
+
+            if (string.Equals(_countryCode, normalized, StringComparison.Ordinal))
+                return;
+
+            _countryCode = normalized;
+            Customer.Country = normalized;
             OnPropertyChanged();
         }
     }
@@ -45,15 +64,16 @@ public sealed class CustomerEditorViewModel : INotifyPropertyChanged
             ? new Customer { Name = string.Empty }
             : CloneCustomer(source);
 
+        _countryCode = Customer.Country;
+
         foreach (var contact in source?.Contacts ?? Array.Empty<CustomerContact>())
             Contacts.Add(CloneContact(contact));
     }
 
     public void SetCountry(string code)
     {
-        Customer.Country = code.Trim().ToUpperInvariant();
-        OnPropertyChanged(nameof(Customer));
-        Status = $"Country set to {Customer.Country}.";
+        CountryCode = code;
+        Status = $"Country set to {CountryCode}.";
     }
 
     public void AddContact()
@@ -99,6 +119,7 @@ public sealed class CustomerEditorViewModel : INotifyPropertyChanged
         }
 
         Customer.Name = Customer.Name.Trim();
+        Customer.Country = CountryCode;
         Customer.Contacts = Contacts.Select(CloneContact).ToList();
 
         try
