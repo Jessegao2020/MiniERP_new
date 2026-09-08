@@ -45,8 +45,13 @@ public sealed class UserRepository : Repository<User>, IUserRepository
 
     public override async Task DeleteAsync(int id)
     {
-        if (await _context.Quotations.AnyAsync(q => q.UserId == id))
-            throw new InvalidOperationException("This user is referenced by one or more quotations and cannot be deleted.");
+        var isReferenced =
+            await _context.Quotations.AnyAsync(q => q.UserId == id) ||
+            await _context.Invoices.AnyAsync(i => i.UserId == id) ||
+            await _context.PackingLists.AnyAsync(p => p.UserId == id);
+
+        if (isReferenced)
+            throw new InvalidOperationException("This user is referenced by one or more sales documents and cannot be deleted.");
 
         await base.DeleteAsync(id);
     }
