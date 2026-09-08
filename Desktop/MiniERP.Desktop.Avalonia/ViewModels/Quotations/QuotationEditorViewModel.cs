@@ -196,7 +196,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         QuotationDate = new DateTimeOffset(Quotation.QuotationDate);
         ValidUntil = Quotation.ValidUntil is null ? null : new DateTimeOffset(Quotation.ValidUntil.Value);
 
-        foreach (var item in Quotation.Items.OrderBy(item => item.Id))
+        foreach (var item in Quotation.Items.OrderBy(item => item.SortOrder).ThenBy(item => item.Id))
             AddRow(new QuotationItemRowViewModel(item));
     }
 
@@ -316,6 +316,44 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         SelectedItem = null;
         NotifyTotals();
         Status = "Quotation item removed. Save to persist the change.";
+    }
+
+    public void MoveSelectedItemUp()
+    {
+        if (SelectedItem is null)
+        {
+            Status = "Select a quotation item first.";
+            return;
+        }
+
+        var index = Items.IndexOf(SelectedItem);
+        if (index <= 0)
+        {
+            Status = "The selected item is already first.";
+            return;
+        }
+
+        Items.Move(index, index - 1);
+        Status = "Quotation item moved up. Save to persist the new order.";
+    }
+
+    public void MoveSelectedItemDown()
+    {
+        if (SelectedItem is null)
+        {
+            Status = "Select a quotation item first.";
+            return;
+        }
+
+        var index = Items.IndexOf(SelectedItem);
+        if (index < 0 || index >= Items.Count - 1)
+        {
+            Status = "The selected item is already last.";
+            return;
+        }
+
+        Items.Move(index, index + 1);
+        Status = "Quotation item moved down. Save to persist the new order.";
     }
 
     public bool TryPrepareForExport()
@@ -461,7 +499,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         Quotation.UserId = SelectedUser.Id;
         Quotation.Customer = null;
         Quotation.User = null;
-        Quotation.Items = Items.Select(item => item.ToEntity()).ToList();
+        Quotation.Items = Items.Select((item, index) => item.ToEntity(index)).ToList();
         return true;
     }
 
@@ -570,6 +608,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
     {
         Id = source.Id,
         QuotationId = source.QuotationId,
+        SortOrder = source.SortOrder,
         SourceArticleId = source.SourceArticleId,
         ArticleName = source.ArticleName,
         Description = source.Description,
