@@ -11,26 +11,24 @@ namespace MiniERP.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
         {
-            // 注册DbContext
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(connectionString));
 
-            // 注册Repository
             services.AddScoped<IArticleRepository, ArticleRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IQuotationRepository, QuotationRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
 
             return services;
         }
 
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            // 注册Application Services
             services.AddScoped<IArticleService, ArticleService>();
             services.AddScoped<ICustomerService, CustomerService>();
+            services.AddScoped<IUserService, UserService>();
 
             return services;
         }
     }
 }
-
