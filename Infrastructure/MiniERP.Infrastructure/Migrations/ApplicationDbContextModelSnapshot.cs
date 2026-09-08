@@ -117,6 +117,7 @@ namespace MiniERP.Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy").HasColumnType("TEXT");
                     b.Property<decimal>("Quantity").HasColumnType("TEXT");
                     b.Property<int>("QuotationId").HasColumnType("INTEGER");
+                    b.Property<int>("SortOrder").HasColumnType("INTEGER");
                     b.Property<int?>("SourceArticleId").HasColumnType("INTEGER");
                     b.Property<string>("Specification").HasColumnType("TEXT");
                     b.Property<string>("Unit").IsRequired().HasColumnType("TEXT");
