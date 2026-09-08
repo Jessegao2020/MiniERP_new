@@ -28,6 +28,23 @@ public partial class QuotationEditorView : UserControl
     private void AddItem_Click(object? sender, RoutedEventArgs e) => ViewModel.AddSelectedArticle();
     private void RemoveItem_Click(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedItem();
 
+    private async void PickCustomer_Click(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+
+        var picker = new CustomerPickerWindow(
+            ViewModel.Customers,
+            ViewModel.SelectedCustomer?.Id);
+
+        var selected = await picker.ShowDialog<Customer?>(owner);
+        if (selected is not null)
+        {
+            ViewModel.SelectedCustomer = selected;
+            ViewModel.SetStatusMessage($"Customer selected: {selected.Name}");
+        }
+    }
+
     private async void ExportPdf_Click(object? sender, RoutedEventArgs e)
     {
         if (!ViewModel.TryPrepareForExport())
