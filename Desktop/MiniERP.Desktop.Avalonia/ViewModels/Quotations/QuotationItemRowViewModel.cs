@@ -138,7 +138,7 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
         return true;
     }
 
-    public QuotationItem ToEntity() => new()
+    public QuotationItem ToEntity(int sortOrder) => new()
     {
         Id = Id,
         SourceArticleId = SourceArticleId,
@@ -150,7 +150,8 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
         UnitPrice = UnitPrice,
         DiscountPercent = DiscountPercent,
         Currency = Currency,
-        ExchangeRateSnapshot = ExchangeRateSnapshot
+        ExchangeRateSnapshot = ExchangeRateSnapshot,
+        SortOrder = sortOrder
     };
 
     private void SetDecimalText(ref string field, string? value, [CallerMemberName] string? propertyName = null)
