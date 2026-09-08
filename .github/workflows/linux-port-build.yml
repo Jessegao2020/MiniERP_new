@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - linux-port
+      - feature/sales-documents
   pull_request:
     branches:
       - master
@@ -35,5 +36,11 @@ jobs:
         run: |
           rm -f erp.db
           dotnet ef database update \
+            --project Infrastructure/MiniERP.Infrastructure/MiniERP.Infrastructure.csproj \
+            --startup-project Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj
+
+      - name: Verify model snapshot is current
+        run: |
+          dotnet ef migrations has-pending-model-changes \
             --project Infrastructure/MiniERP.Infrastructure/MiniERP.Infrastructure.csproj \
             --startup-project Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj
