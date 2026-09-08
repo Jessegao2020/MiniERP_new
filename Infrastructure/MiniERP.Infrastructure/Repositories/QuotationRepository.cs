@@ -95,6 +95,7 @@ namespace MiniERP.Infrastructure.Repositories
 
                 existing.Items.Add(new QuotationItem
                 {
+                    SortOrder = incoming.SortOrder,
                     SourceArticleId = incoming.SourceArticleId,
                     ArticleName = incoming.ArticleName,
                     Description = incoming.Description,
@@ -117,6 +118,7 @@ namespace MiniERP.Infrastructure.Repositories
 
         private static void CopyItem(QuotationItem source, QuotationItem target)
         {
+            target.SortOrder = source.SortOrder;
             target.SourceArticleId = source.SourceArticleId;
             target.ArticleName = source.ArticleName;
             target.Description = source.Description;
