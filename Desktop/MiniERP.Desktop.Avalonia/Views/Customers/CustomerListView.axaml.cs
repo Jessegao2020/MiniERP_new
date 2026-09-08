@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Customers;
 using MiniERP.Domain;
 
@@ -25,7 +26,21 @@ public partial class CustomerListView : UserControl
         => OpenCustomerRequested?.Invoke(null);
 
     private async void Delete_Click(object? sender, RoutedEventArgs e)
-        => await ViewModel.DeleteSelectedAsync();
+    {
+        if (ViewModel.SelectedCustomer is null)
+        {
+            await ViewModel.DeleteSelectedAsync();
+            return;
+        }
+
+        var confirmed = await ConfirmationDialog.ShowAsync(
+            this,
+            "Delete Customer",
+            $"Delete customer '{ViewModel.SelectedCustomer.Name}'? This cannot be undone.");
+
+        if (confirmed)
+            await ViewModel.DeleteSelectedAsync();
+    }
 
     private async void Refresh_Click(object? sender, RoutedEventArgs e)
         => await ViewModel.LoadAsync();
