@@ -17,6 +17,7 @@ public partial class QuotationEditorView : UserControl
     public event EventHandler? RequestClose;
     public event Action<Quotation, InvoiceType>? CreateInvoiceRequested;
     public event Action<Quotation>? CreatePackingListRequested;
+    public event Action<Quotation>? CreateContractRequested;
 
     public QuotationEditorView(Quotation? quotation)
     {
@@ -123,6 +124,13 @@ public partial class QuotationEditorView : UserControl
         if (!await ViewModel.SaveAsync()) return;
         Saved?.Invoke(this, EventArgs.Empty);
         CreatePackingListRequested?.Invoke(ViewModel.Quotation);
+    }
+
+    private async void CreateContract_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!await ViewModel.SaveAsync()) return;
+        Saved?.Invoke(this, EventArgs.Empty);
+        CreateContractRequested?.Invoke(ViewModel.Quotation);
     }
 
     private async void Save_Click(object? sender, RoutedEventArgs e)
