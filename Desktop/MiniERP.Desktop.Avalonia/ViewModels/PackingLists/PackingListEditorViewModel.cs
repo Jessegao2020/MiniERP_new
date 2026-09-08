@@ -84,14 +84,19 @@ public sealed class PackingListEditorViewModel : INotifyPropertyChanged
             var users = await userService.GetAllUsersAsync();
             var articles = await articleService.GetAllArticlesAsync();
 
-            Customers.Clear(); foreach (var c in customers.Where(c => c.IsActive).OrderBy(c => c.Name)) Customers.Add(c);
+            Customers.Clear();
+            foreach (var customer in customers
+                         .Where(c => c.IsActive || c.Id == PackingList.CustomerId)
+                         .OrderBy(c => c.Name))
+                Customers.Add(customer);
+
             Users.Clear(); foreach (var u in users.OrderBy(u => u.Name)) Users.Add(u);
             Articles.Clear(); foreach (var a in articles.OrderBy(a => a.Name)) Articles.Add(a);
 
             SelectedCustomer = Customers.FirstOrDefault(c => c.Id == PackingList.CustomerId);
             SelectedUser = Users.FirstOrDefault(u => u.Id == PackingList.UserId);
-            if (IsNew && SelectedCustomer is null && Customers.Count == 1) SelectedCustomer = Customers[0];
-            if (IsNew && SelectedUser is null && Users.Count == 1) SelectedUser = Users[0];
+            if (IsNew && PackingList.SourceDocumentType == DocumentSourceType.None && SelectedCustomer is null && Customers.Count == 1) SelectedCustomer = Customers[0];
+            if (IsNew && PackingList.SourceDocumentType == DocumentSourceType.None && SelectedUser is null && Users.Count == 1) SelectedUser = Users[0];
             Status = "Ready.";
         }
         catch (Exception ex) { Status = $"Load failed: {ex.Message}"; }
@@ -188,16 +193,23 @@ public sealed class PackingListEditorViewModel : INotifyPropertyChanged
         PackingList.PackingDate = PackingDate.Value.DateTime;
         PackingList.CustomerPoDate = CustomerPoDate?.DateTime;
 
-        if (IsNew || customerChanged || string.IsNullOrWhiteSpace(PackingList.CustomerNameSnapshot))
+        // Converted packing lists inherit the historical source snapshots. Keep those values
+        // unless the user explicitly selects a different customer/contact/user.
+        if (customerChanged || string.IsNullOrWhiteSpace(PackingList.CustomerNameSnapshot))
         {
             PackingList.CustomerNameSnapshot = SelectedCustomer.Name.Trim();
             PackingList.CustomerAddressSnapshot = BuildCustomerAddress(SelectedCustomer);
             PackingList.CustomerContactSnapshot = SelectedCustomerContact is null ? null : BuildContactName(SelectedCustomerContact);
         }
         else if (SelectedCustomerContact is not null)
-            PackingList.CustomerContactSnapshot = BuildContactName(SelectedCustomerContact);
+        {
+            var selectedContact = BuildContactName(SelectedCustomerContact);
+            if (string.IsNullOrWhiteSpace(PackingList.CustomerContactSnapshot) ||
+                !string.Equals(selectedContact, PackingList.CustomerContactSnapshot, StringComparison.OrdinalIgnoreCase))
+                PackingList.CustomerContactSnapshot = selectedContact;
+        }
 
-        if (IsNew || userChanged || string.IsNullOrWhiteSpace(PackingList.SalesContactNameSnapshot))
+        if (userChanged || string.IsNullOrWhiteSpace(PackingList.SalesContactNameSnapshot))
         {
             PackingList.SalesContactNameSnapshot = SelectedUser.Name.Trim();
             PackingList.SalesContactPhoneSnapshot = SelectedUser.Phone;
@@ -220,7 +232,8 @@ public sealed class PackingListEditorViewModel : INotifyPropertyChanged
         foreach (var c in SelectedCustomer.Contacts.OrderBy(c => c.Name)) CustomerContacts.Add(c);
         if (SelectedCustomer.Id == PackingList.CustomerId && !string.IsNullOrWhiteSpace(PackingList.CustomerContactSnapshot))
             SelectedCustomerContact = CustomerContacts.FirstOrDefault(c => string.Equals(BuildContactName(c), PackingList.CustomerContactSnapshot, StringComparison.OrdinalIgnoreCase));
-        if (IsNew && SelectedCustomerContact is null && CustomerContacts.Count == 1) SelectedCustomerContact = CustomerContacts[0];
+        if (IsNew && PackingList.SourceDocumentType == DocumentSourceType.None && SelectedCustomerContact is null && CustomerContacts.Count == 1)
+            SelectedCustomerContact = CustomerContacts[0];
     }
 
     private void AddItemRow(PackingListItemRowViewModel row) { row.PropertyChanged += Row_PropertyChanged; Items.Add(row); NotifyTotals(); }
