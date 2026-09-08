@@ -30,7 +30,12 @@ public static class QuotationPdfExporter
         if (quotation.Items.Count == 0)
             throw new InvalidOperationException("A quotation needs at least one item before it can be exported.");
 
-        var plans = BuildPagePlans(quotation.Items.OrderBy(item => item.Id).ToList());
+        var plans = BuildPagePlans(
+            quotation.Items
+                .OrderBy(item => item.SortOrder)
+                .ThenBy(item => item.Id)
+                .ToList());
+
         using var document = SKDocument.CreatePdf(output)
             ?? throw new InvalidOperationException("Could not create PDF document.");
 
