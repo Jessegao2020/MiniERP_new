@@ -42,6 +42,17 @@ public partial class ArticleEditorView : UserControl
 
     private async void Delete_Click(object? sender, RoutedEventArgs e)
     {
+        if (!ViewModel.IsNew)
+        {
+            var confirmed = await ConfirmationDialog.ShowAsync(
+                this,
+                "Delete Article",
+                $"Delete article '{ViewModel.Article.Name}'? This cannot be undone.");
+
+            if (!confirmed)
+                return;
+        }
+
         if (!await ViewModel.DeleteAsync()) return;
 
         Deleted?.Invoke(this, EventArgs.Empty);
