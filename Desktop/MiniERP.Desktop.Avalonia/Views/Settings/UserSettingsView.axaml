@@ -1,0 +1,56 @@
+<UserControl
+    x:Class="MiniERP.Desktop.Views.Settings.UserSettingsView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
+
+    <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="2*,*">
+        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="3" Spacing="3">
+            <Button Padding="8,2" Click="New_Click" Content="New" />
+            <Button Padding="8,2" Click="Save_Click" Content="Save" />
+            <Button Padding="8,2" Click="Delete_Click" Content="Delete" />
+            <Button Padding="8,2" Click="Refresh_Click" Content="Refresh" />
+        </StackPanel>
+
+        <dg:DataGrid
+            Grid.Row="1"
+            Grid.Column="0"
+            Margin="5"
+            AutoGenerateColumns="False"
+            CanUserResizeColumns="True"
+            CanUserSortColumns="True"
+            GridLinesVisibility="All"
+            IsReadOnly="True"
+            ItemsSource="{Binding Users}"
+            SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
+            <dg:DataGrid.Columns>
+                <dg:DataGridTextColumn Width="80" Binding="{Binding Code}" Header="Code" />
+                <dg:DataGridTextColumn Width="2*" Binding="{Binding Name}" Header="Name" />
+                <dg:DataGridTextColumn Width="2*" Binding="{Binding Email}" Header="Email" />
+                <dg:DataGridTextColumn Width="*" Binding="{Binding Phone}" Header="Phone" />
+            </dg:DataGrid.Columns>
+        </dg:DataGrid>
+
+        <Border Grid.Row="1" Grid.Column="1" Margin="0,5,5,5" Padding="18" BorderBrush="LightGray" BorderThickness="1">
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="6">
+                <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,8" FontSize="20" FontWeight="SemiBold" Text="User Details" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Code" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CodeText, Mode=TwoWay}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Name" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Name, Mode=TwoWay}" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Email" />
+                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Email, Mode=TwoWay}" />
+
+                <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="Phone" />
+                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Phone, Mode=TwoWay}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
+            <TextBlock Foreground="#CB004A" Text="{Binding Status}" />
+        </Border>
+    </Grid>
+</UserControl>
