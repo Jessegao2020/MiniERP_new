@@ -31,6 +31,53 @@ public partial class InvoiceEditorView : UserControl
     private void AddItem_Click(object? sender, RoutedEventArgs e) => ViewModel.AddSelectedArticle();
     private void RemoveItem_Click(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedItem();
 
+    private void MoveItemUp_Click(object? sender, RoutedEventArgs e)
+    {
+        var item = ViewModel.SelectedItem;
+        if (item is null)
+        {
+            ViewModel.SetStatusMessage("Select an invoice item first.");
+            return;
+        }
+
+        var index = ViewModel.Items.IndexOf(item);
+        if (index <= 0)
+        {
+            ViewModel.SetStatusMessage("The selected item is already first.");
+            return;
+        }
+
+        // Avalonia DataGrid 11 does not reliably repaint ObservableCollection.Move.
+        ViewModel.SelectedItem = null;
+        ViewModel.Items.RemoveAt(index);
+        ViewModel.Items.Insert(index - 1, item);
+        ViewModel.SelectedItem = item;
+        ViewModel.SetStatusMessage("Invoice item moved up. Save to persist the new order.");
+    }
+
+    private void MoveItemDown_Click(object? sender, RoutedEventArgs e)
+    {
+        var item = ViewModel.SelectedItem;
+        if (item is null)
+        {
+            ViewModel.SetStatusMessage("Select an invoice item first.");
+            return;
+        }
+
+        var index = ViewModel.Items.IndexOf(item);
+        if (index < 0 || index >= ViewModel.Items.Count - 1)
+        {
+            ViewModel.SetStatusMessage("The selected item is already last.");
+            return;
+        }
+
+        ViewModel.SelectedItem = null;
+        ViewModel.Items.RemoveAt(index);
+        ViewModel.Items.Insert(index + 1, item);
+        ViewModel.SelectedItem = item;
+        ViewModel.SetStatusMessage("Invoice item moved down. Save to persist the new order.");
+    }
+
     private async void PickCustomer_Click(object? sender, RoutedEventArgs e)
     {
         if (TopLevel.GetTopLevel(this) is not Window owner) return;
