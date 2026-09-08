@@ -42,4 +42,12 @@ public sealed class UserRepository : Repository<User>, IUserRepository
         existing.Phone = user.Phone;
         await _context.SaveChangesAsync();
     }
+
+    public override async Task DeleteAsync(int id)
+    {
+        if (await _context.Quotations.AnyAsync(q => q.UserId == id))
+            throw new InvalidOperationException("This user is referenced by one or more quotations and cannot be deleted.");
+
+        await base.DeleteAsync(id);
+    }
 }
