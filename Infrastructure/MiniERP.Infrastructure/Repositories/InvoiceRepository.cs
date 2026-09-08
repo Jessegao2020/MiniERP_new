@@ -34,6 +34,24 @@ public sealed class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
         await _context.SaveChangesAsync();
     }
 
+    public override async Task DeleteAsync(int id)
+    {
+        var isUsedAsInvoiceSource =
+            await _context.Invoices.AnyAsync(invoice =>
+                invoice.SourceDocumentId == id &&
+                (invoice.SourceDocumentType == DocumentSourceType.ProformaInvoice ||
+                 invoice.SourceDocumentType == DocumentSourceType.CommercialInvoice)) ||
+            await _context.PackingLists.AnyAsync(packingList =>
+                packingList.SourceDocumentId == id &&
+                (packingList.SourceDocumentType == DocumentSourceType.ProformaInvoice ||
+                 packingList.SourceDocumentType == DocumentSourceType.CommercialInvoice));
+
+        if (isUsedAsInvoiceSource)
+            throw new InvalidOperationException("This invoice has downstream sales documents and cannot be deleted.");
+
+        await base.DeleteAsync(id);
+    }
+
     private IQueryable<Invoice> Query()
         => _dbSet.AsNoTracking().Include(i => i.Customer).Include(i => i.User).Include(i => i.Items);
 
