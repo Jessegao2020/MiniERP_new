@@ -168,10 +168,17 @@ namespace MiniERP.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("CustomerId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("DeliveryTerm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("ExchangeRate")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("LastModifiedAt")
@@ -209,6 +216,63 @@ namespace MiniERP.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Quotations", (string)null);
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.QuotationItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ArticleName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("ExchangeRateSnapshot")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("QuotationId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SourceArticleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Specification")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuotationId");
+
+                    b.ToTable("QuotationItems", (string)null);
                 });
 
             modelBuilder.Entity("MiniERP.Domain.User", b =>
@@ -264,7 +328,20 @@ namespace MiniERP.Infrastructure.Migrations
 
                     b.Navigation("Customer");
 
+                    b.Navigation("Items");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MiniERP.Domain.QuotationItem", b =>
+                {
+                    b.HasOne("MiniERP.Domain.Quotation", "Quotation")
+                        .WithMany("Items")
+                        .HasForeignKey("QuotationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quotation");
                 });
 #pragma warning restore 612, 618
         }
