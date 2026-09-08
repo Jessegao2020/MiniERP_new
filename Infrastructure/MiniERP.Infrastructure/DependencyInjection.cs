@@ -26,6 +26,7 @@ namespace MiniERP.Infrastructure
         {
             services.AddScoped<IArticleService, ArticleService>();
             services.AddScoped<ICustomerService, CustomerService>();
+            services.AddScoped<IQuotationService, QuotationService>();
             services.AddScoped<IUserService, UserService>();
 
             return services;
