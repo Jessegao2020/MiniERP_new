@@ -23,6 +23,9 @@ public partial class QuotationEditorView : UserControl
         AttachedToVisualTree += async (_, _) => await ViewModel.LoadLookupsAsync();
     }
 
+    public void RefreshExchangeRate()
+        => ViewModel.RefreshExchangeRateFromSettings();
+
     private void AddItem_Click(object? sender, RoutedEventArgs e)
         => ViewModel.AddSelectedArticle();
 
