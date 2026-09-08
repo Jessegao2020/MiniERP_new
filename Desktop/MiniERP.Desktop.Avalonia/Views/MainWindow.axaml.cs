@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using MiniERP.Desktop.Views.Articles;
 using MiniERP.Desktop.Views.Customers;
+using MiniERP.Desktop.Views.Quotations;
 using MiniERP.Desktop.Views.Settings;
 using MiniERP.Domain;
 
@@ -30,7 +31,7 @@ public partial class MainWindow : Window
         => OpenCustomerList();
 
     private void Quotation_Click(object? sender, RoutedEventArgs e)
-        => OpenPlaceholder("quotation", "Quotation", "Quotation module is not migrated yet.");
+        => OpenQuotationList();
 
     private void Order_Click(object? sender, RoutedEventArgs e)
         => OpenPlaceholder("order", "Order", "Order module is not migrated yet.");
@@ -51,7 +52,7 @@ public partial class MainWindow : Window
         => OpenSystemSettings();
 
     private void User_Click(object? sender, RoutedEventArgs e)
-        => OpenPlaceholder("user", "User", "User settings are not migrated yet.");
+        => OpenUserSettings();
 
     private void OpenArticleList()
     {
@@ -95,8 +96,6 @@ public partial class MainWindow : Window
 
     private void OpenCustomerEditor(Customer? customer)
     {
-        // Identity is based on the entity id, not the displayed title. This fixes the
-        // old WPF behavior where every "Customer Details" request reused the same tab.
         var key = customer is null ? "customer:new" : $"customer:{customer.Id}";
         var title = customer is null ? "New Customer" : $"Customer Details: {customer.Name}";
 
@@ -111,6 +110,34 @@ public partial class MainWindow : Window
         editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
     }
 
+    private void OpenQuotationList()
+    {
+        const string key = "quotation";
+
+        if (SelectExisting(key))
+            return;
+
+        var view = new QuotationListView();
+        view.OpenQuotationRequested += OpenQuotationEditor;
+        AddWorkspace(key, "Quotation", view);
+    }
+
+    private void OpenQuotationEditor(Quotation? quotation)
+    {
+        var key = quotation is null ? "quotation:new" : $"quotation:{quotation.Id}";
+        var title = quotation is null ? "New Quotation" : $"Quotation: {quotation.QuotationNumber}";
+
+        if (SelectExisting(key))
+            return;
+
+        var editor = new QuotationEditorView(quotation);
+        var tab = AddWorkspace(key, title, editor);
+
+        editor.Saved += async (_, _) => await RefreshQuotationListAsync();
+        editor.Deleted += async (_, _) => await RefreshQuotationListAsync();
+        editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+    }
+
     private void OpenSystemSettings()
     {
         const string key = "system";
@@ -121,6 +148,16 @@ public partial class MainWindow : Window
         var view = new SystemSettingsView();
         view.Saved += (_, _) => RefreshOpenArticleExchangeRates();
         AddWorkspace(key, "System", view);
+    }
+
+    private void OpenUserSettings()
+    {
+        const string key = "user";
+
+        if (SelectExisting(key))
+            return;
+
+        AddWorkspace(key, "User", new UserSettingsView());
     }
 
     private void RefreshOpenArticleExchangeRates()
@@ -141,6 +178,12 @@ public partial class MainWindow : Window
     private async Task RefreshCustomerListAsync()
     {
         if (_openTabs.TryGetValue("customer", out var tab) && tab.Content is CustomerListView list)
+            await list.ReloadAsync();
+    }
+
+    private async Task RefreshQuotationListAsync()
+    {
+        if (_openTabs.TryGetValue("quotation", out var tab) && tab.Content is QuotationListView list)
             await list.ReloadAsync();
     }
 
