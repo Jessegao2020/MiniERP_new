@@ -28,6 +28,98 @@ public partial class PackingListEditorView : UserControl
     private void AddPackage_Click(object? sender, RoutedEventArgs e) => ViewModel.AddPackage();
     private void RemovePackage_Click(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedPackage();
 
+    private void MoveItemUp_Click(object? sender, RoutedEventArgs e)
+    {
+        var item = ViewModel.SelectedItem;
+        if (item is null)
+        {
+            ViewModel.SetStatusMessage("Select a packing-list item first.");
+            return;
+        }
+
+        var index = ViewModel.Items.IndexOf(item);
+        if (index <= 0)
+        {
+            ViewModel.SetStatusMessage("The selected item is already first.");
+            return;
+        }
+
+        ViewModel.SelectedItem = null;
+        ViewModel.Items.RemoveAt(index);
+        ViewModel.Items.Insert(index - 1, item);
+        ViewModel.SelectedItem = item;
+        ViewModel.SetStatusMessage("Packing-list item moved up. Save to persist the new order.");
+    }
+
+    private void MoveItemDown_Click(object? sender, RoutedEventArgs e)
+    {
+        var item = ViewModel.SelectedItem;
+        if (item is null)
+        {
+            ViewModel.SetStatusMessage("Select a packing-list item first.");
+            return;
+        }
+
+        var index = ViewModel.Items.IndexOf(item);
+        if (index < 0 || index >= ViewModel.Items.Count - 1)
+        {
+            ViewModel.SetStatusMessage("The selected item is already last.");
+            return;
+        }
+
+        ViewModel.SelectedItem = null;
+        ViewModel.Items.RemoveAt(index);
+        ViewModel.Items.Insert(index + 1, item);
+        ViewModel.SelectedItem = item;
+        ViewModel.SetStatusMessage("Packing-list item moved down. Save to persist the new order.");
+    }
+
+    private void MovePackageUp_Click(object? sender, RoutedEventArgs e)
+    {
+        var package = ViewModel.SelectedPackage;
+        if (package is null)
+        {
+            ViewModel.SetStatusMessage("Select a package row first.");
+            return;
+        }
+
+        var index = ViewModel.Packages.IndexOf(package);
+        if (index <= 0)
+        {
+            ViewModel.SetStatusMessage("The selected package is already first.");
+            return;
+        }
+
+        ViewModel.SelectedPackage = null;
+        ViewModel.Packages.RemoveAt(index);
+        ViewModel.Packages.Insert(index - 1, package);
+        ViewModel.SelectedPackage = package;
+        ViewModel.SetStatusMessage("Package row moved up. Save to persist the new order.");
+    }
+
+    private void MovePackageDown_Click(object? sender, RoutedEventArgs e)
+    {
+        var package = ViewModel.SelectedPackage;
+        if (package is null)
+        {
+            ViewModel.SetStatusMessage("Select a package row first.");
+            return;
+        }
+
+        var index = ViewModel.Packages.IndexOf(package);
+        if (index < 0 || index >= ViewModel.Packages.Count - 1)
+        {
+            ViewModel.SetStatusMessage("The selected package is already last.");
+            return;
+        }
+
+        ViewModel.SelectedPackage = null;
+        ViewModel.Packages.RemoveAt(index);
+        ViewModel.Packages.Insert(index + 1, package);
+        ViewModel.SelectedPackage = package;
+        ViewModel.SetStatusMessage("Package row moved down. Save to persist the new order.");
+    }
+
     private async void PickCustomer_Click(object? sender, RoutedEventArgs e)
     {
         if (TopLevel.GetTopLevel(this) is not Window owner) return;
