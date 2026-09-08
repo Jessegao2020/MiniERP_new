@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Platform.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Quotations;
@@ -33,49 +32,6 @@ public partial class QuotationEditorView : UserControl
     private void RemoveItem_Click(object? sender, RoutedEventArgs e)
         => ViewModel.RemoveSelectedItem();
 
-    private async void ExportPdf_Click(object? sender, RoutedEventArgs e)
-    {
-        if (!ViewModel.TryPrepareForOutput(requireItems: true))
-            return;
-
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel?.StorageProvider is null)
-        {
-            ViewModel.SetStatusMessage("PDF export is not available on this desktop session.");
-            return;
-        }
-
-        var suggestedName = SanitizeFileName(ViewModel.Quotation.QuotationNumber);
-        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = "Export Quotation PDF",
-            SuggestedFileName = $"{suggestedName}.pdf",
-            DefaultExtension = "pdf",
-            FileTypeChoices = new[]
-            {
-                new FilePickerFileType("PDF document")
-                {
-                    Patterns = new[] { "*.pdf" }
-                }
-            }
-        });
-
-        if (file is null)
-            return;
-
-        try
-        {
-            await using var stream = await file.OpenWriteAsync();
-            QuotationPdfExporter.Export(ViewModel.Quotation, stream);
-            await stream.FlushAsync();
-            ViewModel.SetStatusMessage("PDF exported.");
-        }
-        catch (Exception ex)
-        {
-            ViewModel.SetStatusMessage($"PDF export failed: {ex.Message}");
-        }
-    }
-
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync())
@@ -106,16 +62,5 @@ public partial class QuotationEditorView : UserControl
 
         Deleted?.Invoke(this, EventArgs.Empty);
         RequestClose?.Invoke(this, EventArgs.Empty);
-    }
-
-    private static string SanitizeFileName(string value)
-    {
-        var invalid = Path.GetInvalidFileNameChars();
-        var characters = value
-            .Select(character => invalid.Contains(character) ? '_' : character)
-            .ToArray();
-
-        var sanitized = new string(characters).Trim();
-        return string.IsNullOrWhiteSpace(sanitized) ? "Quotation" : sanitized;
     }
 }

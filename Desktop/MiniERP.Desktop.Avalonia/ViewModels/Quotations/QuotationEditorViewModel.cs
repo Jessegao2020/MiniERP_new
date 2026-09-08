@@ -12,7 +12,6 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 {
     private readonly AppSettingsService _settings;
     private Customer? _selectedCustomer;
-    private CustomerContact? _selectedCustomerContact;
     private User? _selectedUser;
     private Article? _selectedArticle;
     private QuotationItemRowViewModel? _selectedItem;
@@ -20,16 +19,11 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
     private DateTimeOffset? _validUntil;
     private string _currency;
     private decimal _exchangeRateSnapshot;
-    private string _tier1Label;
-    private string _tier2Label;
-    private string _tier3Label;
     private string _status = string.Empty;
 
     public Quotation Quotation { get; }
     public bool IsNew { get; private set; }
-
     public ObservableCollection<Customer> Customers { get; } = new();
-    public ObservableCollection<CustomerContact> CustomerContacts { get; } = new();
     public ObservableCollection<User> Users { get; } = new();
     public ObservableCollection<Article> Articles { get; } = new();
     public ObservableCollection<QuotationItemRowViewModel> Items { get; } = new();
@@ -65,47 +59,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             _currency = normalized;
             Quotation.Currency = normalized;
             OnPropertyChanged();
-            NotifyTotals();
-        }
-    }
-
-    public string Tier1Label
-    {
-        get => _tier1Label;
-        set
-        {
-            var normalized = value ?? string.Empty;
-            if (_tier1Label == normalized) return;
-            _tier1Label = normalized;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(Tier1TotalText));
             OnPropertyChanged(nameof(TotalText));
-        }
-    }
-
-    public string Tier2Label
-    {
-        get => _tier2Label;
-        set
-        {
-            var normalized = value ?? string.Empty;
-            if (_tier2Label == normalized) return;
-            _tier2Label = normalized;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(Tier2TotalText));
-        }
-    }
-
-    public string Tier3Label
-    {
-        get => _tier3Label;
-        set
-        {
-            var normalized = value ?? string.Empty;
-            if (_tier3Label == normalized) return;
-            _tier3Label = normalized;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(Tier3TotalText));
         }
     }
 
@@ -114,17 +68,8 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             ? $"1 USD = {ExchangeRateSnapshot:0.####} CNY"
             : "Not configured";
 
-    public decimal Tier1Total => Items.Sum(item => item.LineTotal);
-    public decimal Tier2Total => Items.Sum(item => item.LineTotal2);
-    public decimal Tier3Total => Items.Sum(item => item.LineTotal3);
-
-    public string Tier1TotalText => $"{FallbackTierLabel(Tier1Label, "Tier 1")}: {Currency} {Tier1Total:N2}";
-    public string Tier2TotalText => $"{FallbackTierLabel(Tier2Label, "Tier 2")}: {Currency} {Tier2Total:N2}";
-    public string Tier3TotalText => $"{FallbackTierLabel(Tier3Label, "Tier 3")}: {Currency} {Tier3Total:N2}";
-
-    // Compatibility aliases used by older bindings.
-    public decimal TotalAmount => Tier1Total;
-    public string TotalText => Tier1TotalText;
+    public decimal TotalAmount => Items.Sum(item => item.LineTotal);
+    public string TotalText => $"{Currency} {TotalAmount:N2}";
 
     public Customer? SelectedCustomer
     {
@@ -133,18 +78,6 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         {
             if (ReferenceEquals(_selectedCustomer, value)) return;
             _selectedCustomer = value;
-            OnPropertyChanged();
-            RefreshCustomerContacts();
-        }
-    }
-
-    public CustomerContact? SelectedCustomerContact
-    {
-        get => _selectedCustomerContact;
-        set
-        {
-            if (ReferenceEquals(_selectedCustomerContact, value)) return;
-            _selectedCustomerContact = value;
             OnPropertyChanged();
         }
     }
@@ -228,17 +161,11 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
                 QuotationDate = DateTime.Now,
                 ValidUntil = DateTime.Today.AddDays(30),
                 Currency = "USD",
-                ExchangeRate = currentRate,
-                Tier1Label = "100 Sets",
-                Tier2Label = "500 Sets",
-                Tier3Label = "1000 Sets"
+                ExchangeRate = currentRate
             }
             : Clone(source);
 
         _currency = string.IsNullOrWhiteSpace(Quotation.Currency) ? "USD" : Quotation.Currency.ToUpperInvariant();
-        _tier1Label = string.IsNullOrWhiteSpace(Quotation.Tier1Label) ? "100 Sets" : Quotation.Tier1Label;
-        _tier2Label = string.IsNullOrWhiteSpace(Quotation.Tier2Label) ? "500 Sets" : Quotation.Tier2Label;
-        _tier3Label = string.IsNullOrWhiteSpace(Quotation.Tier3Label) ? "1000 Sets" : Quotation.Tier3Label;
 
         // The first quotation-items migration used 1.0 as a compatibility default for
         // quotation headers that existed before exchange-rate snapshots were introduced.
@@ -255,9 +182,6 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 
         Quotation.Currency = _currency;
         Quotation.ExchangeRate = ExchangeRateSnapshot;
-        Quotation.Tier1Label = _tier1Label;
-        Quotation.Tier2Label = _tier2Label;
-        Quotation.Tier3Label = _tier3Label;
 
         QuotationDate = new DateTimeOffset(Quotation.QuotationDate);
         ValidUntil = Quotation.ValidUntil is null
@@ -370,14 +294,11 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             SelectedArticle,
             Currency,
             ExchangeRateSnapshot,
-            unitPrice,
-            Tier1Label,
-            Tier2Label,
-            Tier3Label);
+            unitPrice);
 
         AddRow(row);
         SelectedItem = row;
-        Status = $"Added '{row.ArticleName}' with three quantity-tier price snapshots.";
+        Status = $"Added '{row.ArticleName}' using the current {Currency} price snapshot.";
     }
 
     public void RemoveSelectedItem()
@@ -395,7 +316,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         Status = "Quotation item removed. Save to persist the change.";
     }
 
-    public bool TryPrepareForOutput(bool requireItems = false)
+    public async Task<bool> SaveAsync()
     {
         if (string.IsNullOrWhiteSpace(Quotation.QuotationNumber))
         {
@@ -421,20 +342,6 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(Tier1Label) ||
-            string.IsNullOrWhiteSpace(Tier2Label) ||
-            string.IsNullOrWhiteSpace(Tier3Label))
-        {
-            Status = "All three quantity-tier labels are required.";
-            return false;
-        }
-
-        if (requireItems && Items.Count == 0)
-        {
-            Status = "Add at least one quotation item before exporting.";
-            return false;
-        }
-
         if (Currency == "USD" && Items.Count > 0 && ExchangeRateSnapshot <= 0)
         {
             Status = "A valid USD exchange-rate snapshot is required.";
@@ -451,52 +358,16 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             }
         }
 
-        var customerChanged = Quotation.CustomerId != 0 && Quotation.CustomerId != SelectedCustomer.Id;
-        var userChanged = Quotation.UserId != 0 && Quotation.UserId != SelectedUser.Id;
-
         Quotation.QuotationNumber = Quotation.QuotationNumber.Trim();
-        Quotation.QuotationDate = QuotationDate.Value.DateTime;
-        Quotation.ValidUntil = ValidUntil?.DateTime;
-        Quotation.Currency = Currency;
-        Quotation.ExchangeRate = ExchangeRateSnapshot;
-        Quotation.Tier1Label = Tier1Label.Trim();
-        Quotation.Tier2Label = Tier2Label.Trim();
-        Quotation.Tier3Label = Tier3Label.Trim();
-
-        if (IsNew || customerChanged || string.IsNullOrWhiteSpace(Quotation.CustomerNameSnapshot))
-        {
-            Quotation.CustomerNameSnapshot = SelectedCustomer.Name.Trim();
-            Quotation.CustomerAddressSnapshot = BuildCustomerAddress(SelectedCustomer);
-            Quotation.CustomerContactSnapshot = SelectedCustomerContact is null
-                ? null
-                : BuildContactName(SelectedCustomerContact);
-        }
-        else if (SelectedCustomerContact is not null)
-        {
-            // Selecting another contact is an explicit edit of the quotation.
-            Quotation.CustomerContactSnapshot = BuildContactName(SelectedCustomerContact);
-        }
-
-        if (IsNew || userChanged || string.IsNullOrWhiteSpace(Quotation.SalesContactNameSnapshot))
-        {
-            Quotation.SalesContactNameSnapshot = SelectedUser.Name.Trim();
-            Quotation.SalesContactPhoneSnapshot = SelectedUser.Phone;
-            Quotation.SalesContactEmailSnapshot = SelectedUser.Email;
-        }
-
         Quotation.CustomerId = SelectedCustomer.Id;
         Quotation.UserId = SelectedUser.Id;
         Quotation.Customer = null;
         Quotation.User = null;
+        Quotation.QuotationDate = QuotationDate.Value.DateTime;
+        Quotation.ValidUntil = ValidUntil?.DateTime;
+        Quotation.Currency = Currency;
+        Quotation.ExchangeRate = ExchangeRateSnapshot;
         Quotation.Items = Items.Select(item => item.ToEntity()).ToList();
-
-        return true;
-    }
-
-    public async Task<bool> SaveAsync()
-    {
-        if (!TryPrepareForOutput())
-            return false;
 
         try
         {
@@ -550,34 +421,6 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         }
     }
 
-    public void SetStatusMessage(string message)
-        => Status = message;
-
-    private void RefreshCustomerContacts()
-    {
-        CustomerContacts.Clear();
-        SelectedCustomerContact = null;
-
-        if (SelectedCustomer is null)
-            return;
-
-        foreach (var contact in SelectedCustomer.Contacts.OrderBy(contact => contact.Name))
-            CustomerContacts.Add(contact);
-
-        var sameCustomerAsSnapshot = SelectedCustomer.Id == Quotation.CustomerId;
-        if (sameCustomerAsSnapshot && !string.IsNullOrWhiteSpace(Quotation.CustomerContactSnapshot))
-        {
-            SelectedCustomerContact = CustomerContacts.FirstOrDefault(contact =>
-                string.Equals(
-                    BuildContactName(contact),
-                    Quotation.CustomerContactSnapshot,
-                    StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (IsNew && SelectedCustomerContact is null && CustomerContacts.Count == 1)
-            SelectedCustomerContact = CustomerContacts[0];
-    }
-
     private void AddRow(QuotationItemRowViewModel row)
     {
         row.PropertyChanged += Item_PropertyChanged;
@@ -590,55 +433,9 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 
     private void NotifyTotals()
     {
-        OnPropertyChanged(nameof(Tier1Total));
-        OnPropertyChanged(nameof(Tier2Total));
-        OnPropertyChanged(nameof(Tier3Total));
-        OnPropertyChanged(nameof(Tier1TotalText));
-        OnPropertyChanged(nameof(Tier2TotalText));
-        OnPropertyChanged(nameof(Tier3TotalText));
         OnPropertyChanged(nameof(TotalAmount));
         OnPropertyChanged(nameof(TotalText));
     }
-
-    private static string BuildContactName(CustomerContact contact)
-    {
-        var title = contact.Title?.Trim();
-        var name = contact.Name.Trim();
-
-        return string.IsNullOrWhiteSpace(title)
-            ? name
-            : $"{title} {name}".Trim();
-    }
-
-    private static string? BuildCustomerAddress(Customer customer)
-    {
-        var lines = new List<string>();
-
-        AddIfNotEmpty(lines, customer.AddressLine1);
-        AddIfNotEmpty(lines, customer.AddressLine2);
-
-        var cityLineParts = new[]
-        {
-            customer.PostalCode?.Trim(),
-            customer.City?.Trim(),
-            customer.State?.Trim()
-        }.Where(value => !string.IsNullOrWhiteSpace(value));
-
-        var cityLine = string.Join(" ", cityLineParts);
-        AddIfNotEmpty(lines, cityLine);
-        AddIfNotEmpty(lines, customer.Country);
-
-        return lines.Count == 0 ? null : string.Join(Environment.NewLine, lines);
-    }
-
-    private static void AddIfNotEmpty(ICollection<string> target, string? value)
-    {
-        if (!string.IsNullOrWhiteSpace(value))
-            target.Add(value.Trim());
-    }
-
-    private static string FallbackTierLabel(string? value, string fallback)
-        => string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
 
     private static Quotation Clone(Quotation source) => new()
     {
@@ -654,15 +451,6 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         ValidUntil = source.ValidUntil,
         Currency = source.Currency,
         ExchangeRate = source.ExchangeRate,
-        Tier1Label = source.Tier1Label,
-        Tier2Label = source.Tier2Label,
-        Tier3Label = source.Tier3Label,
-        CustomerNameSnapshot = source.CustomerNameSnapshot,
-        CustomerAddressSnapshot = source.CustomerAddressSnapshot,
-        CustomerContactSnapshot = source.CustomerContactSnapshot,
-        SalesContactNameSnapshot = source.SalesContactNameSnapshot,
-        SalesContactPhoneSnapshot = source.SalesContactPhoneSnapshot,
-        SalesContactEmailSnapshot = source.SalesContactEmailSnapshot,
         Items = source.Items.Select(CloneItem).ToList(),
         CreatedBy = source.CreatedBy,
         CreatedAt = source.CreatedAt,
@@ -678,13 +466,8 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         ArticleName = source.ArticleName,
         Description = source.Description,
         Specification = source.Specification,
-        Unit = source.Unit,
         Quantity = source.Quantity,
         UnitPrice = source.UnitPrice,
-        Quantity2 = source.Quantity2,
-        UnitPrice2 = source.UnitPrice2,
-        Quantity3 = source.Quantity3,
-        UnitPrice3 = source.UnitPrice3,
         DiscountPercent = source.DiscountPercent,
         Currency = source.Currency,
         ExchangeRateSnapshot = source.ExchangeRateSnapshot,

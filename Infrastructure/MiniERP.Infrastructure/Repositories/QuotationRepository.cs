@@ -15,7 +15,6 @@ namespace MiniERP.Infrastructure.Repositories
             => await _dbSet
                 .AsNoTracking()
                 .Include(q => q.Customer)
-                    .ThenInclude(customer => customer!.Contacts)
                 .Include(q => q.User)
                 .Include(q => q.Items)
                 .OrderByDescending(q => q.QuotationDate)
@@ -26,7 +25,6 @@ namespace MiniERP.Infrastructure.Repositories
             => await _dbSet
                 .AsNoTracking()
                 .Include(q => q.Customer)
-                    .ThenInclude(customer => customer!.Contacts)
                 .Include(q => q.User)
                 .Include(q => q.Items)
                 .FirstOrDefaultAsync(q => q.Id == id);
@@ -36,7 +34,6 @@ namespace MiniERP.Infrastructure.Repositories
             return await _dbSet
                 .AsNoTracking()
                 .Include(q => q.Customer)
-                    .ThenInclude(customer => customer!.Contacts)
                 .Include(q => q.User)
                 .Include(q => q.Items)
                 .FirstOrDefaultAsync(q => q.QuotationNumber == quotationNumber);
@@ -47,7 +44,6 @@ namespace MiniERP.Infrastructure.Repositories
             return await _dbSet
                 .AsNoTracking()
                 .Include(q => q.Customer)
-                    .ThenInclude(customer => customer!.Contacts)
                 .Include(q => q.User)
                 .Include(q => q.Items)
                 .Where(q => q.CustomerId == customerId)
@@ -73,15 +69,6 @@ namespace MiniERP.Infrastructure.Repositories
             existing.ValidUntil = quotation.ValidUntil;
             existing.Currency = quotation.Currency;
             existing.ExchangeRate = quotation.ExchangeRate;
-            existing.Tier1Label = quotation.Tier1Label;
-            existing.Tier2Label = quotation.Tier2Label;
-            existing.Tier3Label = quotation.Tier3Label;
-            existing.CustomerNameSnapshot = quotation.CustomerNameSnapshot;
-            existing.CustomerAddressSnapshot = quotation.CustomerAddressSnapshot;
-            existing.CustomerContactSnapshot = quotation.CustomerContactSnapshot;
-            existing.SalesContactNameSnapshot = quotation.SalesContactNameSnapshot;
-            existing.SalesContactPhoneSnapshot = quotation.SalesContactPhoneSnapshot;
-            existing.SalesContactEmailSnapshot = quotation.SalesContactEmailSnapshot;
             existing.LastModifiedBy = quotation.LastModifiedBy;
             existing.LastModifiedAt = DateTime.Now;
 
@@ -113,13 +100,8 @@ namespace MiniERP.Infrastructure.Repositories
                     ArticleName = incoming.ArticleName,
                     Description = incoming.Description,
                     Specification = incoming.Specification,
-                    Unit = incoming.Unit,
                     Quantity = incoming.Quantity,
                     UnitPrice = incoming.UnitPrice,
-                    Quantity2 = incoming.Quantity2,
-                    UnitPrice2 = incoming.UnitPrice2,
-                    Quantity3 = incoming.Quantity3,
-                    UnitPrice3 = incoming.UnitPrice3,
                     DiscountPercent = incoming.DiscountPercent,
                     Currency = incoming.Currency,
                     ExchangeRateSnapshot = incoming.ExchangeRateSnapshot,
@@ -139,13 +121,8 @@ namespace MiniERP.Infrastructure.Repositories
             target.ArticleName = source.ArticleName;
             target.Description = source.Description;
             target.Specification = source.Specification;
-            target.Unit = source.Unit;
             target.Quantity = source.Quantity;
             target.UnitPrice = source.UnitPrice;
-            target.Quantity2 = source.Quantity2;
-            target.UnitPrice2 = source.UnitPrice2;
-            target.Quantity3 = source.Quantity3;
-            target.UnitPrice3 = source.UnitPrice3;
             target.DiscountPercent = source.DiscountPercent;
             target.Currency = source.Currency;
             target.ExchangeRateSnapshot = source.ExchangeRateSnapshot;

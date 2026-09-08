@@ -26,23 +26,13 @@
                     <TextBlock Text="Delete" FontSize="10" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
-
-            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="ExportPdf_Click">
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <TextBlock Text="↓" />
-                    <TextBlock Text="Export PDF" FontSize="10" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
         </StackPanel>
 
-        <ScrollViewer
-            Grid.Row="1"
-            HorizontalScrollBarVisibility="Auto"
-            VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24,18" Spacing="18" MinWidth="1450" HorizontalAlignment="Left">
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Margin="24,18" Spacing="18" MaxWidth="1120" HorizontalAlignment="Left">
                 <TextBlock FontSize="24" FontWeight="SemiBold" Text="Quotation" />
 
-                <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
+                <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Quotation No." />
                     <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Quotation.QuotationNumber, Mode=TwoWay}" />
 
@@ -67,60 +57,28 @@
                     <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Quotation Date" />
                     <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding QuotationDate, Mode=TwoWay}" />
 
-                    <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Customer Contact" />
-                    <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <TextBlock Text="{Binding Title}" />
-                                    <TextBlock Text="{Binding Name}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                    <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Delivery Term" />
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Quotation.DeliveryTerm, Mode=TwoWay}" />
 
                     <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="Valid Until" />
                     <DatePicker Grid.Row="2" Grid.Column="3" SelectedDate="{Binding ValidUntil, Mode=TwoWay}" />
 
-                    <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Delivery Term" />
-                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Quotation.DeliveryTerm, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Lead Time" />
+                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Quotation.LeadTime, Mode=TwoWay}" />
 
                     <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" Text="Payment Term" />
                     <TextBox Grid.Row="3" Grid.Column="3" Text="{Binding Quotation.PaymentTerm, Mode=TwoWay}" />
 
-                    <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="Lead Time" />
-                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Quotation.LeadTime, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="Currency" />
+                    <ComboBox Grid.Row="4" Grid.Column="1" Width="120" HorizontalAlignment="Left" ItemsSource="{Binding Currencies}" SelectedItem="{Binding Currency, Mode=TwoWay}" />
 
-                    <TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" Text="Currency" />
-                    <ComboBox Grid.Row="4" Grid.Column="3" Width="120" HorizontalAlignment="Left" ItemsSource="{Binding Currencies}" SelectedItem="{Binding Currency, Mode=TwoWay}" />
-
-                    <TextBlock Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" Text="Rate Snapshot" />
-                    <TextBox Grid.Row="5" Grid.Column="1" IsReadOnly="True" Text="{Binding ExchangeRateDisplay}" />
+                    <TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" Text="Rate Snapshot" />
+                    <TextBox Grid.Row="4" Grid.Column="3" IsReadOnly="True" Text="{Binding ExchangeRateDisplay}" />
                 </Grid>
-
-                <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
-                    <StackPanel Spacing="8">
-                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="Quantity Tiers" />
-                        <Grid ColumnDefinitions="Auto,180,Auto,180,Auto,180" ColumnSpacing="8">
-                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Tier 1" />
-                            <TextBox Grid.Column="1" Text="{Binding Tier1Label, Mode=TwoWay}" />
-
-                            <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="Tier 2" />
-                            <TextBox Grid.Column="3" Text="{Binding Tier2Label, Mode=TwoWay}" />
-
-                            <TextBlock Grid.Column="4" VerticalAlignment="Center" Text="Tier 3" />
-                            <TextBox Grid.Column="5" Text="{Binding Tier3Label, Mode=TwoWay}" />
-                        </Grid>
-                        <TextBlock
-                            Opacity="0.55"
-                            Text="These labels become the three grouped columns in the legacy-style quotation PDF. New items use the leading quantities (for example 100 / 500 / 1000) as defaults." />
-                    </StackPanel>
-                </Border>
 
                 <StackPanel Spacing="5">
                     <TextBlock Text="Remarks" />
                     <TextBox
-                        Width="900"
                         MinHeight="75"
                         AcceptsReturn="True"
                         TextWrapping="Wrap"
@@ -128,10 +86,10 @@
                 </StackPanel>
 
                 <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
-                    <Grid RowDefinitions="Auto,Auto,300,Auto" RowSpacing="8">
+                    <Grid RowDefinitions="Auto,Auto,260,Auto" RowSpacing="8">
                         <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Quotation Items" />
 
-                        <Grid Grid.Row="1" ColumnDefinitions="Auto,420,Auto,Auto" ColumnSpacing="6">
+                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto" ColumnSpacing="6">
                             <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Article" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}">
                                 <ComboBox.ItemTemplate>
@@ -149,7 +107,6 @@
 
                         <dg:DataGrid
                             Grid.Row="2"
-                            MinWidth="1420"
                             AutoGenerateColumns="False"
                             CanUserResizeColumns="True"
                             CanUserSortColumns="False"
@@ -157,12 +114,27 @@
                             ItemsSource="{Binding Items}"
                             SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
                             <dg:DataGrid.Columns>
-                                <dg:DataGridTextColumn Width="160" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
-                                <dg:DataGridTextColumn Width="190" Header="Description" Binding="{Binding Description, Mode=TwoWay}" />
-                                <dg:DataGridTextColumn Width="190" Header="Specification" Binding="{Binding Specification, Mode=TwoWay}" />
-                                <dg:DataGridTextColumn Width="58" Header="Unit" Binding="{Binding Unit, Mode=TwoWay}" />
+                                <dg:DataGridTextColumn Width="1.8*" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
+                                <dg:DataGridTextColumn Width="2.2*" Header="Description" Binding="{Binding Description, Mode=TwoWay}" />
+                                <dg:DataGridTextColumn Width="2.2*" Header="Specification" Binding="{Binding Specification, Mode=TwoWay}" />
 
-                                <dg:DataGridTemplateColumn Width="72" Header="Disc. %">
+                                <dg:DataGridTemplateColumn Width="85" Header="Qty">
+                                    <dg:DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Margin="2" Text="{Binding QuantityText, Mode=TwoWay}" />
+                                        </DataTemplate>
+                                    </dg:DataGridTemplateColumn.CellTemplate>
+                                </dg:DataGridTemplateColumn>
+
+                                <dg:DataGridTemplateColumn Width="105" Header="Unit Price">
+                                    <dg:DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Margin="2" Text="{Binding UnitPriceText, Mode=TwoWay}" />
+                                        </DataTemplate>
+                                    </dg:DataGridTemplateColumn.CellTemplate>
+                                </dg:DataGridTemplateColumn>
+
+                                <dg:DataGridTemplateColumn Width="90" Header="Disc. %">
                                     <dg:DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBox Margin="2" Text="{Binding DiscountText, Mode=TwoWay}" />
@@ -170,67 +142,15 @@
                                     </dg:DataGridTemplateColumn.CellTemplate>
                                 </dg:DataGridTemplateColumn>
 
-                                <dg:DataGridTemplateColumn Width="70" Header="T1 Qty">
-                                    <dg:DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Margin="2" Text="{Binding QuantityText, Mode=TwoWay}" />
-                                        </DataTemplate>
-                                    </dg:DataGridTemplateColumn.CellTemplate>
-                                </dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="95" Header="T1 Unit Price">
-                                    <dg:DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Margin="2" Text="{Binding UnitPriceText, Mode=TwoWay}" />
-                                        </DataTemplate>
-                                    </dg:DataGridTemplateColumn.CellTemplate>
-                                </dg:DataGridTemplateColumn>
-                                <dg:DataGridTextColumn Width="100" Header="T1 Amount" IsReadOnly="True" Binding="{Binding LineTotal, StringFormat='{}{0:N2}'}" />
-
-                                <dg:DataGridTemplateColumn Width="70" Header="T2 Qty">
-                                    <dg:DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Margin="2" Text="{Binding Quantity2Text, Mode=TwoWay}" />
-                                        </DataTemplate>
-                                    </dg:DataGridTemplateColumn.CellTemplate>
-                                </dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="95" Header="T2 Unit Price">
-                                    <dg:DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Margin="2" Text="{Binding UnitPrice2Text, Mode=TwoWay}" />
-                                        </DataTemplate>
-                                    </dg:DataGridTemplateColumn.CellTemplate>
-                                </dg:DataGridTemplateColumn>
-                                <dg:DataGridTextColumn Width="100" Header="T2 Amount" IsReadOnly="True" Binding="{Binding LineTotal2, StringFormat='{}{0:N2}'}" />
-
-                                <dg:DataGridTemplateColumn Width="70" Header="T3 Qty">
-                                    <dg:DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Margin="2" Text="{Binding Quantity3Text, Mode=TwoWay}" />
-                                        </DataTemplate>
-                                    </dg:DataGridTemplateColumn.CellTemplate>
-                                </dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="95" Header="T3 Unit Price">
-                                    <dg:DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Margin="2" Text="{Binding UnitPrice3Text, Mode=TwoWay}" />
-                                        </DataTemplate>
-                                    </dg:DataGridTemplateColumn.CellTemplate>
-                                </dg:DataGridTemplateColumn>
-                                <dg:DataGridTextColumn Width="100" Header="T3 Amount" IsReadOnly="True" Binding="{Binding LineTotal3, StringFormat='{}{0:N2}'}" />
+                                <dg:DataGridTextColumn Width="115" Header="Line Total" IsReadOnly="True" Binding="{Binding LineTotal, StringFormat='{}{0:N2}'}" />
                             </dg:DataGrid.Columns>
                         </dg:DataGrid>
 
                         <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,4,0,0">
-                            <TextBlock
-                                MaxWidth="760"
-                                Opacity="0.55"
-                                VerticalAlignment="Center"
-                                TextWrapping="Wrap"
-                                Text="Article text, currency and exchange rate are copied as snapshots. The PDF uses net unit prices after discount so each displayed amount remains mathematically consistent." />
-                            <StackPanel Grid.Column="1" Spacing="3" HorizontalAlignment="Right">
-                                <TextBlock FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Right" Text="{Binding Tier1TotalText}" />
-                                <TextBlock FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Right" Text="{Binding Tier2TotalText}" />
-                                <TextBlock FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Right" Text="{Binding Tier3TotalText}" />
+                            <TextBlock Opacity="0.55" VerticalAlignment="Center" Text="Article text and price are copied as snapshots; later catalogue changes will not rewrite this quotation." />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <TextBlock FontSize="16" FontWeight="SemiBold" Text="Total" />
+                                <TextBlock FontSize="16" FontWeight="Bold" Text="{Binding TotalText}" />
                             </StackPanel>
                         </Grid>
                     </Grid>
