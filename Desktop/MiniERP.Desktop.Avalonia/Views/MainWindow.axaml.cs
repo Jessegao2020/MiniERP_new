@@ -146,7 +146,7 @@ public partial class MainWindow : Window
             return;
 
         var view = new SystemSettingsView();
-        view.Saved += (_, _) => RefreshOpenArticleExchangeRates();
+        view.Saved += (_, _) => RefreshOpenExchangeRates();
         AddWorkspace(key, "System", view);
     }
 
@@ -160,12 +160,14 @@ public partial class MainWindow : Window
         AddWorkspace(key, "User", new UserSettingsView());
     }
 
-    private void RefreshOpenArticleExchangeRates()
+    private void RefreshOpenExchangeRates()
     {
         foreach (var tab in _workspaceTabs)
         {
-            if (tab.Content is ArticleEditorView editor)
-                editor.RefreshExchangeRate();
+            if (tab.Content is ArticleEditorView articleEditor)
+                articleEditor.RefreshExchangeRate();
+            else if (tab.Content is QuotationEditorView quotationEditor)
+                quotationEditor.RefreshExchangeRate();
         }
     }
 
