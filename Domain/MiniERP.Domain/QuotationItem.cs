@@ -17,6 +17,7 @@ public class QuotationItem : AuditableEntity
     public string? Description { get; set; }
     public string? Specification { get; set; }
     public decimal Quantity { get; set; } = 1m;
+    public string Unit { get; set; } = "PCS";
     public decimal UnitPrice { get; set; }
     public decimal DiscountPercent { get; set; }
     public string Currency { get; set; } = "USD";

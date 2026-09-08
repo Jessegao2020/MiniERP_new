@@ -12,6 +12,7 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
     private string? _description;
     private string? _specification;
     private string _quantityText;
+    private string _unit;
     private string _unitPriceText;
     private string _discountText;
 
@@ -44,6 +45,12 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
         set => SetDecimalText(ref _quantityText, value);
     }
 
+    public string Unit
+    {
+        get => _unit;
+        set => SetField(ref _unit, value ?? string.Empty);
+    }
+
     public string UnitPriceText
     {
         get => _unitPriceText;
@@ -73,23 +80,24 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
         _description = source.Description;
         _specification = source.Specification;
         _quantityText = ToText(source.Quantity);
+        _unit = string.IsNullOrWhiteSpace(source.Unit) ? "PCS" : source.Unit;
         _unitPriceText = ToText(source.UnitPrice);
         _discountText = ToText(source.DiscountPercent);
     }
 
-    public QuotationItemRowViewModel(
-        Article source,
-        string currency,
-        decimal exchangeRateSnapshot,
-        decimal unitPrice)
+    public QuotationItemRowViewModel(Article source, string currency, decimal exchangeRateSnapshot, decimal unitPrice)
     {
         SourceArticleId = source.Id;
         Currency = currency;
         ExchangeRateSnapshot = exchangeRateSnapshot;
         _articleName = FirstNonEmpty(source.Name_EN, source.Name) ?? $"Article {source.Id}";
-        _description = FirstNonEmpty(source.Description_EN, source.Description);
+
+        // Quotation template rule: the small text printed below the bold product
+        // name is specifically Article.Description_EN. Do not fall back to Chinese.
+        _description = source.Description_EN;
         _specification = FirstNonEmpty(source.Specs_EN, source.Specification);
         _quantityText = "1";
+        _unit = "PCS";
         _unitPriceText = ToText(unitPrice);
         _discountText = "0";
     }
@@ -105,6 +113,12 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
         if (Quantity <= 0)
         {
             error = $"Quantity for '{ArticleName}' must be greater than zero.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(Unit))
+        {
+            error = $"Unit for '{ArticleName}' is required.";
             return false;
         }
 
@@ -132,6 +146,7 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
         Description = Description,
         Specification = Specification,
         Quantity = Quantity,
+        Unit = Unit.Trim().ToUpperInvariant(),
         UnitPrice = UnitPrice,
         DiscountPercent = DiscountPercent,
         Currency = Currency,

@@ -30,18 +30,15 @@ namespace MiniERP.Infrastructure.Repositories
                 .FirstOrDefaultAsync(q => q.Id == id);
 
         public async Task<Quotation?> GetByNumberAsync(string quotationNumber)
-        {
-            return await _dbSet
+            => await _dbSet
                 .AsNoTracking()
                 .Include(q => q.Customer)
                 .Include(q => q.User)
                 .Include(q => q.Items)
                 .FirstOrDefaultAsync(q => q.QuotationNumber == quotationNumber);
-        }
 
         public async Task<IEnumerable<Quotation>> GetByCustomerIdAsync(int customerId)
-        {
-            return await _dbSet
+            => await _dbSet
                 .AsNoTracking()
                 .Include(q => q.Customer)
                 .Include(q => q.User)
@@ -49,7 +46,6 @@ namespace MiniERP.Infrastructure.Repositories
                 .Where(q => q.CustomerId == customerId)
                 .OrderByDescending(q => q.QuotationDate)
                 .ToListAsync();
-        }
 
         public override async Task UpdateAsync(Quotation quotation)
         {
@@ -69,14 +65,17 @@ namespace MiniERP.Infrastructure.Repositories
             existing.ValidUntil = quotation.ValidUntil;
             existing.Currency = quotation.Currency;
             existing.ExchangeRate = quotation.ExchangeRate;
+            existing.CustomerNameSnapshot = quotation.CustomerNameSnapshot;
+            existing.CustomerAddressSnapshot = quotation.CustomerAddressSnapshot;
+            existing.CustomerContactSnapshot = quotation.CustomerContactSnapshot;
+            existing.SalesContactNameSnapshot = quotation.SalesContactNameSnapshot;
+            existing.SalesContactPhoneSnapshot = quotation.SalesContactPhoneSnapshot;
+            existing.SalesContactEmailSnapshot = quotation.SalesContactEmailSnapshot;
             existing.LastModifiedBy = quotation.LastModifiedBy;
             existing.LastModifiedAt = DateTime.Now;
 
             var incomingItems = quotation.Items.ToList();
-            var incomingIds = incomingItems
-                .Where(item => item.Id > 0)
-                .Select(item => item.Id)
-                .ToHashSet();
+            var incomingIds = incomingItems.Where(item => item.Id > 0).Select(item => item.Id).ToHashSet();
 
             foreach (var oldItem in existing.Items.Where(item => !incomingIds.Contains(item.Id)).ToList())
                 _context.QuotationItems.Remove(oldItem);
@@ -101,6 +100,7 @@ namespace MiniERP.Infrastructure.Repositories
                     Description = incoming.Description,
                     Specification = incoming.Specification,
                     Quantity = incoming.Quantity,
+                    Unit = incoming.Unit,
                     UnitPrice = incoming.UnitPrice,
                     DiscountPercent = incoming.DiscountPercent,
                     Currency = incoming.Currency,
@@ -122,6 +122,7 @@ namespace MiniERP.Infrastructure.Repositories
             target.Description = source.Description;
             target.Specification = source.Specification;
             target.Quantity = source.Quantity;
+            target.Unit = source.Unit;
             target.UnitPrice = source.UnitPrice;
             target.DiscountPercent = source.DiscountPercent;
             target.Currency = source.Currency;

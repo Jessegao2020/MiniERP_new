@@ -22,6 +22,15 @@ namespace MiniERP.Domain
         public string Currency { get; set; } = "USD";
         public decimal ExchangeRate { get; set; } = 1m;
 
+        // Commercial document snapshots. A historical quotation must keep the
+        // customer/sales contact text that was printed at the time of quotation.
+        public string? CustomerNameSnapshot { get; set; }
+        public string? CustomerAddressSnapshot { get; set; }
+        public string? CustomerContactSnapshot { get; set; }
+        public string? SalesContactNameSnapshot { get; set; }
+        public string? SalesContactPhoneSnapshot { get; set; }
+        public string? SalesContactEmailSnapshot { get; set; }
+
         public ICollection<QuotationItem> Items { get; set; } = new List<QuotationItem>();
 
         [NotMapped]
