@@ -42,18 +42,20 @@
                 <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
                     <Grid RowDefinitions="Auto,Auto,235,Auto" RowSpacing="8">
                         <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Goods" />
-                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto" ColumnSpacing="6">
+                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto,Auto,Auto" ColumnSpacing="6">
                             <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Article" />
                             <Grid Grid.Column="1" ColumnDefinitions="*,34"><AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type article name" /><Button Grid.Column="1" Padding="0" Click="PickArticle_Click" Content="..." /></Grid>
                             <Button Grid.Column="2" Padding="10,2" Click="AddItem_Click" Content="Add" />
                             <Button Grid.Column="3" Padding="10,2" Click="RemoveItem_Click" Content="Remove" />
+                            <Button Grid.Column="4" Width="34" Padding="0" Click="MoveItemUp_Click" Content="↑" ToolTip.Tip="Move selected item up" />
+                            <Button Grid.Column="5" Width="34" Padding="0" Click="MoveItemDown_Click" Content="↓" ToolTip.Tip="Move selected item down" />
                         </Grid>
                         <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
                             <dg:DataGrid.Columns>
                                 <dg:DataGridTextColumn Width="1.7*" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
                                 <dg:DataGridTextColumn Width="3*" Header="Description EN" Binding="{Binding Description, Mode=TwoWay}" />
-                                <dg:DataGridTemplateColumn Width="90" Header="Qty"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding QuantityText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="80" Header="Unit"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding Unit, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="90" Header="Qty"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding QuantityText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="80" Header="Unit"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding Unit, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
                             </dg:DataGrid.Columns>
                         </dg:DataGrid>
                         <TextBlock Grid.Row="3" HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding TotalQuantity, StringFormat='Total Qty: {0:0.####}'}" />
@@ -63,17 +65,22 @@
                 <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
                     <Grid RowDefinitions="Auto,Auto,260,Auto" RowSpacing="8">
                         <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Packages / Cartons" />
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6"><Button Padding="10,2" Click="AddPackage_Click" Content="Add Package" /><Button Padding="10,2" Click="RemovePackage_Click" Content="Remove Package" /></StackPanel>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6">
+                            <Button Padding="10,2" Click="AddPackage_Click" Content="Add Package" />
+                            <Button Padding="10,2" Click="RemovePackage_Click" Content="Remove Package" />
+                            <Button Width="34" Padding="0" Click="MovePackageUp_Click" Content="↑" ToolTip.Tip="Move selected package up" />
+                            <Button Width="34" Padding="0" Click="MovePackageDown_Click" Content="↓" ToolTip.Tip="Move selected package down" />
+                        </StackPanel>
                         <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" ItemsSource="{Binding Packages}" SelectedItem="{Binding SelectedPackage, Mode=TwoWay}">
                             <dg:DataGrid.Columns>
                                 <dg:DataGridTextColumn Width="110" Header="Carton No./Range" Binding="{Binding CartonNumber, Mode=TwoWay}" />
-                                <dg:DataGridTemplateColumn Width="65" Header="Count"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding PackageCountText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="65" Header="Count"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding PackageCountText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
                                 <dg:DataGridTextColumn Width="1.7*" Header="Contents" Binding="{Binding Contents, Mode=TwoWay}" />
-                                <dg:DataGridTemplateColumn Width="75" Header="L cm"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding LengthText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="75" Header="W cm"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding WidthText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="75" Header="H cm"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding HeightText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="80" Header="N.W. kg"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding NetWeightText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="80" Header="G.W. kg"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding GrossWeightText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="75" Header="L cm"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding LengthText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="75" Header="W cm"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding WidthText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="75" Header="H cm"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding HeightText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="80" Header="N.W. kg"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding NetWeightText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="80" Header="G.W. kg"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding GrossWeightText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
                                 <dg:DataGridTextColumn Width="75" Header="CBM/ctn" IsReadOnly="True" Binding="{Binding Cbm, StringFormat='{}{0:0.####}'}" />
                             </dg:DataGrid.Columns>
                         </dg:DataGrid>
