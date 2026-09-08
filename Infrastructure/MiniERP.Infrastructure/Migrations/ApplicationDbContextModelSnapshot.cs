@@ -283,7 +283,6 @@ namespace MiniERP.Infrastructure.Migrations
                     b.HasOne("MiniERP.Domain.Customer", "Customer").WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict).IsRequired();
                     b.HasOne("MiniERP.Domain.User", "User").WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Restrict).IsRequired();
                     b.Navigation("Customer");
-                    b.Navigation("Items");
                     b.Navigation("User");
                 });
 
@@ -298,8 +297,6 @@ namespace MiniERP.Infrastructure.Migrations
                     b.HasOne("MiniERP.Domain.Customer", "Customer").WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict).IsRequired();
                     b.HasOne("MiniERP.Domain.User", "User").WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Restrict).IsRequired();
                     b.Navigation("Customer");
-                    b.Navigation("Items");
-                    b.Navigation("Packages");
                     b.Navigation("User");
                 });
 
@@ -320,7 +317,6 @@ namespace MiniERP.Infrastructure.Migrations
                     b.HasOne("MiniERP.Domain.Customer", "Customer").WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Cascade).IsRequired();
                     b.HasOne("MiniERP.Domain.User", "User").WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
                     b.Navigation("Customer");
-                    b.Navigation("Items");
                     b.Navigation("User");
                 });
 
