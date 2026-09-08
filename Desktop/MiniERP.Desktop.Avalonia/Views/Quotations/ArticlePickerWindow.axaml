@@ -1,0 +1,82 @@
+<Window
+    x:Class="MiniERP.Desktop.Views.Quotations.ArticlePickerWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
+    Title="Select Article"
+    Width="1080"
+    Height="650"
+    MinWidth="820"
+    MinHeight="440"
+    WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="*,Auto,Auto">
+        <dg:DataGrid
+            x:Name="ArticleGrid"
+            Grid.Row="0"
+            Margin="8"
+            AutoGenerateColumns="False"
+            CanUserResizeColumns="True"
+            CanUserSortColumns="True"
+            GridLinesVisibility="All"
+            IsReadOnly="True"
+            DoubleTapped="ArticleGrid_DoubleTapped">
+
+            <dg:DataGrid.Columns>
+                <dg:DataGridTextColumn Width="2*" Binding="{Binding Name}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Name" />
+                            <TextBox MinWidth="120" Height="24" Tag="Name" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="2*" Binding="{Binding Name_EN}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Name EN" />
+                            <TextBox MinWidth="120" Height="24" Tag="Name_EN" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="95" Binding="{Binding Price, StringFormat='{}{0:N2}'}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="CNY Price" />
+                            <TextBox MinWidth="70" Height="24" Tag="Price" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="2.5*" Binding="{Binding Description_EN}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Description EN" />
+                            <TextBox MinWidth="150" Height="24" Tag="Description_EN" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding Category}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Category" />
+                            <TextBox MinWidth="80" Height="24" Tag="Category" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+            </dg:DataGrid.Columns>
+        </dg:DataGrid>
+
+        <Border Grid.Row="1" Padding="8,4" Background="#F2F2F2" BorderBrush="LightGray" BorderThickness="1,1,1,0">
+            <TextBlock x:Name="StatusText" Foreground="#666666" />
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" Spacing="8">
+            <Button Width="90" IsDefault="True" Click="Ok_Click" Content="OK" />
+            <Button Width="90" IsCancel="True" Click="Cancel_Click" Content="Cancel" />
+        </StackPanel>
+    </Grid>
+</Window>
