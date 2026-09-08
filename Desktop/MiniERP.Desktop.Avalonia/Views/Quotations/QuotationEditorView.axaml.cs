@@ -27,6 +27,8 @@ public partial class QuotationEditorView : UserControl
     public void RefreshExchangeRate() => ViewModel.RefreshExchangeRateFromSettings();
     private void AddItem_Click(object? sender, RoutedEventArgs e) => ViewModel.AddSelectedArticle();
     private void RemoveItem_Click(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedItem();
+    private void MoveItemUp_Click(object? sender, RoutedEventArgs e) => ViewModel.MoveSelectedItemUp();
+    private void MoveItemDown_Click(object? sender, RoutedEventArgs e) => ViewModel.MoveSelectedItemDown();
 
     private async void PickCustomer_Click(object? sender, RoutedEventArgs e)
     {
@@ -42,6 +44,29 @@ public partial class QuotationEditorView : UserControl
         {
             ViewModel.SelectedCustomer = selected;
             ViewModel.SetStatusMessage($"Customer selected: {selected.Name}");
+        }
+    }
+
+    private async void PickContact_Click(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+
+        if (ViewModel.SelectedCustomer is null)
+        {
+            ViewModel.SetStatusMessage("Select a customer before choosing a contact.");
+            return;
+        }
+
+        var picker = new ContactPickerWindow(
+            ViewModel.CustomerContacts,
+            ViewModel.SelectedCustomerContact?.Id);
+
+        var selected = await picker.ShowDialog<CustomerContact?>(owner);
+        if (selected is not null)
+        {
+            ViewModel.SelectedCustomerContact = selected;
+            ViewModel.SetStatusMessage($"Contact selected: {selected.Name}");
         }
     }
 
