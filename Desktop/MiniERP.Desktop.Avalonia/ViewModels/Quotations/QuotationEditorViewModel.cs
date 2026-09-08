@@ -10,6 +10,7 @@ namespace MiniERP.Desktop.ViewModels.Quotations;
 
 public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 {
+    private readonly AppSettingsService _settings;
     private Customer? _selectedCustomer;
     private User? _selectedUser;
     private Article? _selectedArticle;
@@ -17,6 +18,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
     private DateTimeOffset? _quotationDate;
     private DateTimeOffset? _validUntil;
     private string _currency;
+    private decimal _exchangeRateSnapshot;
     private string _status = string.Empty;
 
     public Quotation Quotation { get; }
@@ -27,7 +29,17 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
     public ObservableCollection<QuotationItemRowViewModel> Items { get; } = new();
     public ObservableCollection<string> Currencies { get; } = new() { "USD", "CNY" };
 
-    public decimal ExchangeRateSnapshot { get; }
+    public decimal ExchangeRateSnapshot
+    {
+        get => _exchangeRateSnapshot;
+        private set
+        {
+            if (_exchangeRateSnapshot == value) return;
+            _exchangeRateSnapshot = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ExchangeRateDisplay));
+        }
+    }
 
     public string Currency
     {
@@ -138,6 +150,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 
     public QuotationEditorViewModel(Quotation? source, AppSettingsService settings)
     {
+        _settings = settings;
         IsNew = source is null;
         var currentRate = settings.Current.CnyPerUsd ?? 0m;
 
@@ -153,7 +166,20 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             : Clone(source);
 
         _currency = string.IsNullOrWhiteSpace(Quotation.Currency) ? "USD" : Quotation.Currency.ToUpperInvariant();
-        ExchangeRateSnapshot = Quotation.ExchangeRate > 0 ? Quotation.ExchangeRate : currentRate;
+
+        // The first quotation-items migration used 1.0 as a compatibility default for
+        // quotation headers that existed before exchange-rate snapshots were introduced.
+        // Such a header has no real historical snapshot, so use the current configured rate.
+        var isLegacyPlaceholderRate = source is not null
+            && source.Items.Count == 0
+            && source.ExchangeRate == 1m
+            && currentRate > 0m
+            && currentRate != 1m;
+
+        ExchangeRateSnapshot = source is null || source.ExchangeRate <= 0m || isLegacyPlaceholderRate
+            ? currentRate
+            : source.ExchangeRate;
+
         Quotation.Currency = _currency;
         Quotation.ExchangeRate = ExchangeRateSnapshot;
 
@@ -166,10 +192,33 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             AddRow(new QuotationItemRowViewModel(item));
     }
 
+    public void RefreshExchangeRateFromSettings()
+    {
+        if (!IsNew)
+            return;
+
+        if (Items.Count > 0)
+        {
+            Status = "Exchange rate changed in Settings, but this quotation already has items. Remove the items before adopting the new rate.";
+            return;
+        }
+
+        var currentRate = _settings.Current.CnyPerUsd ?? 0m;
+        ExchangeRateSnapshot = currentRate;
+        Quotation.ExchangeRate = currentRate;
+
+        Status = currentRate > 0m
+            ? $"Exchange rate refreshed: 1 USD = {currentRate:0.####} CNY."
+            : "USD exchange rate is not configured.";
+    }
+
     public async Task LoadLookupsAsync()
     {
         try
         {
+            if (IsNew && Items.Count == 0)
+                RefreshExchangeRateFromSettings();
+
             using var scope = App.Services.CreateScope();
             var customerService = scope.ServiceProvider.GetRequiredService<ICustomerService>();
             var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
@@ -208,7 +257,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
                 Status = "Quotation header is ready. Create an Article before adding line items.";
             else if (Currency == "USD" && ExchangeRateSnapshot <= 0)
                 Status = "Set the USD exchange rate in Settings > System before adding USD items.";
-            else
+            else if (string.IsNullOrWhiteSpace(Status) || Status.StartsWith("Exchange rate refreshed", StringComparison.Ordinal))
                 Status = IsNew ? "New quotation." : "Ready.";
         }
         catch (Exception ex)
