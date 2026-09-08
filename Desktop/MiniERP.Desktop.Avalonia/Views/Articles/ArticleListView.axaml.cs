@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Articles;
 using MiniERP.Domain;
 
@@ -25,7 +26,21 @@ public partial class ArticleListView : UserControl
         => OpenArticleRequested?.Invoke(null);
 
     private async void Delete_Click(object? sender, RoutedEventArgs e)
-        => await ViewModel.DeleteSelectedAsync();
+    {
+        if (ViewModel.SelectedArticle is null)
+        {
+            await ViewModel.DeleteSelectedAsync();
+            return;
+        }
+
+        var confirmed = await ConfirmationDialog.ShowAsync(
+            this,
+            "Delete Article",
+            $"Delete article '{ViewModel.SelectedArticle.Name}'? This cannot be undone.");
+
+        if (confirmed)
+            await ViewModel.DeleteSelectedAsync();
+    }
 
     private async void Refresh_Click(object? sender, RoutedEventArgs e)
         => await ViewModel.LoadAsync();
