@@ -1,0 +1,91 @@
+<Window
+    x:Class="MiniERP.Desktop.Views.Quotations.CustomerPickerWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
+    Title="Select Customer"
+    Width="980"
+    Height="620"
+    MinWidth="760"
+    MinHeight="420"
+    WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="*,Auto,Auto">
+        <dg:DataGrid
+            x:Name="CustomerGrid"
+            Grid.Row="0"
+            Margin="8"
+            AutoGenerateColumns="False"
+            CanUserResizeColumns="True"
+            CanUserSortColumns="True"
+            GridLinesVisibility="All"
+            IsReadOnly="True"
+            DoubleTapped="CustomerGrid_DoubleTapped">
+
+            <dg:DataGrid.Columns>
+                <dg:DataGridTextColumn Width="2.5*" Binding="{Binding Name}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Name" />
+                            <TextBox MinWidth="120" Height="24" Tag="Name" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="2*" Binding="{Binding AddressLine1}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Address" />
+                            <TextBox MinWidth="100" Height="24" Tag="AddressLine1" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="*" Binding="{Binding PostalCode}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Postal" />
+                            <TextBox MinWidth="65" Height="24" Tag="PostalCode" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding City}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="City" />
+                            <TextBox MinWidth="75" Height="24" Tag="City" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding State}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="State" />
+                            <TextBox MinWidth="75" Height="24" Tag="State" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="*" Binding="{Binding Country}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Country" />
+                            <TextBox MinWidth="65" Height="24" Tag="Country" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+            </dg:DataGrid.Columns>
+        </dg:DataGrid>
+
+        <Border Grid.Row="1" Padding="8,4" Background="#F2F2F2" BorderBrush="LightGray" BorderThickness="1,1,1,0">
+            <TextBlock x:Name="StatusText" Foreground="#666666" />
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" Spacing="8">
+            <Button Width="90" IsDefault="True" Click="Ok_Click" Content="OK" />
+            <Button Width="90" IsCancel="True" Click="Cancel_Click" Content="Cancel" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,45 @@
+<Window
+    x:Class="MiniERP.Desktop.Views.Customers.CountryPickerWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
+    Title="Country"
+    Width="420"
+    Height="360"
+    CanResize="False"
+    WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="10">
+        <TextBox
+            x:Name="FilterTextBox"
+            Grid.Row="0"
+            Margin="0,0,0,8"
+            Watermark="Filter country..."
+            TextChanged="Filter_TextChanged" />
+
+        <dg:DataGrid
+            x:Name="CountryGrid"
+            Grid.Row="1"
+            AutoGenerateColumns="False"
+            CanUserResizeColumns="True"
+            CanUserSortColumns="True"
+            GridLinesVisibility="All"
+            IsReadOnly="True"
+            DoubleTapped="CountryGrid_DoubleTapped">
+            <dg:DataGrid.Columns>
+                <dg:DataGridTextColumn Width="80" Binding="{Binding Code}" Header="Code" />
+                <dg:DataGridTextColumn Width="*" Binding="{Binding Name}" Header="Country" />
+            </dg:DataGrid.Columns>
+        </dg:DataGrid>
+
+        <StackPanel
+            Grid.Row="2"
+            Margin="0,10,0,0"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal"
+            Spacing="8">
+            <Button Width="90" Click="Ok_Click" Content="OK" />
+            <Button Width="90" Click="Cancel_Click" Content="Cancel" />
+        </StackPanel>
+    </Grid>
+</Window>

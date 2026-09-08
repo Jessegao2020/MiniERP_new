@@ -11,40 +11,50 @@ namespace MiniERP.ApplicationLayer.Services
         {
             _customerRepository = customerRepository;
         }
+
         public Task<IEnumerable<Customer>> GetAllCustomersAsync()
-        {
-            return _customerRepository.GetAllAsync();
-        }
+            => _customerRepository.GetAllAsync();
+
+        public Task<Customer?> GetCustomerByIdAsync(int id)
+            => _customerRepository.GetByIdAsync(id);
+
+        public Task<Customer?> GetCustomerByCodeAsync(string code)
+            => _customerRepository.GetByCodeAsync(code);
+
+        public Task<IEnumerable<Customer>> SearchCustomersAsync(string keyword)
+            => _customerRepository.SearchAsync(keyword);
 
         public async Task CreateCustomerAsync(Customer customer)
         {
-             await _customerRepository.AddAsync(customer);
-        }
+            ArgumentNullException.ThrowIfNull(customer);
 
-        public Task DeleteCustomerAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
+            if (string.IsNullOrWhiteSpace(customer.Name))
+                throw new ArgumentException("Customer name is required.", nameof(customer));
 
-        public Task<Customer?> GetCustomerByCodeAsync(string code)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Customer?> GetCustomerByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<Customer>> SearchCustomersAsync(string keyword)
-        {
-            throw new NotImplementedException();
+            customer.Name = customer.Name.Trim();
+            await _customerRepository.AddAsync(customer);
         }
 
         public async Task UpdateCustomerAsync(Customer customer)
         {
+            ArgumentNullException.ThrowIfNull(customer);
+
+            if (customer.Id <= 0)
+                throw new ArgumentException("A persisted customer id is required.", nameof(customer));
+
+            if (string.IsNullOrWhiteSpace(customer.Name))
+                throw new ArgumentException("Customer name is required.", nameof(customer));
+
+            customer.Name = customer.Name.Trim();
             await _customerRepository.UpdateAsync(customer);
+        }
+
+        public Task DeleteCustomerAsync(int id)
+        {
+            if (id <= 0)
+                throw new ArgumentOutOfRangeException(nameof(id));
+
+            return _customerRepository.DeleteAsync(id);
         }
     }
 }
-

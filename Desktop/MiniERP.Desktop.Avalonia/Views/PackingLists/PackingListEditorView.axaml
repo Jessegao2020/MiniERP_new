@@ -1,0 +1,94 @@
+<UserControl
+    x:Class="MiniERP.Desktop.Views.PackingLists.PackingListEditorView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
+    <Grid RowDefinitions="Auto,*,Auto">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0" Spacing="3">
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="✓" /><TextBlock Text="Save" FontSize="10" /></StackPanel></Button>
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Discard_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↶" /><TextBlock Text="Discard" FontSize="10" /></StackPanel></Button>
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Delete_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="×" /><TextBlock Text="Delete" FontSize="10" /></StackPanel></Button>
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="ExportPdf_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↓" /><TextBlock Text="Export PDF" FontSize="10" /></StackPanel></Button>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Margin="24,18" Spacing="16" MaxWidth="1200" HorizontalAlignment="Left">
+                <Grid ColumnDefinitions="*,Auto"><TextBlock FontSize="24" FontWeight="SemiBold" Text="Packing List" /><TextBlock Grid.Column="1" VerticalAlignment="Center" Opacity="0.55" Text="{Binding SourceText}" /></Grid>
+
+                <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
+                    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Packing List No." />
+                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PackingList.PackingListNumber, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="User" />
+                    <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Customer" />
+                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,34"><AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type customer name" /><Button Grid.Column="1" Padding="0" Click="PickCustomer_Click" Content="..." /></Grid>
+                    <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Packing Date" />
+                    <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding PackingDate, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Customer Contact" />
+                    <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,34"><AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name" /><Button Grid.Column="1" Padding="0" Click="PickContact_Click" Content="..." /></Grid>
+                    <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="Delivery Term" />
+                    <TextBox Grid.Row="2" Grid.Column="3" Text="{Binding PackingList.DeliveryTerm, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Customer PO No." />
+                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding PackingList.CustomerPoNumber, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" Text="Customer PO Date" />
+                    <DatePicker Grid.Row="3" Grid.Column="3" SelectedDate="{Binding CustomerPoDate, Mode=TwoWay}" />
+                </Grid>
+
+                <StackPanel Spacing="5"><TextBlock Text="Remarks" /><TextBox MinHeight="70" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding PackingList.Remarks, Mode=TwoWay}" /></StackPanel>
+
+                <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
+                    <Grid RowDefinitions="Auto,Auto,235,Auto" RowSpacing="8">
+                        <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Goods" />
+                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto,Auto,Auto" ColumnSpacing="6">
+                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Article" />
+                            <Grid Grid.Column="1" ColumnDefinitions="*,34"><AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type article name" /><Button Grid.Column="1" Padding="0" Click="PickArticle_Click" Content="..." /></Grid>
+                            <Button Grid.Column="2" Padding="10,2" Click="AddItem_Click" Content="Add" />
+                            <Button Grid.Column="3" Padding="10,2" Click="RemoveItem_Click" Content="Remove" />
+                            <Button Grid.Column="4" Width="34" Padding="0" Click="MoveItemUp_Click" Content="↑" ToolTip.Tip="Move selected item up" />
+                            <Button Grid.Column="5" Width="34" Padding="0" Click="MoveItemDown_Click" Content="↓" ToolTip.Tip="Move selected item down" />
+                        </Grid>
+                        <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                            <dg:DataGrid.Columns>
+                                <dg:DataGridTextColumn Width="1.7*" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
+                                <dg:DataGridTextColumn Width="3*" Header="Description EN" Binding="{Binding Description, Mode=TwoWay}" />
+                                <dg:DataGridTemplateColumn Width="90" Header="Qty"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding QuantityText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="80" Header="Unit"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding Unit, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                            </dg:DataGrid.Columns>
+                        </dg:DataGrid>
+                        <TextBlock Grid.Row="3" HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding TotalQuantity, StringFormat='Total Qty: {0:0.####}'}" />
+                    </Grid>
+                </Border>
+
+                <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
+                    <Grid RowDefinitions="Auto,Auto,260,Auto" RowSpacing="8">
+                        <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Packages / Cartons" />
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6">
+                            <Button Padding="10,2" Click="AddPackage_Click" Content="Add Package" />
+                            <Button Padding="10,2" Click="RemovePackage_Click" Content="Remove Package" />
+                            <Button Width="34" Padding="0" Click="MovePackageUp_Click" Content="↑" ToolTip.Tip="Move selected package up" />
+                            <Button Width="34" Padding="0" Click="MovePackageDown_Click" Content="↓" ToolTip.Tip="Move selected package down" />
+                        </StackPanel>
+                        <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" ItemsSource="{Binding Packages}" SelectedItem="{Binding SelectedPackage, Mode=TwoWay}">
+                            <dg:DataGrid.Columns>
+                                <dg:DataGridTextColumn Width="110" Header="Carton No./Range" Binding="{Binding CartonNumber, Mode=TwoWay}" />
+                                <dg:DataGridTemplateColumn Width="65" Header="Count"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding PackageCountText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTextColumn Width="1.7*" Header="Contents" Binding="{Binding Contents, Mode=TwoWay}" />
+                                <dg:DataGridTemplateColumn Width="75" Header="L cm"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding LengthText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="75" Header="W cm"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding WidthText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="75" Header="H cm"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding HeightText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="80" Header="N.W. kg"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding NetWeightText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="80" Header="G.W. kg"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding GrossWeightText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTextColumn Width="75" Header="CBM/ctn" IsReadOnly="True" Binding="{Binding Cbm, StringFormat='{}{0:0.####}'}" />
+                            </dg:DataGrid.Columns>
+                        </dg:DataGrid>
+                        <TextBlock Grid.Row="3" HorizontalAlignment="Right" FontSize="14" FontWeight="SemiBold" Text="{Binding TotalsText}" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1"><TextBlock Foreground="#CB004A" Text="{Binding Status}" /></Border>
+    </Grid>
+</UserControl>
