@@ -89,7 +89,14 @@
                         <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{Binding Customer.AddressLine2, Mode=TwoWay}" />
 
                         <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Country" />
-                        <TextBox Grid.Row="4" Grid.Column="1" Width="90" HorizontalAlignment="Left" Margin="0,2" MaxLength="2" Watermark="US" Text="{Binding Customer.Country, Mode=TwoWay}" />
+                        <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="90,Auto" ColumnSpacing="5">
+                            <TextBox
+                                Grid.Column="0"
+                                Margin="0,2"
+                                IsReadOnly="True"
+                                Text="{Binding Customer.Country, Mode=TwoWay}" />
+                            <Button Grid.Column="1" Margin="0,2" Padding="8,2" Click="PickCountry_Click" Content="..." />
+                        </Grid>
 
                         <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Postal Code" />
                         <TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{Binding Customer.PostalCode, Mode=TwoWay}" />
