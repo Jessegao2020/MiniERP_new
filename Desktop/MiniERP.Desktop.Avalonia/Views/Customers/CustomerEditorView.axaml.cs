@@ -1,5 +1,7 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Customers;
 using MiniERP.Domain;
 
@@ -34,11 +36,33 @@ public partial class CustomerEditorView : UserControl
 
     private async void Delete_Click(object? sender, RoutedEventArgs e)
     {
+        if (!ViewModel.IsNew)
+        {
+            var confirmed = await ConfirmationDialog.ShowAsync(
+                this,
+                "Delete Customer",
+                $"Delete customer '{ViewModel.Customer.Name}'? This cannot be undone.");
+
+            if (!confirmed)
+                return;
+        }
+
         if (!await ViewModel.DeleteAsync())
             return;
 
         Deleted?.Invoke(this, EventArgs.Empty);
         RequestClose?.Invoke(this, EventArgs.Empty);
+    }
+
+    private async void PickCountry_Click(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+
+        var picker = new CountryPickerWindow(ViewModel.Customer.Country);
+        var selectedCode = await picker.ShowDialog<string?>(owner);
+        if (!string.IsNullOrWhiteSpace(selectedCode))
+            ViewModel.SetCountry(selectedCode);
     }
 
     private void Address_Click(object? sender, RoutedEventArgs e)
