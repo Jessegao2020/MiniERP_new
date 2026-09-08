@@ -163,7 +163,11 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
             var articles = await articleService.GetAllArticlesAsync();
 
             Customers.Clear();
-            foreach (var customer in customers.Where(c => c.IsActive).OrderBy(c => c.Name)) Customers.Add(customer);
+            foreach (var customer in customers
+                         .Where(c => c.IsActive || c.Id == Invoice.CustomerId)
+                         .OrderBy(c => c.Name))
+                Customers.Add(customer);
+
             Users.Clear();
             foreach (var user in users.OrderBy(u => u.Name)) Users.Add(user);
             Articles.Clear();
@@ -171,8 +175,8 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
 
             SelectedCustomer = Customers.FirstOrDefault(c => c.Id == Invoice.CustomerId);
             SelectedUser = Users.FirstOrDefault(u => u.Id == Invoice.UserId);
-            if (IsNew && SelectedCustomer is null && Customers.Count == 1) SelectedCustomer = Customers[0];
-            if (IsNew && SelectedUser is null && Users.Count == 1) SelectedUser = Users[0];
+            if (IsNew && Invoice.SourceDocumentType == DocumentSourceType.None && SelectedCustomer is null && Customers.Count == 1) SelectedCustomer = Customers[0];
+            if (IsNew && Invoice.SourceDocumentType == DocumentSourceType.None && SelectedUser is null && Users.Count == 1) SelectedUser = Users[0];
 
             Status = Customers.Count == 0 ? "Create an active customer before saving."
                 : Users.Count == 0 ? "Create a user in Settings > User before saving."
@@ -265,16 +269,23 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
         Invoice.Currency = Currency;
         Invoice.ExchangeRate = ExchangeRateSnapshot;
 
-        if (IsNew || customerChanged || string.IsNullOrWhiteSpace(Invoice.CustomerNameSnapshot))
+        // A converted document already carries the source document's historical snapshot.
+        // Preserve it unless the user deliberately switches the referenced customer/user.
+        if (customerChanged || string.IsNullOrWhiteSpace(Invoice.CustomerNameSnapshot))
         {
             Invoice.CustomerNameSnapshot = SelectedCustomer.Name.Trim();
             Invoice.CustomerAddressSnapshot = BuildCustomerAddress(SelectedCustomer);
             Invoice.CustomerContactSnapshot = SelectedCustomerContact is null ? null : BuildContactName(SelectedCustomerContact);
         }
         else if (SelectedCustomerContact is not null)
-            Invoice.CustomerContactSnapshot = BuildContactName(SelectedCustomerContact);
+        {
+            var selectedContact = BuildContactName(SelectedCustomerContact);
+            if (string.IsNullOrWhiteSpace(Invoice.CustomerContactSnapshot) ||
+                !string.Equals(selectedContact, Invoice.CustomerContactSnapshot, StringComparison.OrdinalIgnoreCase))
+                Invoice.CustomerContactSnapshot = selectedContact;
+        }
 
-        if (IsNew || userChanged || string.IsNullOrWhiteSpace(Invoice.SalesContactNameSnapshot))
+        if (userChanged || string.IsNullOrWhiteSpace(Invoice.SalesContactNameSnapshot))
         {
             Invoice.SalesContactNameSnapshot = SelectedUser.Name.Trim();
             Invoice.SalesContactPhoneSnapshot = SelectedUser.Phone;
@@ -297,7 +308,8 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
         foreach (var contact in SelectedCustomer.Contacts.OrderBy(c => c.Name)) CustomerContacts.Add(contact);
         if (SelectedCustomer.Id == Invoice.CustomerId && !string.IsNullOrWhiteSpace(Invoice.CustomerContactSnapshot))
             SelectedCustomerContact = CustomerContacts.FirstOrDefault(c => string.Equals(BuildContactName(c), Invoice.CustomerContactSnapshot, StringComparison.OrdinalIgnoreCase));
-        if (IsNew && SelectedCustomerContact is null && CustomerContacts.Count == 1) SelectedCustomerContact = CustomerContacts[0];
+        if (IsNew && Invoice.SourceDocumentType == DocumentSourceType.None && SelectedCustomerContact is null && CustomerContacts.Count == 1)
+            SelectedCustomerContact = CustomerContacts[0];
     }
 
     private void AddRow(InvoiceItemRowViewModel row)
