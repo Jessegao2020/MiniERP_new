@@ -94,7 +94,7 @@
                                 Grid.Column="0"
                                 Margin="0,2"
                                 IsReadOnly="True"
-                                Text="{Binding Customer.Country, Mode=TwoWay}" />
+                                Text="{Binding CountryCode, Mode=OneWay}" />
                             <Button Grid.Column="1" Margin="0,2" Padding="8,2" Click="PickCountry_Click" Content="..." />
                         </Grid>
 
