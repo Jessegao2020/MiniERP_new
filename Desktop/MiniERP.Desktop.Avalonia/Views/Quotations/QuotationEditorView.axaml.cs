@@ -45,6 +45,23 @@ public partial class QuotationEditorView : UserControl
         }
     }
 
+    private async void PickArticle_Click(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+
+        var picker = new ArticlePickerWindow(
+            ViewModel.Articles,
+            ViewModel.SelectedArticle?.Id);
+
+        var selected = await picker.ShowDialog<Article?>(owner);
+        if (selected is not null)
+        {
+            ViewModel.SelectedArticle = selected;
+            ViewModel.SetStatusMessage($"Article selected: {selected.Name}");
+        }
+    }
+
     private async void ExportPdf_Click(object? sender, RoutedEventArgs e)
     {
         if (!ViewModel.TryPrepareForExport())
