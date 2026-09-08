@@ -27,7 +27,7 @@ public sealed class PackingListItemRowViewModel : INotifyPropertyChanged
     {
         Id = source.Id;
         SourceArticleId = source.SourceArticleId;
-        _articleName = source.ArticleName;
+        _articleName = source.ArticleName ?? string.Empty;
         _description = source.Description;
         _specification = source.Specification;
         _quantityText = ToText(source.Quantity);
@@ -37,7 +37,11 @@ public sealed class PackingListItemRowViewModel : INotifyPropertyChanged
     public PackingListItemRowViewModel(Article source)
     {
         SourceArticleId = source.Id;
-        _articleName = !string.IsNullOrWhiteSpace(source.Name_EN) ? source.Name_EN : source.Name;
+        _articleName = !string.IsNullOrWhiteSpace(source.Name_EN)
+            ? source.Name_EN
+            : !string.IsNullOrWhiteSpace(source.Name)
+                ? source.Name
+                : $"Article {source.Id}";
         _description = source.Description_EN;
         _specification = !string.IsNullOrWhiteSpace(source.Specs_EN) ? source.Specs_EN : source.Specification;
         _quantityText = "1";
