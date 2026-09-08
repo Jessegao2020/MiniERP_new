@@ -10,7 +10,7 @@ public static class QuotationPdfExporter
     private const float PageHeight = 842f;
     private const float Left = 58f;
     private const float Right = 536f;
-    private const float FooterLineY = 718f;
+    private const float FooterLineY = 750f;
 
     private const float ItemCenterX = 72f;
     private const float ProductX = 88f;
@@ -62,7 +62,13 @@ public static class QuotationPdfExporter
             }
 
             if (plan.DrawTotal)
+            {
                 DrawTotal(canvas, quotation, y);
+            }
+            else if (pageIndex < plans.Count - 1)
+            {
+                DrawContinuedOnNextPage(canvas, y + 8f);
+            }
 
             DrawFooter(canvas, pageIndex + 1, plans.Count);
             document.EndPage();
@@ -277,6 +283,12 @@ public static class QuotationPdfExporter
         canvas.DrawLine(totalLeft, baseline + 5f, Right, baseline + 5f, line);
     }
 
+    private static void DrawContinuedOnNextPage(SKCanvas canvas, float y)
+    {
+        using var notice = Paint(7f, Italic, new SKColor(90, 90, 90));
+        RightText(canvas, "Continued on next page", Right, y, notice);
+    }
+
     private static void DrawFooter(SKCanvas canvas, int pageNumber, int pageCount)
     {
         using var rule = Stroke(0.75f, new SKColor(70, 70, 70));
@@ -287,9 +299,10 @@ public static class QuotationPdfExporter
 
         canvas.DrawLine(Left, FooterLineY, Right, FooterLineY, rule);
 
-        // Footer text should read as a compact information block rather than body text.
-        const float y = 742f;
-        const float lineStep = 11.5f;
+        // Keep the footer compact, but anchor it lower on the physical page so
+        // the printable bottom area is used instead of leaving a large blank band.
+        const float y = 770f;
+        const float lineStep = 10.5f;
         canvas.DrawText("Baoding Forlinx Embedded Technology Co., Ltd", Left + 2f, y, company);
         canvas.DrawText("2699 Xiangyang North Street", Left + 2f, y + lineStep, text);
         canvas.DrawText("071000 Baoding", Left + 2f, y + lineStep * 2f, text);
