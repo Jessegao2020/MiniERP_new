@@ -27,3 +27,13 @@ jobs:
 
       - name: Build Avalonia desktop project
         run: dotnet build Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj --configuration Release --no-restore
+
+      - name: Install EF Core CLI
+        run: dotnet tool install --global dotnet-ef --version 8.0.22
+
+      - name: Verify database migrations
+        run: |
+          rm -f erp.db
+          dotnet ef database update \
+            --project Infrastructure/MiniERP.Infrastructure/MiniERP.Infrastructure.csproj \
+            --startup-project Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj
