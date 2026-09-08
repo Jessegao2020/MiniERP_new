@@ -15,6 +15,11 @@ namespace MiniERP.Infrastructure.Data
         public DbSet<CustomerContact> Contacts { get; set; }
         public DbSet<Quotation> Quotations { get; set; }
         public DbSet<QuotationItem> QuotationItems { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<InvoiceItem> InvoiceItems { get; set; }
+        public DbSet<PackingList> PackingLists { get; set; }
+        public DbSet<PackingListItem> PackingListItems { get; set; }
+        public DbSet<PackingPackage> PackingPackages { get; set; }
         public DbSet<User> Users { get; set; }
     }
 }
