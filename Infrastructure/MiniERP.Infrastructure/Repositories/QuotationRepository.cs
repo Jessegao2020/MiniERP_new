@@ -116,6 +116,22 @@ namespace MiniERP.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public override async Task DeleteAsync(int id)
+        {
+            var hasDownstreamDocuments =
+                await _context.Invoices.AnyAsync(invoice =>
+                    invoice.SourceDocumentType == DocumentSourceType.Quotation &&
+                    invoice.SourceDocumentId == id) ||
+                await _context.PackingLists.AnyAsync(packingList =>
+                    packingList.SourceDocumentType == DocumentSourceType.Quotation &&
+                    packingList.SourceDocumentId == id);
+
+            if (hasDownstreamDocuments)
+                throw new InvalidOperationException("This quotation has downstream sales documents and cannot be deleted.");
+
+            await base.DeleteAsync(id);
+        }
+
         private static void CopyItem(QuotationItem source, QuotationItem target)
         {
             target.SortOrder = source.SortOrder;
