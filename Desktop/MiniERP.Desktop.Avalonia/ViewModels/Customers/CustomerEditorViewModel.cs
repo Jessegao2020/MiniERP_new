@@ -49,6 +49,13 @@ public sealed class CustomerEditorViewModel : INotifyPropertyChanged
             Contacts.Add(CloneContact(contact));
     }
 
+    public void SetCountry(string code)
+    {
+        Customer.Country = code.Trim().ToUpperInvariant();
+        OnPropertyChanged(nameof(Customer));
+        Status = $"Country set to {Customer.Country}.";
+    }
+
     public void AddContact()
     {
         var contact = new CustomerContact
