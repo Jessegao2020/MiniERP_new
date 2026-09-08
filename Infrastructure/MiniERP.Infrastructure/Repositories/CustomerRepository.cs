@@ -118,8 +118,13 @@ namespace MiniERP.Infrastructure.Repositories
 
         public override async Task DeleteAsync(int id)
         {
-            if (await _context.Quotations.AnyAsync(q => q.CustomerId == id))
-                throw new InvalidOperationException("This customer is referenced by one or more quotations and cannot be deleted.");
+            var isReferenced =
+                await _context.Quotations.AnyAsync(q => q.CustomerId == id) ||
+                await _context.Invoices.AnyAsync(i => i.CustomerId == id) ||
+                await _context.PackingLists.AnyAsync(p => p.CustomerId == id);
+
+            if (isReferenced)
+                throw new InvalidOperationException("This customer is referenced by one or more sales documents and cannot be deleted.");
 
             var existing = await _dbSet
                 .Include(customer => customer.Contacts)
