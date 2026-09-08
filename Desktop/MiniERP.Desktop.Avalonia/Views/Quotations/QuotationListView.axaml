@@ -1,0 +1,109 @@
+<UserControl
+    x:Class="MiniERP.Desktop.Views.Quotations.QuotationListView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="3" Spacing="3">
+            <Button Padding="8,2" Click="New_Click" Content="New" />
+            <Button Padding="8,2" Click="Delete_Click" Content="Delete" />
+            <Button Padding="8,2" Click="Refresh_Click" Content="Refresh" />
+        </StackPanel>
+
+        <dg:DataGrid
+            x:Name="QuotationGrid"
+            Grid.Row="1"
+            Margin="0,5,0,0"
+            AutoGenerateColumns="False"
+            CanUserResizeColumns="True"
+            CanUserSortColumns="True"
+            GridLinesVisibility="All"
+            IsReadOnly="True"
+            ItemsSource="{Binding Quotations}"
+            SelectedItem="{Binding SelectedQuotation, Mode=TwoWay}"
+            DoubleTapped="QuotationGrid_DoubleTapped">
+
+            <dg:DataGrid.Columns>
+                <dg:DataGridTextColumn Width="1.6*" Binding="{Binding QuotationNumber}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Quotation No." />
+                            <TextBox MinWidth="105" Height="24" Tag="Number" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="2*" Binding="{Binding Customer.Name}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Customer" />
+                            <TextBox MinWidth="100" Height="24" Tag="Customer" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="1.4*" Binding="{Binding User.Name}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="User" />
+                            <TextBox MinWidth="80" Height="24" Tag="User" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding QuotationDate, StringFormat='{}{0:yyyy-MM-dd}'}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Date" />
+                            <TextBox MinWidth="80" Height="24" Tag="Date" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding ValidUntil, StringFormat='{}{0:yyyy-MM-dd}'}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Valid Until" />
+                            <TextBox MinWidth="80" Height="24" Tag="ValidUntil" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="1.3*" Binding="{Binding DeliveryTerm}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Delivery Term" />
+                            <TextBox MinWidth="80" Height="24" Tag="DeliveryTerm" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="1.3*" Binding="{Binding LeadTime}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Lead Time" />
+                            <TextBox MinWidth="80" Height="24" Tag="LeadTime" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+
+                <dg:DataGridTextColumn Width="1.5*" Binding="{Binding PaymentTerm}">
+                    <dg:DataGridTextColumn.Header>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Payment Term" />
+                            <TextBox MinWidth="90" Height="24" Tag="PaymentTerm" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </StackPanel>
+                    </dg:DataGridTextColumn.Header>
+                </dg:DataGridTextColumn>
+            </dg:DataGrid.Columns>
+        </dg:DataGrid>
+
+        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Foreground="#CB004A" Text="{Binding Status}" />
+                <TextBlock Grid.Column="1" Foreground="#CB004A" Text="Double-click a row to edit" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
