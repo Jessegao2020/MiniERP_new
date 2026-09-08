@@ -1,530 +1,379 @@
-using SkiaSharp;
 using MiniERP.Domain;
+using SkiaSharp;
 
 namespace MiniERP.Desktop.Infrastructure;
 
 public static class QuotationPdfExporter
 {
-    private const float PageWidth = 842f;   // A4 landscape, points
-    private const float PageHeight = 595f;
-    private const float MarginLeft = 24f;
-    private const float MarginRight = 24f;
+    private const float W = 842f;
+    private const float H = 595f;
+    private const float L = 24f;
     private const float FooterTop = 535f;
+    private const float ItemW = 28f;
+    private const float ProductW = 196f;
+    private const float UnitW = 38f;
+    private const float TierW = 177f;
+    private const float QtyW = 39f;
+    private const float PriceW = 62f;
+    private const float AmountW = 76f;
 
-    private static readonly SKTypeface RegularTypeface = FindTypeface(SKFontStyle.Normal);
-    private static readonly SKTypeface BoldTypeface = FindTypeface(SKFontStyle.Bold);
-    private static readonly SKTypeface ItalicTypeface = FindTypeface(SKFontStyle.Italic);
+    private static readonly SKTypeface Regular = Typeface(SKFontStyle.Normal);
+    private static readonly SKTypeface Bold = Typeface(SKFontStyle.Bold);
+    private static readonly SKTypeface Italic = Typeface(SKFontStyle.Italic);
 
-    public static void Export(Quotation quotation, Stream output)
+    public static void Export(Quotation q, Stream output)
     {
-        if (quotation.Items.Count == 0)
+        if (q.Items.Count == 0)
             throw new InvalidOperationException("A quotation needs at least one item before it can be exported.");
 
-        using var document = SKDocument.CreatePdf(output)
+        using var doc = SKDocument.CreatePdf(output)
             ?? throw new InvalidOperationException("Could not create PDF document.");
 
-        var canvas = document.BeginPage(PageWidth, PageHeight);
-        var y = DrawFirstPageHeader(canvas, quotation);
-        y = DrawTableHeader(canvas, quotation, y);
+        var canvas = doc.BeginPage(W, H);
+        var y = FirstHeader(canvas, q);
+        y = TableHeader(canvas, q, y);
 
-        var itemNumber = 1;
-        foreach (var item in quotation.Items)
+        var number = 1;
+        foreach (var item in q.Items)
         {
-            var rowHeight = MeasureItemHeight(item);
-
-            if (y + rowHeight > FooterTop)
+            var height = ItemHeight(item);
+            if (y + height > FooterTop)
             {
-                DrawFooter(canvas, includeBankDetails: false);
-                document.EndPage();
-
-                canvas = document.BeginPage(PageWidth, PageHeight);
-                y = DrawContinuationHeader(canvas);
-                y = DrawTableHeader(canvas, quotation, y);
+                Footer(canvas, false);
+                doc.EndPage();
+                canvas = doc.BeginPage(W, H);
+                y = ContinuationHeader(canvas);
+                y = TableHeader(canvas, q, y);
             }
 
-            DrawItemRow(canvas, itemNumber++, item, y, rowHeight);
-            y += rowHeight;
+            ItemRow(canvas, number++, item, y, height);
+            y += height;
         }
 
-        const float totalsRequiredHeight = 74f;
-        if (y + totalsRequiredHeight > FooterTop)
+        if (y + 74f > FooterTop)
         {
-            DrawFooter(canvas, includeBankDetails: false);
-            document.EndPage();
-
-            canvas = document.BeginPage(PageWidth, PageHeight);
-            y = DrawContinuationHeader(canvas);
-            y += 10f;
+            Footer(canvas, false);
+            doc.EndPage();
+            canvas = doc.BeginPage(W, H);
+            y = ContinuationHeader(canvas) + 10f;
         }
 
-        DrawTotals(canvas, quotation, y);
-        DrawFooter(canvas, includeBankDetails: true);
-
-        document.EndPage();
-        document.Close();
+        Totals(canvas, q, y);
+        Footer(canvas, true);
+        doc.EndPage();
+        doc.Close();
     }
 
-    private static float DrawFirstPageHeader(SKCanvas canvas, Quotation quotation)
+    private static float FirstHeader(SKCanvas c, Quotation q)
     {
-        DrawCompanyHeader(canvas, 18f);
+        CompanyHeader(c);
 
-        using var title = Paint(19f, BoldTypeface);
-        DrawCentered(canvas, "Quotation", PageWidth / 2f, 83f, title);
+        using var title = P(19f, Bold);
+        Center(c, "Quotation", W / 2f, 83f, title);
 
-        using var customerName = Paint(8.5f, BoldTypeface);
-        using var small = Paint(7.3f, RegularTypeface);
-        using var label = Paint(7.5f, BoldTypeface);
-        using var value = Paint(7.5f, RegularTypeface);
+        using var customer = P(8.5f, Bold);
+        using var small = P(7.3f, Regular);
+        using var label = P(7.5f, Bold);
+        using var value = P(7.5f, Regular);
 
-        var customer = FirstNonEmpty(quotation.CustomerNameSnapshot, quotation.Customer?.Name) ?? string.Empty;
-        canvas.DrawText(customer, MarginLeft, 112f, customerName);
+        c.DrawText(q.CustomerNameSnapshot ?? q.Customer?.Name ?? string.Empty, L, 112f, customer);
 
-        var customerContact = FirstNonEmpty(quotation.CustomerContactSnapshot, string.Empty);
-        if (!string.IsNullOrWhiteSpace(customerContact))
-            canvas.DrawText(customerContact, MarginLeft, 126f, small);
+        var contact = q.CustomerContactSnapshot;
+        if (!string.IsNullOrWhiteSpace(contact))
+            c.DrawText(contact, L, 126f, small);
 
-        // The original template keeps the customer block intentionally compact.
-        // If no contact is available, use the first line of the snapshotted address.
-        if (string.IsNullOrWhiteSpace(customerContact) && !string.IsNullOrWhiteSpace(quotation.CustomerAddressSnapshot))
-        {
-            var firstAddressLine = quotation.CustomerAddressSnapshot
-                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                .FirstOrDefault();
+        var lx = 320f;
+        var vx = 405f;
+        var y = 108f;
+        const float step = 12.2f;
 
-            if (!string.IsNullOrWhiteSpace(firstAddressLine))
-                canvas.DrawText(firstAddressLine, MarginLeft, 126f, small);
-        }
+        Meta(c, "Date", q.QuotationDate.ToString("dd.MM.yyyy"), lx, vx, y, label, value); y += step;
+        Meta(c, "Quotation No.", q.QuotationNumber, lx, vx, y, label, value); y += step;
+        Meta(c, "Contact", q.SalesContactNameSnapshot ?? q.User?.Name ?? string.Empty, lx, vx, y, label, value); y += step;
+        Meta(c, "Phone", q.SalesContactPhoneSnapshot ?? q.User?.Phone ?? string.Empty, lx, vx, y, label, value); y += step;
+        Meta(c, "Email", q.SalesContactEmailSnapshot ?? q.User?.Email ?? string.Empty, lx, vx, y, label, value); y += step;
+        Meta(c, "Payment Term", q.PaymentTerm ?? string.Empty, lx, vx, y, label, value); y += step;
+        Meta(c, "Delivery Term", q.DeliveryTerm ?? string.Empty, lx, vx, y, label, value); y += step;
+        Meta(c, "Lead Time", q.LeadTime ?? string.Empty, lx, vx, y, label, value); y += step;
+        Meta(c, "Validity", Validity(q), lx, vx, y, label, value);
 
-        var metaLabelX = 320f;
-        var metaValueX = 405f;
-        var metaY = 108f;
-        const float metaStep = 12.2f;
-
-        DrawMeta(canvas, "Date", quotation.QuotationDate.ToString("dd.MM.yyyy"), metaLabelX, metaValueX, metaY, label, value);
-        metaY += metaStep;
-        DrawMeta(canvas, "Quotation No.", quotation.QuotationNumber, metaLabelX, metaValueX, metaY, label, value);
-        metaY += metaStep;
-        DrawMeta(canvas, "Contact", FirstNonEmpty(quotation.SalesContactNameSnapshot, quotation.User?.Name) ?? string.Empty, metaLabelX, metaValueX, metaY, label, value);
-        metaY += metaStep;
-        DrawMeta(canvas, "Phone", FirstNonEmpty(quotation.SalesContactPhoneSnapshot, quotation.User?.Phone) ?? string.Empty, metaLabelX, metaValueX, metaY, label, value);
-        metaY += metaStep;
-        DrawMeta(canvas, "Email", FirstNonEmpty(quotation.SalesContactEmailSnapshot, quotation.User?.Email) ?? string.Empty, metaLabelX, metaValueX, metaY, label, value);
-        metaY += metaStep;
-        DrawMeta(canvas, "Payment Term", quotation.PaymentTerm ?? string.Empty, metaLabelX, metaValueX, metaY, label, value);
-        metaY += metaStep;
-        DrawMeta(canvas, "Delivery Term", quotation.DeliveryTerm ?? string.Empty, metaLabelX, metaValueX, metaY, label, value);
-        metaY += metaStep;
-        DrawMeta(canvas, "Lead Time", quotation.LeadTime ?? string.Empty, metaLabelX, metaValueX, metaY, label, value);
-        metaY += metaStep;
-        DrawMeta(canvas, "Validity", FormatValidity(quotation), metaLabelX, metaValueX, metaY, label, value);
-
-        using var term = Paint(6.8f, RegularTypeface);
-        var paymentText = string.IsNullOrWhiteSpace(quotation.PaymentTerm)
-            ? "Payment term:"
-            : $"Payment term: {quotation.PaymentTerm.Trim()}";
-
-        canvas.DrawText(paymentText, MarginLeft, 213f, term);
-        canvas.DrawText("Warranty: see attached warranty document", MarginLeft, 227f, term);
+        using var term = P(6.8f, Regular);
+        c.DrawText(string.IsNullOrWhiteSpace(q.PaymentTerm) ? "Payment term:" : $"Payment term: {q.PaymentTerm.Trim()}", L, 213f, term);
+        c.DrawText("Warranty: see attached warranty document", L, 227f, term);
 
         return 244f;
     }
 
-    private static float DrawContinuationHeader(SKCanvas canvas)
+    private static float ContinuationHeader(SKCanvas c)
     {
-        DrawCompanyHeader(canvas, 18f);
+        CompanyHeader(c);
         return 66f;
     }
 
-    private static void DrawCompanyHeader(SKCanvas canvas, float top)
+    private static void CompanyHeader(SKCanvas c)
     {
-        using var company = Paint(10.5f, BoldTypeface);
-        using var tagline = Paint(6.5f, ItalicTypeface);
-        using var rule = LinePaint(0.8f, SKColors.Black);
+        using var company = P(10.5f, Bold);
+        using var tagline = P(6.5f, Italic);
+        using var line = Stroke(0.8f, SKColors.Black);
 
-        DrawCentered(canvas, "Baoding Forlinx Embedded Technology Co., Ltd", PageWidth / 2f, top + 2f, company);
-        DrawCentered(canvas, "Trusted Designer & Manufacturer of System on Module", PageWidth / 2f, top + 14f, tagline);
-        canvas.DrawLine(MarginLeft, top + 28f, PageWidth - MarginRight, top + 28f, rule);
+        Center(c, "Baoding Forlinx Embedded Technology Co., Ltd", W / 2f, 20f, company);
+        Center(c, "Trusted Designer & Manufacturer of System on Module", W / 2f, 32f, tagline);
+        c.DrawLine(L, 46f, W - L, 46f, line);
     }
 
-    private static float DrawTableHeader(SKCanvas canvas, Quotation quotation, float y)
+    private static float TableHeader(SKCanvas c, Quotation q, float y)
     {
-        var layout = TableLayout.Create();
-        using var header = Paint(7.2f, BoldTypeface);
-        using var sub = Paint(6.7f, BoldTypeface);
-        using var line = LinePaint(0.8f, SKColors.Black);
-        using var light = LinePaint(0.35f, new SKColor(205, 205, 205));
+        using var header = P(7.2f, Bold);
+        using var sub = P(6.7f, Bold);
+        using var line = Stroke(0.8f, SKColors.Black);
+        using var light = Stroke(0.35f, new SKColor(205, 205, 205));
 
-        var groupHeight = 17f;
-        var subHeight = 25f;
-        var top = y;
-        var middle = y + groupHeight;
-        var bottom = middle + subHeight;
+        var x = Xs();
+        var middle = y + 17f;
+        var bottom = middle + 25f;
 
-        canvas.DrawLine(layout.Left, top, layout.Right, top, line);
-        canvas.DrawLine(layout.Left, middle, layout.Right, middle, light);
-        canvas.DrawLine(layout.Left, bottom, layout.Right, bottom, line);
+        c.DrawLine(x.Left, y, x.Right, y, line);
+        c.DrawLine(x.Left, middle, x.Right, middle, light);
+        c.DrawLine(x.Left, bottom, x.Right, bottom, line);
 
-        DrawCentered(canvas, "Item", layout.ItemCenter, bottom - 8f, header);
-        DrawCentered(canvas, "Product", layout.ProductCenter, bottom - 8f, header);
-        DrawCentered(canvas, "Unit", layout.UnitCenter, bottom - 8f, header);
+        Center(c, "Item", x.Item + ItemW / 2f, bottom - 8f, header);
+        Center(c, "Product", x.Product + ProductW / 2f, bottom - 8f, header);
+        Center(c, "Unit", x.Unit + UnitW / 2f, bottom - 8f, header);
 
-        DrawCentered(canvas, Fallback(quotation.Tier1Label, "100 Sets"), layout.Tier1Center, y + 12f, header);
-        DrawCentered(canvas, Fallback(quotation.Tier2Label, "500 Sets"), layout.Tier2Center, y + 12f, header);
-        DrawCentered(canvas, Fallback(quotation.Tier3Label, "1000 Sets"), layout.Tier3Center, y + 12f, header);
+        TierHeader(c, q.Tier1Label, q.Currency, x.T1, y, middle, header, sub);
+        TierHeader(c, q.Tier2Label, q.Currency, x.T2, y, middle, header, sub);
+        TierHeader(c, q.Tier3Label, q.Currency, x.T3, y, middle, header, sub);
 
-        DrawTierSubHeader(canvas, layout.Tier1Start, quotation.Currency, middle, sub);
-        DrawTierSubHeader(canvas, layout.Tier2Start, quotation.Currency, middle, sub);
-        DrawTierSubHeader(canvas, layout.Tier3Start, quotation.Currency, middle, sub);
-
-        foreach (var x in layout.VerticalRules)
-            canvas.DrawLine(x, top, x, bottom, light);
+        foreach (var vx in Verticals(x))
+            c.DrawLine(vx, y, vx, bottom, light);
 
         return bottom;
     }
 
-    private static void DrawTierSubHeader(SKCanvas canvas, float tierStart, string currency, float top, SKPaint paint)
+    private static void TierHeader(SKCanvas c, string label, string currency, float x, float y, float middle, SKPaint header, SKPaint sub)
     {
-        const float qtyWidth = 39f;
-        const float priceWidth = 62f;
-        const float amountWidth = 76f;
-
-        DrawCentered(canvas, "Qty", tierStart + qtyWidth / 2f, top + 15f, paint);
-        DrawCentered(canvas, "Unit Price", tierStart + qtyWidth + priceWidth / 2f, top + 10f, paint);
-        DrawCentered(canvas, $"({currency})", tierStart + qtyWidth + priceWidth / 2f, top + 20f, paint);
-        DrawCentered(canvas, "Amount", tierStart + qtyWidth + priceWidth + amountWidth / 2f, top + 15f, paint);
+        Center(c, string.IsNullOrWhiteSpace(label) ? "Tier" : label, x + TierW / 2f, y + 12f, header);
+        Center(c, "Qty", x + QtyW / 2f, middle + 15f, sub);
+        Center(c, "Unit Price", x + QtyW + PriceW / 2f, middle + 10f, sub);
+        Center(c, $"({currency})", x + QtyW + PriceW / 2f, middle + 20f, sub);
+        Center(c, "Amount", x + QtyW + PriceW + AmountW / 2f, middle + 15f, sub);
     }
 
-    private static float MeasureItemHeight(QuotationItem item)
+    private static float ItemHeight(QuotationItem item)
     {
-        using var detail = Paint(6.2f, RegularTypeface);
-        var productWidth = TableLayout.ProductWidth - 8f;
-
-        var detailLines = new List<string>();
-        detailLines.AddRange(WrapMultiline(item.Description, productWidth, detail));
-        detailLines.AddRange(WrapMultiline(item.Specification, productWidth, detail));
-
-        if (item.DiscountPercent > 0m)
-            detailLines.Add($"Discount: {item.DiscountPercent:0.##}%");
-
-        var detailHeight = detailLines.Count * 8.4f;
-        return Math.Max(24f, 17f + detailHeight + 5f);
+        using var detail = P(6.2f, Regular);
+        var lines = DetailLines(item, detail);
+        return Math.Max(24f, 22f + lines.Count * 8.4f);
     }
 
-    private static void DrawItemRow(SKCanvas canvas, int itemNumber, QuotationItem item, float y, float height)
+    private static void ItemRow(SKCanvas c, int n, QuotationItem item, float y, float height)
     {
-        var layout = TableLayout.Create();
-        using var product = Paint(7.1f, BoldTypeface);
-        using var detail = Paint(6.2f, RegularTypeface);
-        using var normal = Paint(6.8f, RegularTypeface);
-        using var emphasizedMoney = Paint(6.8f, item.DiscountPercent > 0m ? BoldTypeface : RegularTypeface);
-        using var light = LinePaint(0.35f, new SKColor(215, 215, 215));
+        var x = Xs();
+        using var product = P(7.1f, Bold);
+        using var detail = P(6.2f, Regular);
+        using var normal = P(6.8f, Regular);
+        using var price = P(6.8f, item.DiscountPercent > 0 ? Bold : Regular);
+        using var light = Stroke(0.35f, new SKColor(215, 215, 215));
 
-        var baseline = y + 13f;
-        DrawCentered(canvas, itemNumber.ToString(), layout.ItemCenter, baseline, normal);
-        canvas.DrawText(item.ArticleName, layout.ProductStart + 4f, baseline, product);
-        DrawCentered(canvas, string.IsNullOrWhiteSpace(item.Unit) ? "PCS" : item.Unit, layout.UnitCenter, baseline, normal);
+        var baseY = y + 13f;
+        Center(c, n.ToString(), x.Item + ItemW / 2f, baseY, normal);
+        c.DrawText(item.ArticleName, x.Product + 4f, baseY, product);
+        Center(c, string.IsNullOrWhiteSpace(item.Unit) ? "PCS" : item.Unit, x.Unit + UnitW / 2f, baseY, normal);
 
-        DrawTierValues(canvas, layout.Tier1Start, item.Quantity, item.NetUnitPrice, item.LineTotal, item.Currency, baseline, normal, emphasizedMoney);
-        DrawTierValues(canvas, layout.Tier2Start, item.Quantity2, item.NetUnitPrice2, item.LineTotal2, item.Currency, baseline, normal, emphasizedMoney);
-        DrawTierValues(canvas, layout.Tier3Start, item.Quantity3, item.NetUnitPrice3, item.LineTotal3, item.Currency, baseline, normal, emphasizedMoney);
+        TierValues(c, x.T1, item.Quantity, item.NetUnitPrice, item.LineTotal, item.Currency, baseY, normal, price);
+        TierValues(c, x.T2, item.Quantity2, item.NetUnitPrice2, item.LineTotal2, item.Currency, baseY, normal, price);
+        TierValues(c, x.T3, item.Quantity3, item.NetUnitPrice3, item.LineTotal3, item.Currency, baseY, normal, price);
 
-        var detailY = baseline + 10f;
-        var detailLines = new List<string>();
-        detailLines.AddRange(WrapMultiline(item.Description, layout.ProductWidth - 8f, detail));
-        detailLines.AddRange(WrapMultiline(item.Specification, layout.ProductWidth - 8f, detail));
-
-        if (item.DiscountPercent > 0m)
-            detailLines.Add($"Discount: {item.DiscountPercent:0.##}%");
-
-        foreach (var lineText in detailLines)
+        var dy = baseY + 10f;
+        foreach (var text in DetailLines(item, detail))
         {
-            canvas.DrawText(lineText, layout.ProductStart + 4f, detailY, detail);
-            detailY += 8.4f;
+            c.DrawText(text, x.Product + 4f, dy, detail);
+            dy += 8.4f;
         }
 
-        canvas.DrawLine(layout.Left, y + height, layout.Right, y + height, light);
-
-        foreach (var x in layout.VerticalRules)
-            canvas.DrawLine(x, y, x, y + height, light);
+        c.DrawLine(x.Left, y + height, x.Right, y + height, light);
+        foreach (var vx in Verticals(x))
+            c.DrawLine(vx, y, vx, y + height, light);
     }
 
-    private static void DrawTierValues(
-        SKCanvas canvas,
-        float tierStart,
-        decimal quantity,
-        decimal unitPrice,
-        decimal amount,
-        string currency,
-        float baseline,
-        SKPaint normal,
-        SKPaint money)
+    private static void TierValues(SKCanvas c, float x, decimal qty, decimal unitPrice, decimal amount, string currency, float y, SKPaint normal, SKPaint price)
     {
-        const float qtyWidth = 39f;
-        const float priceWidth = 62f;
-        const float amountWidth = 76f;
-
-        DrawCentered(canvas, FormatQuantity(quantity), tierStart + qtyWidth / 2f, baseline, normal);
-        DrawRight(canvas, FormatMoney(unitPrice, currency), tierStart + qtyWidth + priceWidth - 4f, baseline, money);
-        DrawRight(canvas, FormatMoney(amount, currency), tierStart + qtyWidth + priceWidth + amountWidth - 4f, baseline, normal);
+        Center(c, Q(qty), x + QtyW / 2f, y, normal);
+        Right(c, Money(unitPrice, currency), x + QtyW + PriceW - 4f, y, price);
+        Right(c, Money(amount, currency), x + TierW - 4f, y, normal);
     }
 
-    private static void DrawTotals(SKCanvas canvas, Quotation quotation, float y)
+    private static void Totals(SKCanvas c, Quotation q, float y)
     {
-        var layout = TableLayout.Create();
-        using var total = Paint(7.4f, BoldTypeface);
-        using var note = Paint(6.5f, ItalicTypeface);
-        using var line = LinePaint(0.9f, SKColors.Black);
+        var x = Xs();
+        using var total = P(7.4f, Bold);
+        using var note = P(6.5f, Italic);
+        using var line = Stroke(0.9f, SKColors.Black);
 
         y += 8f;
-        canvas.DrawLine(layout.Tier1Start, y, layout.Right, y, line);
+        c.DrawLine(x.T1, y, x.Right, y, line);
         y += 16f;
 
-        DrawTierTotal(canvas, layout.Tier1Start, Fallback(quotation.Tier1Label, "100 Sets"), quotation.Tier1Total, quotation.Currency, y, total);
-        DrawTierTotal(canvas, layout.Tier2Start, Fallback(quotation.Tier2Label, "500 Sets"), quotation.Tier2Total, quotation.Currency, y, total);
-        DrawTierTotal(canvas, layout.Tier3Start, Fallback(quotation.Tier3Label, "1000 Sets"), quotation.Tier3Total, quotation.Currency, y, total);
+        TierTotal(c, x.T1, q.Tier1Label, q.Tier1Total, q.Currency, y, total);
+        TierTotal(c, x.T2, q.Tier2Label, q.Tier2Total, q.Currency, y, total);
+        TierTotal(c, x.T3, q.Tier3Label, q.Tier3Total, q.Currency, y, total);
 
         y += 19f;
-        canvas.DrawText(
-            "Note: NRE is a one-time charge and is included in each quantity-tier total above.",
-            layout.Tier1Start,
-            y,
-            note);
+        c.DrawText("Note: NRE is a one-time charge and is included in each quantity-tier total above.", x.T1, y, note);
 
-        if (!string.IsNullOrWhiteSpace(quotation.Remarks))
+        if (!string.IsNullOrWhiteSpace(q.Remarks))
         {
+            using var remarks = P(6.2f, Regular);
             y += 14f;
-            using var remarks = Paint(6.2f, RegularTypeface);
-            var wrapped = WrapMultiline($"Remarks: {quotation.Remarks}", layout.Right - layout.Tier1Start, remarks);
-            foreach (var lineText in wrapped.Take(3))
+            foreach (var text in Wrap($"Remarks: {q.Remarks}", x.Right - x.T1, remarks).Take(3))
             {
-                canvas.DrawText(lineText, layout.Tier1Start, y, remarks);
+                c.DrawText(text, x.T1, y, remarks);
                 y += 8.4f;
             }
         }
     }
 
-    private static void DrawTierTotal(
-        SKCanvas canvas,
-        float tierStart,
-        string label,
-        decimal amount,
-        string currency,
-        float baseline,
-        SKPaint paint)
+    private static void TierTotal(SKCanvas c, float x, string label, decimal amount, string currency, float y, SKPaint paint)
     {
-        var text = $"Total ({label})";
-        canvas.DrawText(text, tierStart + 2f, baseline, paint);
-        DrawRight(canvas, FormatMoney(amount, currency), tierStart + TableLayout.TierWidth - 4f, baseline, paint);
+        c.DrawText($"Total ({(string.IsNullOrWhiteSpace(label) ? "Tier" : label)})", x + 2f, y, paint);
+        Right(c, Money(amount, currency), x + TierW - 4f, y, paint);
     }
 
-    private static void DrawFooter(SKCanvas canvas, bool includeBankDetails)
+    private static void Footer(SKCanvas c, bool bank)
     {
-        using var heading = Paint(6.4f, BoldTypeface);
-        using var text = Paint(6.1f, RegularTypeface);
-        using var line = LinePaint(0.65f, SKColors.Black);
+        using var bold = P(6.4f, Bold);
+        using var text = P(6.1f, Regular);
+        using var line = Stroke(0.65f, SKColors.Black);
 
-        var y = 544f;
-        canvas.DrawLine(MarginLeft, y - 7f, 540f, y - 7f, line);
+        const float y = 544f;
+        c.DrawLine(L, y - 7f, 540f, y - 7f, line);
+        c.DrawText("Baoding Forlinx Embedded Technology Co., Ltd", L, y + 4f, bold);
+        c.DrawText("2699 Xiangyang North Street", L, y + 16f, text);
+        c.DrawText("071000 Baoding", L, y + 28f, text);
+        c.DrawText("China", L, y + 40f, text);
 
-        canvas.DrawText("Baoding Forlinx Embedded Technology Co., Ltd", MarginLeft, y + 4f, heading);
-        canvas.DrawText("2699 Xiangyang North Street", MarginLeft, y + 16f, text);
-        canvas.DrawText("071000 Baoding", MarginLeft, y + 28f, text);
-        canvas.DrawText("China", MarginLeft, y + 40f, text);
+        if (!bank) return;
 
-        if (!includeBankDetails)
-            return;
-
-        var labelX = 280f;
-        var valueX = 346f;
-
-        DrawMeta(canvas, "Bank Name:", "China Construction Bank", labelX, valueX, y + 4f, heading, text);
-        DrawMeta(canvas, "Bank Address:", "345 Longxing West Rd, Baoding, China", labelX, valueX, y + 16f, heading, text);
-        DrawMeta(canvas, "Bank Account:", "1301 4600 6002 2010 0241", labelX, valueX, y + 28f, heading, text);
-        DrawMeta(canvas, "Swift Code:", "PCBCCNBJ", labelX, valueX, y + 40f, heading, text);
+        Meta(c, "Bank Name:", "China Construction Bank", 280f, 346f, y + 4f, bold, text);
+        Meta(c, "Bank Address:", "345 Longxing West Rd, Baoding, China", 280f, 346f, y + 16f, bold, text);
+        Meta(c, "Bank Account:", "1301 4600 6002 2010 0241", 280f, 346f, y + 28f, bold, text);
+        Meta(c, "Swift Code:", "PCBCCNBJ", 280f, 346f, y + 40f, bold, text);
     }
 
-    private static void DrawMeta(
-        SKCanvas canvas,
-        string labelText,
-        string valueText,
-        float labelX,
-        float valueX,
-        float baseline,
-        SKPaint labelPaint,
-        SKPaint valuePaint)
-    {
-        canvas.DrawText(labelText, labelX, baseline, labelPaint);
-        canvas.DrawText(valueText ?? string.Empty, valueX, baseline, valuePaint);
-    }
-
-    private static List<string> WrapMultiline(string? text, float maxWidth, SKPaint paint)
+    private static List<string> DetailLines(QuotationItem item, SKPaint paint)
     {
         var result = new List<string>();
-        if (string.IsNullOrWhiteSpace(text))
-            return result;
-
-        foreach (var paragraph in text
-                     .Replace("\r\n", "\n")
-                     .Replace('\r', '\n')
-                     .Split('\n'))
-        {
-            result.AddRange(WrapText(paragraph.Trim(), maxWidth, paint));
-        }
-
+        result.AddRange(Wrap(item.Description, ProductW - 8f, paint));
+        result.AddRange(Wrap(item.Specification, ProductW - 8f, paint));
+        if (item.DiscountPercent > 0)
+            result.Add($"Discount: {item.DiscountPercent:0.##}%");
         return result;
     }
 
-    private static List<string> WrapText(string text, float maxWidth, SKPaint paint)
+    private static List<string> Wrap(string? text, float max, SKPaint paint)
     {
         var result = new List<string>();
-        if (string.IsNullOrWhiteSpace(text))
-            return result;
+        if (string.IsNullOrWhiteSpace(text)) return result;
 
-        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (words.Length == 0)
-            return result;
-
-        var current = words[0];
-
-        for (var i = 1; i < words.Length; i++)
+        foreach (var paragraph in text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'))
         {
-            var candidate = current + " " + words[i];
-            if (paint.MeasureText(candidate) <= maxWidth)
+            var words = paragraph.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length == 0) continue;
+
+            var current = words[0];
+            for (var i = 1; i < words.Length; i++)
             {
-                current = candidate;
-                continue;
+                var next = current + " " + words[i];
+                if (paint.MeasureText(next) <= max)
+                    current = next;
+                else
+                {
+                    result.Add(current);
+                    current = words[i];
+                }
             }
-
             result.Add(current);
-            current = words[i];
         }
 
-        result.Add(current);
         return result;
     }
 
-    private static string FormatMoney(decimal value, string currency)
-        => string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase)
-            ? $"${value:N2}"
-            : $"CNY {value:N2}";
-
-    private static string FormatQuantity(decimal value)
-        => value == decimal.Truncate(value)
-            ? value.ToString("0")
-            : value.ToString("0.####");
-
-    private static string FormatValidity(Quotation quotation)
+    private static string Validity(Quotation q)
     {
-        if (quotation.ValidUntil is null)
-            return string.Empty;
-
-        var days = (quotation.ValidUntil.Value.Date - quotation.QuotationDate.Date).Days;
-        return days >= 0 ? $"{days} days" : quotation.ValidUntil.Value.ToString("dd.MM.yyyy");
+        if (q.ValidUntil is null) return string.Empty;
+        var days = (q.ValidUntil.Value.Date - q.QuotationDate.Date).Days;
+        return days >= 0 ? $"{days} days" : q.ValidUntil.Value.ToString("dd.MM.yyyy");
     }
 
-    private static string Fallback(string? value, string fallback)
-        => string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+    private static string Money(decimal value, string currency)
+        => currency.Equals("USD", StringComparison.OrdinalIgnoreCase) ? $"${value:N2}" : $"CNY {value:N2}";
 
-    private static string? FirstNonEmpty(string? preferred, string? fallback)
-        => !string.IsNullOrWhiteSpace(preferred) ? preferred : fallback;
+    private static string Q(decimal value)
+        => value == decimal.Truncate(value) ? value.ToString("0") : value.ToString("0.####");
 
-    private static SKPaint Paint(float size, SKTypeface typeface)
-        => new()
-        {
-            IsAntialias = true,
-            Color = SKColors.Black,
-            TextSize = size,
-            Typeface = typeface
-        };
+    private static void Meta(SKCanvas c, string label, string value, float lx, float vx, float y, SKPaint lp, SKPaint vp)
+    {
+        c.DrawText(label, lx, y, lp);
+        c.DrawText(value ?? string.Empty, vx, y, vp);
+    }
 
-    private static SKPaint LinePaint(float width, SKColor color)
-        => new()
-        {
-            IsAntialias = true,
-            Color = color,
-            StrokeWidth = width,
-            Style = SKPaintStyle.Stroke
-        };
+    private static void Center(SKCanvas c, string text, float x, float y, SKPaint p)
+        => c.DrawText(text, x - p.MeasureText(text) / 2f, y, p);
 
-    private static void DrawCentered(SKCanvas canvas, string text, float centerX, float baseline, SKPaint paint)
-        => canvas.DrawText(text, centerX - paint.MeasureText(text) / 2f, baseline, paint);
+    private static void Right(SKCanvas c, string text, float x, float y, SKPaint p)
+        => c.DrawText(text, x - p.MeasureText(text), y, p);
 
-    private static void DrawRight(SKCanvas canvas, string text, float rightX, float baseline, SKPaint paint)
-        => canvas.DrawText(text, rightX - paint.MeasureText(text), baseline, paint);
+    private static SKPaint P(float size, SKTypeface face) => new()
+    {
+        IsAntialias = true,
+        Color = SKColors.Black,
+        TextSize = size,
+        Typeface = face
+    };
 
-    private static SKTypeface FindTypeface(SKFontStyle style)
+    private static SKPaint Stroke(float width, SKColor color) => new()
+    {
+        IsAntialias = true,
+        Color = color,
+        StrokeWidth = width,
+        Style = SKPaintStyle.Stroke
+    };
+
+    private static SKTypeface Typeface(SKFontStyle style)
     {
         foreach (var family in new[] { "Arial", "Liberation Sans", "DejaVu Sans" })
         {
-            var typeface = SKTypeface.FromFamilyName(family, style);
-            if (typeface is not null)
-                return typeface;
+            var result = SKTypeface.FromFamilyName(family, style);
+            if (result is not null) return result;
         }
-
         return SKTypeface.Default;
     }
 
-    private readonly record struct TableLayout(
-        float Left,
-        float Right,
-        float ItemStart,
-        float ProductStart,
-        float UnitStart,
-        float Tier1Start,
-        float Tier2Start,
-        float Tier3Start)
+    private static (float Left, float Item, float Product, float Unit, float T1, float T2, float T3, float Right) Xs()
     {
-        public const float ItemWidth = 28f;
-        public const float ProductWidth = 196f;
-        public const float UnitWidth = 38f;
-        public const float TierWidth = 177f;
+        var item = L;
+        var product = item + ItemW;
+        var unit = product + ProductW;
+        var t1 = unit + UnitW;
+        var t2 = t1 + TierW;
+        var t3 = t2 + TierW;
+        return (L, item, product, unit, t1, t2, t3, t3 + TierW);
+    }
 
-        public float ItemCenter => ItemStart + ItemWidth / 2f;
-        public float ProductCenter => ProductStart + ProductWidth / 2f;
-        public float UnitCenter => UnitStart + UnitWidth / 2f;
-        public float Tier1Center => Tier1Start + TierWidth / 2f;
-        public float Tier2Center => Tier2Start + TierWidth / 2f;
-        public float Tier3Center => Tier3Start + TierWidth / 2f;
-
-        public IEnumerable<float> VerticalRules
-        {
-            get
-            {
-                yield return Left;
-                yield return ProductStart;
-                yield return UnitStart;
-                yield return Tier1Start;
-                yield return Tier1Start + 39f;
-                yield return Tier1Start + 101f;
-                yield return Tier2Start;
-                yield return Tier2Start + 39f;
-                yield return Tier2Start + 101f;
-                yield return Tier3Start;
-                yield return Tier3Start + 39f;
-                yield return Tier3Start + 101f;
-                yield return Right;
-            }
-        }
-
-        public static TableLayout Create()
-        {
-            var itemStart = MarginLeft;
-            var productStart = itemStart + ItemWidth;
-            var unitStart = productStart + ProductWidth;
-            var tier1Start = unitStart + UnitWidth;
-            var tier2Start = tier1Start + TierWidth;
-            var tier3Start = tier2Start + TierWidth;
-            var right = tier3Start + TierWidth;
-
-            return new TableLayout(
-                MarginLeft,
-                right,
-                itemStart,
-                productStart,
-                unitStart,
-                tier1Start,
-                tier2Start,
-                tier3Start);
-        }
+    private static IEnumerable<float> Verticals((float Left, float Item, float Product, float Unit, float T1, float T2, float T3, float Right) x)
+    {
+        yield return x.Left;
+        yield return x.Product;
+        yield return x.Unit;
+        yield return x.T1;
+        yield return x.T1 + QtyW;
+        yield return x.T1 + QtyW + PriceW;
+        yield return x.T2;
+        yield return x.T2 + QtyW;
+        yield return x.T2 + QtyW + PriceW;
+        yield return x.T3;
+        yield return x.T3 + QtyW;
+        yield return x.T3 + QtyW + PriceW;
+        yield return x.Right;
     }
 }
