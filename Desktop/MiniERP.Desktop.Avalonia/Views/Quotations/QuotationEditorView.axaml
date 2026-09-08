@@ -33,9 +33,30 @@
                     </ComboBox>
 
                     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Customer" />
-                    <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
-                    </ComboBox>
+                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,34">
+                        <AutoCompleteBox
+                            x:Name="CustomerAutoComplete"
+                            Grid.Column="0"
+                            Margin="0,0,4,0"
+                            ItemsSource="{Binding Customers}"
+                            SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
+                            ValueMemberBinding="{Binding Name}"
+                            FilterMode="ContainsOrdinal"
+                            MinimumPrefixLength="0"
+                            MaxDropDownHeight="260"
+                            Watermark="Type customer name">
+                            <AutoCompleteBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="2*,*,Auto" ColumnSpacing="8" MinWidth="250">
+                                        <TextBlock Grid.Column="0" Text="{Binding Name}" />
+                                        <TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding City}" />
+                                        <TextBlock Grid.Column="2" Opacity="0.6" Text="{Binding Country}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </AutoCompleteBox.ItemTemplate>
+                        </AutoCompleteBox>
+                        <Button Grid.Column="1" Padding="0" Click="PickCustomer_Click" Content="..." ToolTip.Tip="Open customer list" />
+                    </Grid>
                     <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Quotation Date" />
                     <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding QuotationDate, Mode=TwoWay}" />
 
