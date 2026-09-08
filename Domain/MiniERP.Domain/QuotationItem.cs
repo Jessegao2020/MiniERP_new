@@ -8,6 +8,10 @@ public class QuotationItem : AuditableEntity
     public int QuotationId { get; set; }
     public Quotation? Quotation { get; set; }
 
+    // Persistent display order inside a quotation. This controls editor order
+    // and exported document order independently of database primary keys.
+    public int SortOrder { get; set; }
+
     // This is deliberately not a foreign key. The quotation must remain valid even
     // if the source Article is later removed from the catalogue.
     public int? SourceArticleId { get; set; }
