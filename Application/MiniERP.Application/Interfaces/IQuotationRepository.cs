@@ -6,7 +6,5 @@ namespace MiniERP.ApplicationLayer.Interfaces
     {
         Task<Quotation?> GetByNumberAsync(string quotationNumber);
         Task<IEnumerable<Quotation>> GetByCustomerIdAsync(int customerId);
-        Task<IEnumerable<Quotation>> GetByStatusAsync(string status);
     }
 }
-
