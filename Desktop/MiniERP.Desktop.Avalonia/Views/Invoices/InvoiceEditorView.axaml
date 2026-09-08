@@ -67,7 +67,7 @@
                 <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
                     <Grid RowDefinitions="Auto,Auto,280,Auto" RowSpacing="8">
                         <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Items" />
-                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto" ColumnSpacing="6">
+                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto,Auto,Auto" ColumnSpacing="6">
                             <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Article" />
                             <Grid Grid.Column="1" ColumnDefinitions="*,34">
                                 <AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type article name" />
@@ -75,15 +75,17 @@
                             </Grid>
                             <Button Grid.Column="2" Padding="10,2" Click="AddItem_Click" Content="Add" />
                             <Button Grid.Column="3" Padding="10,2" Click="RemoveItem_Click" Content="Remove" />
+                            <Button Grid.Column="4" Width="34" Padding="0" Click="MoveItemUp_Click" Content="↑" ToolTip.Tip="Move selected item up" />
+                            <Button Grid.Column="5" Width="34" Padding="0" Click="MoveItemDown_Click" Content="↓" ToolTip.Tip="Move selected item down" />
                         </Grid>
                         <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
                             <dg:DataGrid.Columns>
                                 <dg:DataGridTextColumn Width="1.7*" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
                                 <dg:DataGridTextColumn Width="2.6*" Header="Description EN" Binding="{Binding Description, Mode=TwoWay}" />
-                                <dg:DataGridTemplateColumn Width="80" Header="Qty"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding QuantityText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="70" Header="Unit"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding Unit, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="105" Header="Unit Price"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding UnitPriceText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="85" Header="Disc. %"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" Text="{Binding DiscountText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="80" Header="Qty"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding QuantityText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="70" Header="Unit"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding Unit, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="105" Header="Unit Price"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding UnitPriceText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
+                                <dg:DataGridTemplateColumn Width="85" Header="Disc. %"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding DiscountText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
                                 <dg:DataGridTextColumn Width="115" Header="Amount" IsReadOnly="True" Binding="{Binding LineTotal, StringFormat='{}{0:N2}'}" />
                             </dg:DataGrid.Columns>
                         </dg:DataGrid>
