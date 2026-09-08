@@ -268,7 +268,9 @@ public static class QuotationPdfExporter
         using var amount = Paint(9f, Bold);
 
         var totalLeft = 350f;
-        canvas.DrawLine(totalLeft, y, Right, y, line);
+
+        // The product table already has its closing rule. Do not draw another
+        // top rule here, otherwise the Total block appears to have a double line.
         var baseline = y + 15f;
         RightText(canvas, "Total", 438f, baseline, label);
         RightText(canvas, FormatMoney(quotation.TotalAmount, quotation.Currency), Right, baseline, amount);
@@ -278,25 +280,27 @@ public static class QuotationPdfExporter
     private static void DrawFooter(SKCanvas canvas, int pageNumber, int pageCount)
     {
         using var rule = Stroke(0.75f, new SKColor(70, 70, 70));
-        using var company = Paint(6.8f, Bold);
-        using var label = Paint(6.8f, Bold);
-        using var text = Paint(6.8f, Regular);
+        using var company = Paint(6.5f, Bold);
+        using var label = Paint(6.5f, Bold);
+        using var text = Paint(6.5f, Regular);
         using var page = Paint(8f, Regular, new SKColor(90, 90, 90));
 
         canvas.DrawLine(Left, FooterLineY, Right, FooterLineY, rule);
 
-        var y = 747f;
+        // Footer text should read as a compact information block rather than body text.
+        const float y = 742f;
+        const float lineStep = 11.5f;
         canvas.DrawText("Baoding Forlinx Embedded Technology Co., Ltd", Left + 2f, y, company);
-        canvas.DrawText("2699 Xiangyang North Street", Left + 2f, y + 18f, text);
-        canvas.DrawText("071000 Baoding", Left + 2f, y + 36f, text);
-        canvas.DrawText("China", Left + 2f, y + 54f, text);
+        canvas.DrawText("2699 Xiangyang North Street", Left + 2f, y + lineStep, text);
+        canvas.DrawText("071000 Baoding", Left + 2f, y + lineStep * 2f, text);
+        canvas.DrawText("China", Left + 2f, y + lineStep * 3f, text);
 
         const float bankLabelX = 286f;
         const float bankValueX = 359f;
         DrawMeta(canvas, "Bank Name:", "China Construction Bank", bankLabelX, bankValueX, y, label, text);
-        DrawMeta(canvas, "Bank Address:", "345 Longxing West Rd, Baoding, China", bankLabelX, bankValueX, y + 18f, label, text);
-        DrawMeta(canvas, "Bank Account:", "1301 4600 6002 2010 0241", bankLabelX, bankValueX, y + 36f, label, text);
-        DrawMeta(canvas, "Swift Code:", "PCBCCNBJ", bankLabelX, bankValueX, y + 54f, label, text);
+        DrawMeta(canvas, "Bank Address:", "345 Longxing West Rd, Baoding, China", bankLabelX, bankValueX, y + lineStep, label, text);
+        DrawMeta(canvas, "Bank Account:", "1301 4600 6002 2010 0241", bankLabelX, bankValueX, y + lineStep * 2f, label, text);
+        DrawMeta(canvas, "Swift Code:", "PCBCCNBJ", bankLabelX, bankValueX, y + lineStep * 3f, label, text);
 
         CenterText(canvas, $"Page {pageNumber} of {pageCount}", PageWidth / 2f, 826f, page);
     }
