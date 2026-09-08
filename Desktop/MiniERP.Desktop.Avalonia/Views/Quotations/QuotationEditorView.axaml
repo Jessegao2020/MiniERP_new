@@ -61,11 +61,29 @@
                     <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding QuotationDate, Mode=TwoWay}" />
 
                     <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Customer Contact" />
-                    <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="{Binding Title}" /><TextBlock Text="{Binding Name}" /></StackPanel></DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                    <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,34">
+                        <AutoCompleteBox
+                            x:Name="ContactAutoComplete"
+                            Grid.Column="0"
+                            Margin="0,0,4,0"
+                            ItemsSource="{Binding CustomerContacts}"
+                            SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}"
+                            ValueMemberBinding="{Binding Name}"
+                            FilterMode="ContainsOrdinal"
+                            MinimumPrefixLength="0"
+                            MaxDropDownHeight="220"
+                            Watermark="Type contact name">
+                            <AutoCompleteBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <TextBlock Opacity="0.6" Text="{Binding Title}" />
+                                        <TextBlock Text="{Binding Name}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </AutoCompleteBox.ItemTemplate>
+                        </AutoCompleteBox>
+                        <Button Grid.Column="1" Padding="0" Click="PickContact_Click" Content="..." ToolTip.Tip="Open contact list" />
+                    </Grid>
                     <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="Valid Until" />
                     <DatePicker Grid.Row="2" Grid.Column="3" SelectedDate="{Binding ValidUntil, Mode=TwoWay}" />
 
@@ -91,7 +109,7 @@
                 <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
                     <Grid RowDefinitions="Auto,Auto,280,Auto" RowSpacing="8">
                         <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Quotation Items" />
-                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto" ColumnSpacing="6">
+                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto,Auto,Auto" ColumnSpacing="6">
                             <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Article" />
                             <Grid Grid.Column="1" ColumnDefinitions="*,34">
                                 <AutoCompleteBox
@@ -118,6 +136,8 @@
                             </Grid>
                             <Button Grid.Column="2" Padding="10,2" Click="AddItem_Click" Content="Add" />
                             <Button Grid.Column="3" Padding="10,2" Click="RemoveItem_Click" Content="Remove" />
+                            <Button Grid.Column="4" Width="34" Padding="0" Click="MoveItemUp_Click" Content="↑" ToolTip.Tip="Move selected item up" />
+                            <Button Grid.Column="5" Width="34" Padding="0" Click="MoveItemDown_Click" Content="↓" ToolTip.Tip="Move selected item down" />
                         </Grid>
 
                         <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
