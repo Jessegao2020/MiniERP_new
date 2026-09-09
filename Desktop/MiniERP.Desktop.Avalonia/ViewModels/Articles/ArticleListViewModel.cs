@@ -14,6 +14,8 @@ public sealed class ArticleListViewModel : INotifyPropertyChanged
     private readonly Dictionary<string, string> _filters = new(StringComparer.OrdinalIgnoreCase);
     private Article? _selectedArticle;
     private string _status = string.Empty;
+    private string? _sortField;
+    private bool _sortAscending = true;
 
     public ObservableCollection<Article> Articles { get; } = new();
 
@@ -38,6 +40,9 @@ public sealed class ArticleListViewModel : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
+
+    public string? SortField => _sortField;
+    public bool SortAscending => _sortAscending;
 
     public async Task LoadAsync()
     {
@@ -65,6 +70,19 @@ public sealed class ArticleListViewModel : INotifyPropertyChanged
             _filters.Remove(field);
         else
             _filters[field] = normalized;
+
+        ApplyFilters();
+    }
+
+    public void SortBy(string field)
+    {
+        if (string.Equals(_sortField, field, StringComparison.OrdinalIgnoreCase))
+            _sortAscending = !_sortAscending;
+        else
+        {
+            _sortField = field;
+            _sortAscending = true;
+        }
 
         ApplyFilters();
     }
@@ -116,6 +134,8 @@ public sealed class ArticleListViewModel : INotifyPropertyChanged
             });
         }
 
+        filtered = ApplySort(filtered);
+
         Articles.Clear();
         foreach (var article in filtered)
             Articles.Add(article);
@@ -124,6 +144,31 @@ public sealed class ArticleListViewModel : INotifyPropertyChanged
         Status = _filters.Count == 0
             ? $"{Articles.Count} article(s)"
             : $"{Articles.Count} of {_allArticles.Count} article(s)";
+    }
+
+    private IEnumerable<Article> ApplySort(IEnumerable<Article> source)
+    {
+        if (string.IsNullOrWhiteSpace(_sortField))
+            return source;
+
+        return (_sortField, _sortAscending) switch
+        {
+            ("Name", true) => source.OrderBy(article => article.Name, StringComparer.OrdinalIgnoreCase),
+            ("Name", false) => source.OrderByDescending(article => article.Name, StringComparer.OrdinalIgnoreCase),
+            ("Price", true) => source.OrderBy(article => article.Price),
+            ("Price", false) => source.OrderByDescending(article => article.Price),
+            ("MinimumPrice", true) => source.OrderBy(article => article.MinimumPrice),
+            ("MinimumPrice", false) => source.OrderByDescending(article => article.MinimumPrice),
+            ("Description", true) => source.OrderBy(article => article.Description, StringComparer.OrdinalIgnoreCase),
+            ("Description", false) => source.OrderByDescending(article => article.Description, StringComparer.OrdinalIgnoreCase),
+            ("Specification", true) => source.OrderBy(article => article.Specification, StringComparer.OrdinalIgnoreCase),
+            ("Specification", false) => source.OrderByDescending(article => article.Specification, StringComparer.OrdinalIgnoreCase),
+            ("Discount", true) => source.OrderBy(article => article.Discount, StringComparer.OrdinalIgnoreCase),
+            ("Discount", false) => source.OrderByDescending(article => article.Discount, StringComparer.OrdinalIgnoreCase),
+            ("Note", true) => source.OrderBy(article => article.Note, StringComparer.OrdinalIgnoreCase),
+            ("Note", false) => source.OrderByDescending(article => article.Note, StringComparer.OrdinalIgnoreCase),
+            _ => source
+        };
     }
 
     private static bool Matches(string? value, string filter)
