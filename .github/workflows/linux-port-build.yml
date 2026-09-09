@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - linux-port
+      - feature/workspace-navigation
   pull_request:
     branches:
       - master
