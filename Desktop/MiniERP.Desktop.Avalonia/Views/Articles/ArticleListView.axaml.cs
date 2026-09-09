@@ -53,6 +53,49 @@ public partial class ArticleListView : UserControl
         ViewModel.SetFilter(field, textBox.Text);
     }
 
+    private void Sort_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not string field)
+            return;
+
+        ViewModel.SortBy(field);
+        UpdateSortIndicators();
+    }
+
+    private void UpdateSortIndicators()
+    {
+        NameSortArrow.Text = SortArrow("Name");
+        PriceSortArrow.Text = SortArrow("Price");
+        MinimumPriceSortArrow.Text = SortArrow("MinimumPrice");
+        DescriptionSortArrow.Text = SortArrow("Description");
+        SpecificationSortArrow.Text = SortArrow("Specification");
+        DiscountSortArrow.Text = SortArrow("Discount");
+        NoteSortArrow.Text = SortArrow("Note");
+    }
+
+    private string SortArrow(string field)
+    {
+        if (!string.Equals(ViewModel.SortField, field, StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+
+        return ViewModel.SortAscending ? "▲" : "▼";
+    }
+
+    private void ArticleGrid_LoadingRow(object? sender, DataGridRowEventArgs e)
+    {
+        const string alternateClass = "alternate";
+
+        if (e.Row.Index % 2 == 1)
+        {
+            if (!e.Row.Classes.Contains(alternateClass))
+                e.Row.Classes.Add(alternateClass);
+        }
+        else
+        {
+            e.Row.Classes.Remove(alternateClass);
+        }
+    }
+
     private void ArticleGrid_DoubleTapped(object? sender, TappedEventArgs e)
     {
         if (ViewModel.SelectedArticle is not null)
