@@ -63,7 +63,6 @@
             HorizontalGridLinesBrush="#D0D0D0"
             VerticalGridLinesBrush="#D0D0D0"
             RowBackground="White"
-            AlternatingRowBackground="#F7F7F7"
             RowHeight="24"
             IsReadOnly="True"
             SelectionMode="Single"
