@@ -17,7 +17,11 @@ public partial class ArticleListView : UserControl
     {
         InitializeComponent();
         DataContext = new ArticleListViewModel();
-        AttachedToVisualTree += async (_, _) => await ViewModel.LoadAsync();
+        AttachedToVisualTree += async (_, _) =>
+        {
+            await ViewModel.LoadAsync();
+            SyncDataGridColumnWidths();
+        };
     }
 
     public Task ReloadAsync() => ViewModel.LoadAsync();
@@ -79,6 +83,22 @@ public partial class ArticleListView : UserControl
             return string.Empty;
 
         return ViewModel.SortAscending ? "▲" : "▼";
+    }
+
+    private void ArticleTableLayout_SizeChanged(object? sender, SizeChangedEventArgs e)
+        => SyncDataGridColumnWidths();
+
+    private void SyncDataGridColumnWidths()
+    {
+        if (ArticleGrid.Columns.Count != ArticleTableLayout.ColumnDefinitions.Count)
+            return;
+
+        for (var i = 0; i < ArticleGrid.Columns.Count; i++)
+        {
+            var width = ArticleTableLayout.ColumnDefinitions[i].ActualWidth;
+            if (width > 0)
+                ArticleGrid.Columns[i].Width = new DataGridLength(width);
+        }
     }
 
     private void ArticleGrid_LoadingRow(object? sender, DataGridRowEventArgs e)
