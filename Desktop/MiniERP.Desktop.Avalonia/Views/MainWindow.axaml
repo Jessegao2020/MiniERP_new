@@ -2,6 +2,7 @@
     x:Class="MiniERP.Desktop.Views.MainWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:MiniERP.Desktop.Views"
     Title="MiniERP"
     Width="1200"
     Height="800"
@@ -50,6 +51,9 @@
                 </StackPanel></Border>
             </TabItem>
         </TabControl>
-        <Border Grid.Row="2" BorderThickness="1,0,1,1"><TabControl x:Name="ContentTabControl" BorderThickness="0" Padding="0" /></Border>
+
+        <Border Grid.Row="2" BorderThickness="1,0,1,1">
+            <local:WorkspaceTabHost x:Name="ContentTabControl" />
+        </Border>
     </Grid>
 </Window>
