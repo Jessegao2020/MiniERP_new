@@ -360,7 +360,9 @@ public static class ContractXlsxExporter
 
         row = PadToHeight(sheet, row, SignatureTopHeight);
 
-        sheet.Range(row, 1, row, 4).Merge().Value = "For Seller";
+        // Match the PDF signature geometry: two separate blocks with a visible
+        // center gap instead of one continuous line across the whole page.
+        sheet.Range(row, 1, row, 3).Merge().Value = "For Seller";
         sheet.Range(row, 5, row, 8).Merge().Value = "For Buyer";
         sheet.Range(row, 1, row, 8).Style.Font.Bold = true;
         sheet.Range(row, 1, row, 8).Style.Font.FontSize = 8.5;
@@ -371,9 +373,9 @@ public static class ContractXlsxExporter
         sheet.Row(row).Height = 34;
         row++;
 
-        sheet.Range(row, 1, row, 4).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+        sheet.Range(row, 1, row, 3).Style.Border.TopBorder = XLBorderStyleValues.Thin;
         sheet.Range(row, 5, row, 8).Style.Border.TopBorder = XLBorderStyleValues.Thin;
-        sheet.Range(row, 1, row, 4).Merge().Value = "Authorized Signature / Stamp";
+        sheet.Range(row, 1, row, 3).Merge().Value = "Authorized Signature / Stamp";
         sheet.Range(row, 5, row, 8).Merge().Value = "Authorized Signature / Stamp";
         sheet.Range(row, 1, row, 8).Style.Font.FontSize = 7.6;
         sheet.Row(row).Height = 16;
@@ -444,7 +446,10 @@ public static class ContractXlsxExporter
         page.Style.Font.FontColor = XLColor.Gray;
         page.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
         page.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-        sheet.Row(row).Height = 20;
+        // WPS was placing this final 20 pt row on a second physical page. The text
+        // itself needs far less height; 12 pt keeps the page number visible while
+        // giving the first physical page enough room to contain the whole worksheet.
+        sheet.Row(row).Height = 12;
         return row;
     }
 
