@@ -24,6 +24,12 @@ public static class ContractXlsxPdfScaleExporter
     // can push the last footer rows onto an otherwise blank physical page.
     private const double ContinuationHeaderGrowth = 24d;
 
+    // The first-page party/address rows were 15 pt and the metadata rows were 17 pt,
+    // while ContractPdfExporter advances those sections by 12 pt and 13 pt. Tighten
+    // the XLSX to the same cadence, then put the reclaimed space back into the large
+    // bottom spacer so the footer/signature remains anchored at the PDF position.
+    private const double FirstPageSpacingReduction = 38d;
+
     public static void Export(Contract contract, Stream output)
     {
         using var intermediate = new MemoryStream();
@@ -42,9 +48,12 @@ public static class ContractXlsxPdfScaleExporter
             // only the table-header rule and one closing rule after the last item.
             RemoveIntermediateItemRules(sheet);
 
-            // Keep bank-detail labels close to their values instead of leaving a
-            // large visual gap across the merged D:E label cells.
+            // Keep bank-detail labels at the same visual start point as the PDF,
+            // without sticking them directly against the value column.
             AlignFooterBankLabels(sheet);
+
+            if (sheetIndex == 1)
+                NormalizeFirstPageVerticalSpacing(sheet);
 
             // Every page uses the same full-size document header. The continuation
             // marker is separate and small; the brand/title itself is identical.
@@ -148,9 +157,48 @@ public static class ContractXlsxPdfScaleExporter
                 continue;
 
             for (var offset = 0; offset < 4 && row + offset <= lastRow; offset++)
-                sheet.Range(row + offset, 4, row + offset, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+            {
+                var label = sheet.Range(row + offset, 4, row + offset, 5);
+                label.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                label.Style.Alignment.Indent = 5;
+            }
             break;
         }
+    }
+
+    private static void NormalizeFirstPageVerticalSpacing(IXLWorksheet sheet)
+    {
+        // PDF seller/buyer address lines advance by 12 pt.
+        for (var row = 7; row <= 12; row++)
+            sheet.Row(row).Height = 12;
+
+        // PDF Contract No./Date/... metadata advances by 13 pt.
+        for (var row = 14; row <= 18; row++)
+            sheet.Row(row).Height = 13;
+
+        // Keep the bottom-of-page elements at their existing absolute position.
+        // On a single-page contract compensate before the signature block; on a
+        // multi-page first sheet compensate before the footer.
+        var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
+        var signatureRow = 0;
+        for (var row = 1; row <= lastRow; row++)
+        {
+            if (string.Equals(sheet.Cell(row, 1).GetString(), "For Seller", StringComparison.OrdinalIgnoreCase))
+            {
+                signatureRow = row;
+                break;
+            }
+        }
+
+        if (signatureRow > 0)
+        {
+            AddBlankSpaceBefore(sheet, signatureRow, FirstPageSpacingReduction);
+            return;
+        }
+
+        var footerRow = FindFooterCompanyRow(sheet);
+        if (footerRow > 0)
+            AddBlankSpaceBefore(sheet, footerRow, FirstPageSpacingReduction);
     }
 
     private static void NormalizeContinuationHeader(IXLWorksheet sheet, Contract contract)
@@ -210,6 +258,14 @@ public static class ContractXlsxPdfScaleExporter
 
         // Non-final continuation pages have no signature block. Compensate against
         // the footer spacer instead so their footer also remains on the intended A4.
+        var footerRow = FindFooterCompanyRow(sheet);
+        if (footerRow > 0)
+            ReduceBlankSpaceBefore(sheet, footerRow, ContinuationHeaderGrowth);
+    }
+
+    private static int FindFooterCompanyRow(IXLWorksheet sheet)
+    {
+        var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
         var footerRow = 0;
         for (var row = 1; row <= lastRow; row++)
         {
@@ -221,9 +277,21 @@ public static class ContractXlsxPdfScaleExporter
                 footerRow = row;
             }
         }
+        return footerRow;
+    }
 
-        if (footerRow > 0)
-            ReduceBlankSpaceBefore(sheet, footerRow, ContinuationHeaderGrowth);
+    private static void AddBlankSpaceBefore(IXLWorksheet sheet, int anchorRow, double amount)
+    {
+        for (var row = anchorRow - 1; row >= 1; row--)
+        {
+            var range = sheet.Range(row, 1, row, 8);
+            var isBlank = range.Cells().All(cell => string.IsNullOrWhiteSpace(cell.GetString()));
+            if (!isBlank)
+                continue;
+
+            sheet.Row(row).Height += amount;
+            return;
+        }
     }
 
     private static void ReduceBlankSpaceBefore(IXLWorksheet sheet, int anchorRow, double amount)
