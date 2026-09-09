@@ -126,6 +126,35 @@ public partial class ContractEditorView : UserControl
         catch (Exception ex) { ViewModel.SetStatusMessage($"PDF export failed: {ex.Message}"); }
     }
 
+    private async void ExportXlsx_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!ViewModel.TryPrepareForExport()) return;
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel?.StorageProvider is null)
+        {
+            ViewModel.SetStatusMessage("XLSX export is not available on this desktop session.");
+            return;
+        }
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export Editable Contract XLSX",
+            SuggestedFileName = $"{SanitizeFileName(ViewModel.Contract.ContractNumber)}.xlsx",
+            DefaultExtension = "xlsx",
+            FileTypeChoices = new[] { new FilePickerFileType("Excel workbook") { Patterns = new[] { "*.xlsx" } } }
+        });
+        if (file is null) return;
+
+        try
+        {
+            await using var stream = await file.OpenWriteAsync();
+            ContractXlsxExporter.Export(ViewModel.Contract, stream);
+            await stream.FlushAsync();
+            ViewModel.SetStatusMessage("Editable XLSX exported.");
+        }
+        catch (Exception ex) { ViewModel.SetStatusMessage($"XLSX export failed: {ex.Message}"); }
+    }
+
     private async void CreateProforma_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
