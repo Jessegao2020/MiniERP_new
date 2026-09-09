@@ -49,16 +49,21 @@ internal sealed class WorkspaceTabDescriptor
 }
 
 /// <summary>
-/// SAP/SelectLine-style single-row workspace host. It deliberately accepts the
-/// existing TabItem collection used by MainWindow so business navigation,
-/// duplicate prevention and editor close events stay unchanged.
+/// Classic ERP/SelectLine-style single-row MDI workspace tabs. The host keeps
+/// MainWindow's existing TabItem collection so business navigation and duplicate
+/// prevention remain unchanged while the visual shell is replaced.
 /// </summary>
 public sealed class WorkspaceTabHost : UserControl
 {
-    private static readonly IBrush ActiveBrush = new SolidColorBrush(Color.Parse("#0078D4"));
-    private static readonly IBrush ActiveBackground = new SolidColorBrush(Color.Parse("#F4F8FC"));
-    private static readonly IBrush BarBackground = new SolidColorBrush(Color.Parse("#F6F6F6"));
-    private static readonly IBrush SeparatorBrush = new SolidColorBrush(Color.Parse("#D5D5D5"));
+    private const double TabWidth = 150d;
+    private const double TabHeight = 32d;
+
+    private static readonly IBrush BarBackground = new SolidColorBrush(Color.Parse("#D9D9D9"));
+    private static readonly IBrush InactiveBackground = new SolidColorBrush(Color.Parse("#E8E8E8"));
+    private static readonly IBrush ActiveBackground = Brushes.White;
+    private static readonly IBrush TabBorderBrush = new SolidColorBrush(Color.Parse("#969696"));
+    private static readonly IBrush StrongSeparatorBrush = new SolidColorBrush(Color.Parse("#7F7F7F"));
+    private static readonly IBrush NavBackground = new SolidColorBrush(Color.Parse("#E3E3E3"));
 
     private readonly StackPanel _tabPanel;
     private readonly ScrollViewer _scrollViewer;
@@ -80,25 +85,25 @@ public sealed class WorkspaceTabHost : UserControl
 
         var bar = new Border
         {
-            Height = 38,
+            Height = 35,
             Background = BarBackground,
-            BorderBrush = SeparatorBrush,
+            BorderBrush = StrongSeparatorBrush,
             BorderThickness = new Thickness(0, 0, 0, 1)
         };
 
         var barGrid = new Grid();
-        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(30)));
-        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(30)));
+        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(28)));
+        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(28)));
         barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
-        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(36)));
+        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(34)));
 
         _leftButton = CreateNavButton("‹", "Scroll workspaces left");
-        _leftButton.Click += (_, _) => ScrollBy(-220);
+        _leftButton.Click += (_, _) => ScrollBy(-TabWidth * 2);
         Grid.SetColumn(_leftButton, 0);
         barGrid.Children.Add(_leftButton);
 
         _rightButton = CreateNavButton("›", "Scroll workspaces right");
-        _rightButton.Click += (_, _) => ScrollBy(220);
+        _rightButton.Click += (_, _) => ScrollBy(TabWidth * 2);
         Grid.SetColumn(_rightButton, 1);
         barGrid.Children.Add(_rightButton);
 
@@ -106,7 +111,8 @@ public sealed class WorkspaceTabHost : UserControl
         {
             Orientation = Orientation.Horizontal,
             Spacing = 0,
-            VerticalAlignment = VerticalAlignment.Stretch
+            Margin = new Thickness(2, 2, 0, 0),
+            VerticalAlignment = VerticalAlignment.Bottom
         };
 
         _scrollViewer = new ScrollViewer
@@ -114,13 +120,13 @@ public sealed class WorkspaceTabHost : UserControl
             Content = _tabPanel,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalContentAlignment = VerticalAlignment.Stretch
+            VerticalContentAlignment = VerticalAlignment.Bottom
         };
         Grid.SetColumn(_scrollViewer, 2);
         barGrid.Children.Add(_scrollViewer);
 
         _windowsButton = CreateNavButton("▼", "Open windows");
-        _windowsButton.FontSize = 11;
+        _windowsButton.FontSize = 10;
         _windowsButton.Click += (_, _) => ShowOpenWindowsMenu();
         Grid.SetColumn(_windowsButton, 3);
         barGrid.Children.Add(_windowsButton);
@@ -130,6 +136,7 @@ public sealed class WorkspaceTabHost : UserControl
 
         _contentHost = new ContentControl
         {
+            Background = Brushes.White,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Stretch
         };
@@ -181,11 +188,12 @@ public sealed class WorkspaceTabHost : UserControl
             Content = text,
             Padding = new Thickness(0),
             Margin = new Thickness(0),
-            MinWidth = 28,
+            MinWidth = 27,
             MinHeight = 34,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            FontSize = 19,
+            Background = NavBackground,
+            BorderBrush = TabBorderBrush,
+            BorderThickness = new Thickness(0, 0, 1, 0),
+            FontSize = 17,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
@@ -236,22 +244,25 @@ public sealed class WorkspaceTabHost : UserControl
     private Border CreateTabVisual(TabItem tab)
     {
         var descriptor = Descriptor(tab);
+
         var titleText = new TextBlock
         {
             Text = descriptor.DisplayTitle,
-            MaxWidth = 180,
             TextTrimming = TextTrimming.CharacterEllipsis,
-            VerticalAlignment = VerticalAlignment.Center
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            FontSize = 13
         };
 
         var selectButton = new Button
         {
             Content = titleText,
-            Padding = new Thickness(10, 6, 5, 6),
+            Padding = new Thickness(9, 0, 3, 0),
             Margin = new Thickness(0),
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
-            MinHeight = 35,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Left,
             VerticalContentAlignment = VerticalAlignment.Center
         };
@@ -261,35 +272,37 @@ public sealed class WorkspaceTabHost : UserControl
         var closeButton = new Button
         {
             Content = "×",
-            Padding = new Thickness(3, 0),
-            Margin = new Thickness(0, 0, 3, 0),
-            MinWidth = 20,
-            MinHeight = 30,
+            Padding = new Thickness(0),
+            Margin = new Thickness(0),
+            MinWidth = 25,
             FontSize = 12,
             FontWeight = FontWeight.Bold,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
+            HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
         ToolTip.SetTip(closeButton, "Close");
         closeButton.Click += (_, _) => descriptor.Close();
 
-        var panel = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 0,
-            VerticalAlignment = VerticalAlignment.Stretch
-        };
+        var panel = new Grid();
+        panel.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
+        panel.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(26)));
+        Grid.SetColumn(selectButton, 0);
+        Grid.SetColumn(closeButton, 1);
         panel.Children.Add(selectButton);
         panel.Children.Add(closeButton);
 
         var border = new Border
         {
+            Width = TabWidth,
+            Height = TabHeight,
             Child = panel,
-            BorderBrush = Brushes.Transparent,
-            BorderThickness = new Thickness(0, 0, 0, 2),
-            Background = Brushes.Transparent,
-            VerticalAlignment = VerticalAlignment.Stretch
+            BorderBrush = TabBorderBrush,
+            BorderThickness = new Thickness(1),
+            Background = InactiveBackground,
+            Margin = new Thickness(0, 0, -1, 0),
+            VerticalAlignment = VerticalAlignment.Bottom
         };
         border.ContextMenu = BuildTabContextMenu(tab);
         return border;
@@ -338,8 +351,14 @@ public sealed class WorkspaceTabHost : UserControl
         foreach (var pair in _visuals)
         {
             var active = ReferenceEquals(pair.Key, _selectedItem);
-            pair.Value.BorderBrush = active ? ActiveBrush : Brushes.Transparent;
-            pair.Value.Background = active ? ActiveBackground : Brushes.Transparent;
+            pair.Value.Background = active ? ActiveBackground : InactiveBackground;
+            pair.Value.BorderBrush = active ? StrongSeparatorBrush : TabBorderBrush;
+
+            // A selected top tab visually merges into the white document area below,
+            // like the classic SelectLine/SAP MDI tabs rather than a browser underline.
+            pair.Value.BorderThickness = active
+                ? new Thickness(1, 1, 1, 0)
+                : new Thickness(1);
         }
     }
 
