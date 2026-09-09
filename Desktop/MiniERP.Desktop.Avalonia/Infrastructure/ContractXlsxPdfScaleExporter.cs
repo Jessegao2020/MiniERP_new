@@ -17,6 +17,13 @@ public static class ContractXlsxPdfScaleExporter
     // Final horizontal tuning from side-by-side PDF/XLSX print preview.
     private const double ColumnWidthFactor = 0.625d;
 
+    // ContractXlsxExporter originally lays out continuation sheets using its compact
+    // header. NormalizeContinuationHeader expands rows 1-5 from 66 pt to 90 pt.
+    // The original bottom spacer was already calculated before that expansion, so
+    // without compensating for these 24 pt the signature/footer shifts down and WPS
+    // can push the last footer rows onto an otherwise blank physical page.
+    private const double ContinuationHeaderGrowth = 24d;
+
     public static void Export(Contract contract, Stream output)
     {
         using var intermediate = new MemoryStream();
@@ -42,7 +49,10 @@ public static class ContractXlsxPdfScaleExporter
             // Every page uses the same full-size document header. The continuation
             // marker is separate and small; the brand/title itself is identical.
             if (sheetIndex > 1)
+            {
                 NormalizeContinuationHeader(sheet, contract);
+                CompensateContinuationHeaderGrowth(sheet);
+            }
 
             var page = sheet.PageSetup;
             page.PageOrientation = XLPageOrientation.Portrait;
@@ -173,6 +183,68 @@ public static class ContractXlsxPdfScaleExporter
         continued.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
         continued.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         sheet.Row(5).Height = 14;
+    }
+
+    private static void CompensateContinuationHeaderGrowth(IXLWorksheet sheet)
+    {
+        var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
+
+        // On the final page, take the extra header height out of the large blank
+        // spacer immediately before the signature block. This moves both signature
+        // and footer back to the absolute Y positions calculated by the base layout.
+        var signatureRow = 0;
+        for (var row = 1; row <= lastRow; row++)
+        {
+            if (string.Equals(sheet.Cell(row, 1).GetString(), "For Seller", StringComparison.OrdinalIgnoreCase))
+            {
+                signatureRow = row;
+                break;
+            }
+        }
+
+        if (signatureRow > 0)
+        {
+            ReduceBlankSpaceBefore(sheet, signatureRow, ContinuationHeaderGrowth);
+            return;
+        }
+
+        // Non-final continuation pages have no signature block. Compensate against
+        // the footer spacer instead so their footer also remains on the intended A4.
+        var footerRow = 0;
+        for (var row = 1; row <= lastRow; row++)
+        {
+            if (string.Equals(
+                    sheet.Cell(row, 1).GetString(),
+                    "Baoding Forlinx Embedded Technology Co., Ltd",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                footerRow = row;
+            }
+        }
+
+        if (footerRow > 0)
+            ReduceBlankSpaceBefore(sheet, footerRow, ContinuationHeaderGrowth);
+    }
+
+    private static void ReduceBlankSpaceBefore(IXLWorksheet sheet, int anchorRow, double amount)
+    {
+        var remaining = amount;
+        for (var row = anchorRow - 1; row >= 1 && remaining > 0.01d; row--)
+        {
+            var range = sheet.Range(row, 1, row, 8);
+            var isBlank = range.Cells().All(cell => string.IsNullOrWhiteSpace(cell.GetString()));
+            if (!isBlank)
+                continue;
+
+            var currentHeight = sheet.Row(row).Height;
+            var reducible = Math.Max(0d, currentHeight - 4d);
+            if (reducible <= 0d)
+                continue;
+
+            var reduction = Math.Min(reducible, remaining);
+            sheet.Row(row).Height = currentHeight - reduction;
+            remaining -= reduction;
+        }
     }
 
     private static void RemoveFitToPageFlags(MemoryStream packageStream)
