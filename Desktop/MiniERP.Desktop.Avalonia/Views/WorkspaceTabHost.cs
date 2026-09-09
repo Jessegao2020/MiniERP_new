@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 
@@ -27,7 +28,7 @@ internal sealed class WorkspaceTabDescriptor
     {
         if (string.IsNullOrWhiteSpace(title)) return string.Empty;
 
-        var separators = new[]
+        var prefixes = new[]
         {
             "Customer Details: ",
             "Quotation: ",
@@ -37,7 +38,7 @@ internal sealed class WorkspaceTabDescriptor
             "P/L: "
         };
 
-        foreach (var prefix in separators)
+        foreach (var prefix in prefixes)
         {
             if (title.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 return title[prefix.Length..];
@@ -49,8 +50,8 @@ internal sealed class WorkspaceTabDescriptor
 
 /// <summary>
 /// SAP/SelectLine-style single-row workspace host. It deliberately accepts the
-/// existing TabItem collection used by MainWindow so the business navigation,
-/// duplicate prevention and editor close events do not need to be rewritten.
+/// existing TabItem collection used by MainWindow so business navigation,
+/// duplicate prevention and editor close events stay unchanged.
 /// </summary>
 public sealed class WorkspaceTabHost : UserControl
 {
@@ -195,16 +196,17 @@ public sealed class WorkspaceTabHost : UserControl
     private void ItemsSource_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         var previousSelected = _selectedItem;
-        var previousIndex = previousSelected is null ? -1 : Tabs().IndexOf(previousSelected);
+        var previousTabs = Tabs();
+        var previousIndex = previousSelected is null ? -1 : previousTabs.IndexOf(previousSelected);
         RebuildTabs();
 
-        if (previousSelected is not null && Tabs().Contains(previousSelected))
+        var tabs = Tabs();
+        if (previousSelected is not null && tabs.Contains(previousSelected))
         {
             SelectTab(previousSelected);
             return;
         }
 
-        var tabs = Tabs();
         if (tabs.Count == 0)
         {
             SelectTab(null);
@@ -236,7 +238,7 @@ public sealed class WorkspaceTabHost : UserControl
         var descriptor = Descriptor(tab);
         var titleText = new TextBlock
         {
-            Text = descriptor?.DisplayTitle ?? tab.Header?.ToString() ?? string.Empty,
+            Text = descriptor.DisplayTitle,
             MaxWidth = 180,
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center
@@ -253,7 +255,7 @@ public sealed class WorkspaceTabHost : UserControl
             HorizontalContentAlignment = HorizontalAlignment.Left,
             VerticalContentAlignment = VerticalAlignment.Center
         };
-        ToolTip.SetTip(selectButton, descriptor?.FullTitle ?? titleText.Text);
+        ToolTip.SetTip(selectButton, descriptor.FullTitle);
         selectButton.Click += (_, _) => SelectTab(tab);
 
         var closeButton = new Button
@@ -270,7 +272,7 @@ public sealed class WorkspaceTabHost : UserControl
             VerticalContentAlignment = VerticalAlignment.Center
         };
         ToolTip.SetTip(closeButton, "Close");
-        closeButton.Click += (_, _) => descriptor?.Close();
+        closeButton.Click += (_, _) => descriptor.Close();
 
         var panel = new StackPanel
         {
@@ -298,14 +300,14 @@ public sealed class WorkspaceTabHost : UserControl
         var menu = new ContextMenu();
 
         var close = new MenuItem { Header = "Close" };
-        close.Click += (_, _) => Descriptor(tab)?.Close();
+        close.Click += (_, _) => Descriptor(tab).Close();
         menu.Items.Add(close);
 
         var closeOthers = new MenuItem { Header = "Close Others" };
         closeOthers.Click += (_, _) =>
         {
             foreach (var other in Tabs().Where(candidate => !ReferenceEquals(candidate, tab)).ToList())
-                Descriptor(other)?.Close();
+                Descriptor(other).Close();
             SelectTab(tab);
         };
         menu.Items.Add(closeOthers);
@@ -314,7 +316,7 @@ public sealed class WorkspaceTabHost : UserControl
         closeAll.Click += (_, _) =>
         {
             foreach (var item in Tabs().ToList())
-                Descriptor(item)?.Close();
+                Descriptor(item).Close();
         };
         menu.Items.Add(closeAll);
 
@@ -356,10 +358,11 @@ public sealed class WorkspaceTabHost : UserControl
             {
                 var current = tab;
                 var descriptor = Descriptor(current);
-                var title = descriptor?.FullTitle ?? current.Header?.ToString() ?? "Window";
                 var item = new MenuItem
                 {
-                    Header = ReferenceEquals(current, _selectedItem) ? $"✓  {title}" : title
+                    Header = ReferenceEquals(current, _selectedItem)
+                        ? $"✓  {descriptor.FullTitle}"
+                        : descriptor.FullTitle
                 };
                 item.Click += (_, _) => SelectTab(current);
                 menu.Items.Add(item);
@@ -370,7 +373,7 @@ public sealed class WorkspaceTabHost : UserControl
             closeAll.Click += (_, _) =>
             {
                 foreach (var tab in Tabs().ToList())
-                    Descriptor(tab)?.Close();
+                    Descriptor(tab).Close();
             };
             menu.Items.Add(closeAll);
         }
@@ -397,6 +400,22 @@ public sealed class WorkspaceTabHost : UserControl
     private List<TabItem> Tabs()
         => _itemsSource?.Cast<object>().OfType<TabItem>().ToList() ?? new List<TabItem>();
 
-    private static WorkspaceTabDescriptor? Descriptor(TabItem tab)
-        => tab.Header as WorkspaceTabDescriptor;
+    private static WorkspaceTabDescriptor Descriptor(TabItem tab)
+    {
+        if (tab.Header is WorkspaceTabDescriptor descriptor)
+            return descriptor;
+
+        if (tab.Header is StackPanel headerPanel)
+        {
+            var title = headerPanel.Children.OfType<TextBlock>().FirstOrDefault()?.Text ?? "Window";
+            var originalClose = headerPanel.Children.OfType<Button>().LastOrDefault();
+            return new WorkspaceTabDescriptor(
+                string.Empty,
+                title,
+                () => originalClose?.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+        }
+
+        var fallbackTitle = tab.Header?.ToString() ?? "Window";
+        return new WorkspaceTabDescriptor(string.Empty, fallbackTitle, () => { });
+    }
 }
