@@ -56,14 +56,12 @@ internal sealed class WorkspaceTabDescriptor
 public sealed class WorkspaceTabHost : UserControl
 {
     private const double TabWidth = 150d;
-    private const double TabHeight = 32d;
+    private const double TabHeight = 24d;
 
-    private static readonly IBrush BarBackground = new SolidColorBrush(Color.Parse("#D9D9D9"));
-    private static readonly IBrush InactiveBackground = new SolidColorBrush(Color.Parse("#E8E8E8"));
+    private static readonly IBrush InactiveBackground = new SolidColorBrush(Color.Parse("#F0F0F0"));
     private static readonly IBrush ActiveBackground = Brushes.White;
-    private static readonly IBrush TabBorderBrush = new SolidColorBrush(Color.Parse("#969696"));
-    private static readonly IBrush StrongSeparatorBrush = new SolidColorBrush(Color.Parse("#7F7F7F"));
-    private static readonly IBrush NavBackground = new SolidColorBrush(Color.Parse("#E3E3E3"));
+    private static readonly IBrush TabBorderBrush = new SolidColorBrush(Color.Parse("#A8A8A8"));
+    private static readonly IBrush ActiveBorderBrush = new SolidColorBrush(Color.Parse("#858585"));
 
     private readonly StackPanel _tabPanel;
     private readonly ScrollViewer _scrollViewer;
@@ -83,19 +81,20 @@ public sealed class WorkspaceTabHost : UserControl
         root.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         root.RowDefinitions.Add(new RowDefinition(new GridLength(1, GridUnitType.Star)));
 
+        // Keep the unused part of the document-tab strip visually identical to the
+        // normal window/content background. SelectLine only paints the tabs themselves.
         var bar = new Border
         {
-            Height = 35,
-            Background = BarBackground,
-            BorderBrush = StrongSeparatorBrush,
-            BorderThickness = new Thickness(0, 0, 0, 1)
+            Height = 26,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0)
         };
 
         var barGrid = new Grid();
-        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(28)));
-        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(28)));
+        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(24)));
+        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(24)));
         barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
-        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(34)));
+        barGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(26)));
 
         _leftButton = CreateNavButton("‹", "Scroll workspaces left");
         _leftButton.Click += (_, _) => ScrollBy(-TabWidth * 2);
@@ -111,13 +110,14 @@ public sealed class WorkspaceTabHost : UserControl
         {
             Orientation = Orientation.Horizontal,
             Spacing = 0,
-            Margin = new Thickness(2, 2, 0, 0),
+            Margin = new Thickness(1, 1, 0, 0),
             VerticalAlignment = VerticalAlignment.Bottom
         };
 
         _scrollViewer = new ScrollViewer
         {
             Content = _tabPanel,
+            Background = Brushes.Transparent,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
             VerticalContentAlignment = VerticalAlignment.Bottom
@@ -126,7 +126,7 @@ public sealed class WorkspaceTabHost : UserControl
         barGrid.Children.Add(_scrollViewer);
 
         _windowsButton = CreateNavButton("▼", "Open windows");
-        _windowsButton.FontSize = 10;
+        _windowsButton.FontSize = 9;
         _windowsButton.Click += (_, _) => ShowOpenWindowsMenu();
         Grid.SetColumn(_windowsButton, 3);
         barGrid.Children.Add(_windowsButton);
@@ -188,12 +188,12 @@ public sealed class WorkspaceTabHost : UserControl
             Content = text,
             Padding = new Thickness(0),
             Margin = new Thickness(0),
-            MinWidth = 27,
-            MinHeight = 34,
-            Background = NavBackground,
-            BorderBrush = TabBorderBrush,
-            BorderThickness = new Thickness(0, 0, 1, 0),
-            FontSize = 17,
+            MinWidth = 22,
+            MinHeight = 24,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            FontSize = 14,
+            Opacity = 0.72,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
@@ -251,13 +251,13 @@ public sealed class WorkspaceTabHost : UserControl
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Left,
-            FontSize = 13
+            FontSize = 12
         };
 
         var selectButton = new Button
         {
             Content = titleText,
-            Padding = new Thickness(9, 0, 3, 0),
+            Padding = new Thickness(8, 0, 2, 0),
             Margin = new Thickness(0),
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
@@ -274,11 +274,12 @@ public sealed class WorkspaceTabHost : UserControl
             Content = "×",
             Padding = new Thickness(0),
             Margin = new Thickness(0),
-            MinWidth = 25,
-            FontSize = 12,
-            FontWeight = FontWeight.Bold,
+            MinWidth = 20,
+            FontSize = 11,
+            FontWeight = FontWeight.Normal,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
+            Opacity = 0.75,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
@@ -287,7 +288,7 @@ public sealed class WorkspaceTabHost : UserControl
 
         var panel = new Grid();
         panel.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
-        panel.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(26)));
+        panel.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(22)));
         Grid.SetColumn(selectButton, 0);
         Grid.SetColumn(closeButton, 1);
         panel.Children.Add(selectButton);
@@ -352,10 +353,9 @@ public sealed class WorkspaceTabHost : UserControl
         {
             var active = ReferenceEquals(pair.Key, _selectedItem);
             pair.Value.Background = active ? ActiveBackground : InactiveBackground;
-            pair.Value.BorderBrush = active ? StrongSeparatorBrush : TabBorderBrush;
+            pair.Value.BorderBrush = active ? ActiveBorderBrush : TabBorderBrush;
 
-            // A selected top tab visually merges into the white document area below,
-            // like the classic SelectLine/SAP MDI tabs rather than a browser underline.
+            // Selected top tab merges subtly into the white document surface below.
             pair.Value.BorderThickness = active
                 ? new Thickness(1, 1, 1, 0)
                 : new Thickness(1);
@@ -411,6 +411,13 @@ public sealed class WorkspaceTabHost : UserControl
     private void UpdateNavigationState()
     {
         var count = Tabs().Count;
+
+        // When there are no documents open, leave an unobtrusive strip in the same
+        // background color rather than showing a wide grey toolbar.
+        _leftButton.IsVisible = count > 0;
+        _rightButton.IsVisible = count > 0;
+        _windowsButton.IsVisible = count > 0;
+
         _leftButton.IsEnabled = count > 1;
         _rightButton.IsEnabled = count > 1;
         _windowsButton.IsEnabled = count > 0;
