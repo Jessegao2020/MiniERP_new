@@ -5,15 +5,33 @@
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
 
     <UserControl.Styles>
+        <Style Selector="Button.grid-header">
+            <Setter Property="Height" Value="24" />
+            <Setter Property="MinHeight" Value="24" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="5,0,4,0" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Background" Value="#E8E8E8" />
+            <Setter Property="BorderBrush" Value="#AFAFAF" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="Foreground" Value="#202020" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.grid-header:pointerover">
+            <Setter Property="Background" Value="#DCDCDC" />
+        </Style>
+
         <Style Selector="TextBox.grid-filter">
             <Setter Property="Height" Value="22" />
             <Setter Property="MinHeight" Value="22" />
             <Setter Property="Margin" Value="0" />
             <Setter Property="Padding" Value="5,0,4,0" />
             <Setter Property="CornerRadius" Value="0" />
-            <Setter Property="Background" Value="#FBFBFB" />
+            <Setter Property="Background" Value="#FFF8D8" />
             <Setter Property="BorderBrush" Value="#B7B7B7" />
-            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
             <Setter Property="FontSize" Value="11" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -47,116 +65,119 @@
             <Button Padding="8,2" Click="Refresh_Click" Content="Refresh" />
         </StackPanel>
 
-        <dg:DataGrid
-            x:Name="ArticleGrid"
-            Grid.Row="1"
-            Margin="0,4,0,0"
-            AutoGenerateColumns="False"
-            Background="White"
-            BorderBrush="#AFAFAF"
-            BorderThickness="1"
-            CanUserResizeColumns="True"
-            CanUserSortColumns="True"
-            ColumnHeaderHeight="43"
-            FontSize="12"
-            GridLinesVisibility="All"
-            HorizontalGridLinesBrush="#D0D0D0"
-            VerticalGridLinesBrush="#D0D0D0"
-            RowBackground="White"
-            RowHeight="24"
-            IsReadOnly="True"
-            SelectionMode="Single"
-            ItemsSource="{Binding Articles}"
-            SelectedItem="{Binding SelectedArticle, Mode=TwoWay}"
-            DoubleTapped="ArticleGrid_DoubleTapped">
-
-            <dg:DataGrid.Styles>
-                <Style Selector="DataGridColumnHeader">
-                    <Setter Property="Background" Value="#E9E9E9" />
-                    <Setter Property="Foreground" Value="#202020" />
-                    <Setter Property="BorderBrush" Value="#AFAFAF" />
-                    <Setter Property="BorderThickness" Value="0,0,1,1" />
-                    <Setter Property="Padding" Value="0" />
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                    <Setter Property="VerticalContentAlignment" Value="Stretch" />
-                </Style>
-                <Style Selector="DataGridCell">
-                    <Setter Property="Padding" Value="5,2" />
-                    <Setter Property="VerticalContentAlignment" Value="Center" />
-                </Style>
-                <Style Selector="DataGridRow:pointerover">
-                    <Setter Property="Background" Value="#EEF5FA" />
-                </Style>
-                <Style Selector="DataGridRow:selected">
-                    <Setter Property="Background" Value="#D7E8F5" />
-                </Style>
-            </dg:DataGrid.Styles>
-
-            <dg:DataGrid.Columns>
-                <dg:DataGridTextColumn Width="3*" Binding="{Binding Name}">
-                    <dg:DataGridTextColumn.Header>
-                        <Grid RowDefinitions="20,22">
-                            <TextBlock Text="Name" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Name" Watermark="Filter" TextChanged="Filter_TextChanged" />
+        <Grid Grid.Row="1" Margin="0,4,0,0" RowDefinitions="24,22,*">
+            <!-- Classic ERP header: its only job is labeling and sorting. -->
+            <Border Grid.Row="0" BorderBrush="#AFAFAF" BorderThickness="1,1,0,0">
+                <Grid ColumnDefinitions="3*,*,*,2*,2*,2*,2*">
+                    <Button Grid.Column="0" Classes="grid-header" Tag="Name" Click="Sort_Click">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Name" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Name="NameSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                         </Grid>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="*" Binding="{Binding Price}">
-                    <dg:DataGridTextColumn.Header>
-                        <Grid RowDefinitions="20,22">
-                            <TextBlock Text="Price" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Price" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                    </Button>
+                    <Button Grid.Column="1" Classes="grid-header" Tag="Price" Click="Sort_Click">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Price" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Name="PriceSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                         </Grid>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="*" Binding="{Binding MinimumPrice}">
-                    <dg:DataGridTextColumn.Header>
-                        <Grid RowDefinitions="20,22">
-                            <TextBlock Text="Min. Price" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="MinimumPrice" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                    </Button>
+                    <Button Grid.Column="2" Classes="grid-header" Tag="MinimumPrice" Click="Sort_Click">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Min. Price" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Name="MinimumPriceSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                         </Grid>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding Description}">
-                    <dg:DataGridTextColumn.Header>
-                        <Grid RowDefinitions="20,22">
-                            <TextBlock Text="Description" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Description" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                    </Button>
+                    <Button Grid.Column="3" Classes="grid-header" Tag="Description" Click="Sort_Click">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Description" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Name="DescriptionSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                         </Grid>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding Specification}">
-                    <dg:DataGridTextColumn.Header>
-                        <Grid RowDefinitions="20,22">
-                            <TextBlock Text="Specification" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Specification" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                    </Button>
+                    <Button Grid.Column="4" Classes="grid-header" Tag="Specification" Click="Sort_Click">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Specification" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Name="SpecificationSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                         </Grid>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding Discount}">
-                    <dg:DataGridTextColumn.Header>
-                        <Grid RowDefinitions="20,22">
-                            <TextBlock Text="Discount" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Discount" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                    </Button>
+                    <Button Grid.Column="5" Classes="grid-header" Tag="Discount" Click="Sort_Click">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Discount" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Name="DiscountSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                         </Grid>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding Note}">
-                    <dg:DataGridTextColumn.Header>
-                        <Grid RowDefinitions="20,22">
-                            <TextBlock Text="Note" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Note" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                    </Button>
+                    <Button Grid.Column="6" Classes="grid-header" Tag="Note" Click="Sort_Click">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Note" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Name="NoteSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                         </Grid>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-            </dg:DataGrid.Columns>
-        </dg:DataGrid>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Separate SelectLine-style search row: full-width cells, no Filter watermark. -->
+            <Border Grid.Row="1" BorderBrush="#AFAFAF" BorderThickness="1,0,0,0">
+                <Grid ColumnDefinitions="3*,*,*,2*,2*,2*,2*">
+                    <TextBox Grid.Column="0" Classes="grid-filter" Tag="Name" TextChanged="Filter_TextChanged" />
+                    <TextBox Grid.Column="1" Classes="grid-filter" Tag="Price" TextChanged="Filter_TextChanged" />
+                    <TextBox Grid.Column="2" Classes="grid-filter" Tag="MinimumPrice" TextChanged="Filter_TextChanged" />
+                    <TextBox Grid.Column="3" Classes="grid-filter" Tag="Description" TextChanged="Filter_TextChanged" />
+                    <TextBox Grid.Column="4" Classes="grid-filter" Tag="Specification" TextChanged="Filter_TextChanged" />
+                    <TextBox Grid.Column="5" Classes="grid-filter" Tag="Discount" TextChanged="Filter_TextChanged" />
+                    <TextBox Grid.Column="6" Classes="grid-filter" Tag="Note" TextChanged="Filter_TextChanged" />
+                </Grid>
+            </Border>
+
+            <dg:DataGrid
+                x:Name="ArticleGrid"
+                Grid.Row="2"
+                AutoGenerateColumns="False"
+                Background="White"
+                BorderBrush="#AFAFAF"
+                BorderThickness="1,0,1,1"
+                CanUserResizeColumns="False"
+                CanUserSortColumns="False"
+                FontSize="12"
+                GridLinesVisibility="All"
+                HeadersVisibility="None"
+                HorizontalGridLinesBrush="#D0D0D0"
+                VerticalGridLinesBrush="#D0D0D0"
+                RowBackground="White"
+                RowHeight="24"
+                IsReadOnly="True"
+                SelectionMode="Single"
+                LoadingRow="ArticleGrid_LoadingRow"
+                ItemsSource="{Binding Articles}"
+                SelectedItem="{Binding SelectedArticle, Mode=TwoWay}"
+                DoubleTapped="ArticleGrid_DoubleTapped">
+
+                <dg:DataGrid.Styles>
+                    <Style Selector="DataGridCell">
+                        <Setter Property="Padding" Value="5,2" />
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                    </Style>
+                    <Style Selector="DataGridRow.alternate">
+                        <Setter Property="Background" Value="#F3F3F3" />
+                    </Style>
+                    <Style Selector="DataGridRow:pointerover">
+                        <Setter Property="Background" Value="#EAF2F8" />
+                    </Style>
+                    <Style Selector="DataGridRow:selected">
+                        <Setter Property="Background" Value="#6AAFE0" />
+                        <Setter Property="TextBlock.Foreground" Value="#111111" />
+                    </Style>
+                </dg:DataGrid.Styles>
+
+                <dg:DataGrid.Columns>
+                    <dg:DataGridTextColumn Width="3*" Binding="{Binding Name}" />
+                    <dg:DataGridTextColumn Width="*" Binding="{Binding Price}" />
+                    <dg:DataGridTextColumn Width="*" Binding="{Binding MinimumPrice}" />
+                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Description}" />
+                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Specification}" />
+                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Discount}" />
+                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Note}" />
+                </dg:DataGrid.Columns>
+            </dg:DataGrid>
+        </Grid>
 
         <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
             <Grid ColumnDefinitions="*,Auto">
