@@ -11,8 +11,8 @@
             <Setter Property="Margin" Value="0" />
             <Setter Property="Padding" Value="5,0,4,0" />
             <Setter Property="CornerRadius" Value="0" />
-            <Setter Property="Background" Value="#E8E8E8" />
-            <Setter Property="BorderBrush" Value="#AFAFAF" />
+            <Setter Property="Background" Value="#F4F4F1" />
+            <Setter Property="BorderBrush" Value="#C7C7C4" />
             <Setter Property="BorderThickness" Value="0,0,1,1" />
             <Setter Property="Foreground" Value="#202020" />
             <Setter Property="FontSize" Value="11" />
@@ -20,7 +20,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="Button.grid-header:pointerover">
-            <Setter Property="Background" Value="#DCDCDC" />
+            <Setter Property="Background" Value="#E9EBEC" />
         </Style>
 
         <Style Selector="TextBox.grid-filter">
@@ -30,7 +30,7 @@
             <Setter Property="Padding" Value="5,0,4,0" />
             <Setter Property="CornerRadius" Value="0" />
             <Setter Property="Background" Value="#FFF8D8" />
-            <Setter Property="BorderBrush" Value="#B7B7B7" />
+            <Setter Property="BorderBrush" Value="#D7D1B6" />
             <Setter Property="BorderThickness" Value="0,0,1,1" />
             <Setter Property="FontSize" Value="11" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -67,7 +67,7 @@
 
         <Grid Grid.Row="1" Margin="0,4,0,0" RowDefinitions="24,22,*">
             <!-- Classic ERP header: its only job is labeling and sorting. -->
-            <Border Grid.Row="0" BorderBrush="#AFAFAF" BorderThickness="1,1,0,0">
+            <Border Grid.Row="0" BorderBrush="#C7C7C4" BorderThickness="1,1,0,0">
                 <Grid ColumnDefinitions="3*,*,*,2*,2*,2*,2*">
                     <Button Grid.Column="0" Classes="grid-header" Tag="Name" Click="Sort_Click">
                         <Grid ColumnDefinitions="*,Auto">
@@ -115,7 +115,7 @@
             </Border>
 
             <!-- Separate SelectLine-style search row: full-width cells, no Filter watermark. -->
-            <Border Grid.Row="1" BorderBrush="#AFAFAF" BorderThickness="1,0,0,0">
+            <Border Grid.Row="1" BorderBrush="#D7D1B6" BorderThickness="1,0,0,0">
                 <Grid ColumnDefinitions="3*,*,*,2*,2*,2*,2*">
                     <TextBox Grid.Column="0" Classes="grid-filter" Tag="Name" TextChanged="Filter_TextChanged" />
                     <TextBox Grid.Column="1" Classes="grid-filter" Tag="Price" TextChanged="Filter_TextChanged" />
@@ -132,15 +132,15 @@
                 Grid.Row="2"
                 AutoGenerateColumns="False"
                 Background="White"
-                BorderBrush="#AFAFAF"
+                BorderBrush="#C4C4C4"
                 BorderThickness="1,0,1,1"
                 CanUserResizeColumns="False"
                 CanUserSortColumns="False"
                 FontSize="12"
                 GridLinesVisibility="All"
                 HeadersVisibility="None"
-                HorizontalGridLinesBrush="#D0D0D0"
-                VerticalGridLinesBrush="#D0D0D0"
+                HorizontalGridLinesBrush="#DCDCDC"
+                VerticalGridLinesBrush="#DCDCDC"
                 RowBackground="White"
                 RowHeight="24"
                 IsReadOnly="True"
