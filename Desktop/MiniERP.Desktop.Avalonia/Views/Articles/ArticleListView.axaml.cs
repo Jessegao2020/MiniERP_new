@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Articles;
 using MiniERP.Domain;
@@ -20,7 +21,7 @@ public partial class ArticleListView : UserControl
         AttachedToVisualTree += async (_, _) =>
         {
             await ViewModel.LoadAsync();
-            SyncDataGridColumnWidths();
+            Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Loaded);
         };
     }
 
@@ -57,9 +58,9 @@ public partial class ArticleListView : UserControl
         ViewModel.SetFilter(field, textBox.Text);
     }
 
-    private void Sort_Click(object? sender, RoutedEventArgs e)
+    private void SortHeader_Tapped(object? sender, TappedEventArgs e)
     {
-        if (sender is not Button button || button.Tag is not string field)
+        if (sender is not Border border || border.Tag is not string field)
             return;
 
         ViewModel.SortBy(field);
@@ -86,7 +87,10 @@ public partial class ArticleListView : UserControl
     }
 
     private void ArticleTableLayout_SizeChanged(object? sender, SizeChangedEventArgs e)
-        => SyncDataGridColumnWidths();
+        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
+
+    private void ColumnSplitter_DragDelta(object? sender, VectorEventArgs e)
+        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
 
     private void SyncDataGridColumnWidths()
     {
