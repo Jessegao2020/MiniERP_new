@@ -89,7 +89,7 @@ public static class ContractXlsxPdfScaleExporter
 
             XDocument document;
             using (var input = entry.Open())
-                document = XDocument.Load(input, LoadOptions.PreserveWhitespace);
+                document = XDocument.Load(input, System.Xml.Linq.LoadOptions.PreserveWhitespace);
 
             var root = document.Root;
             if (root is null) continue;
@@ -111,7 +111,7 @@ public static class ContractXlsxPdfScaleExporter
             entry.Delete();
             var replacement = archive.CreateEntry(sheetName, CompressionLevel.Optimal);
             using var outputStream = replacement.Open();
-            document.Save(outputStream, SaveOptions.DisableFormatting);
+            document.Save(outputStream, System.Xml.Linq.SaveOptions.DisableFormatting);
         }
     }
 }
