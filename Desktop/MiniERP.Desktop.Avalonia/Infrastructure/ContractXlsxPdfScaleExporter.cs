@@ -14,11 +14,12 @@ namespace MiniERP.Desktop.Infrastructure;
 /// </summary>
 public static class ContractXlsxPdfScaleExporter
 {
-    // The user's print-preview comparison showed the residual fit-to-page scale was
-    // about 70%. At 100% print scale the columns therefore need the two accumulated
-    // 0.70 factors (0.70 * 0.70 ~= 0.49) to retain the same PDF-like printable width.
-    // Font sizes and row heights are intentionally NOT reduced.
-    private const double ColumnWidthFactor = 0.49d;
+    // After removing spreadsheet auto-scaling, the latest side-by-side print preview
+    // showed the XLSX printable rule at roughly 79% of the PDF rule width while the
+    // left margin already matched. Expanding 0.49 by ~1 / 0.79 gives ~0.62, which
+    // brings the right edge, Seller/Buyer split and item columns back to the same
+    // printable width as ContractPdfExporter without changing font sizes or row heights.
+    private const double ColumnWidthFactor = 0.625d;
 
     public static void Export(Contract contract, Stream output)
     {
