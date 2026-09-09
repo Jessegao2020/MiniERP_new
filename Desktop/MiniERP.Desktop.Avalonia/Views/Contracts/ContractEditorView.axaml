@@ -9,6 +9,7 @@
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Discard_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↶" /><TextBlock Text="Discard" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Delete_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="×" /><TextBlock Text="Delete" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="ExportPdf_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↓" /><TextBlock Text="Export PDF" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="ExportXlsx_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="▦" /><TextBlock Text="Export XLSX" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
             <Border Width="1" Margin="5,3" Background="LightGray" />
             <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreateProforma_Click" Content="Create P/I" />
             <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreateInvoice_Click" Content="Create Invoice" />
