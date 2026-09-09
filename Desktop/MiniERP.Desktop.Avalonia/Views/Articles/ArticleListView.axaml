@@ -5,22 +5,13 @@
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
 
     <UserControl.Styles>
-        <Style Selector="Button.grid-header">
-            <Setter Property="Height" Value="24" />
-            <Setter Property="MinHeight" Value="24" />
-            <Setter Property="Margin" Value="0" />
-            <Setter Property="Padding" Value="5,0,4,0" />
-            <Setter Property="CornerRadius" Value="0" />
+        <Style Selector="Border.grid-header">
             <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#D2D2D2" />
+            <Setter Property="BorderBrush" Value="#C9C9C9" />
             <Setter Property="BorderThickness" Value="0,0,1,1" />
-            <Setter Property="Foreground" Value="#202020" />
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
-        <Style Selector="Button.grid-header:pointerover">
-            <Setter Property="Background" Value="#F1F3F4" />
+        <Style Selector="Border.grid-header:pointerover">
+            <Setter Property="Background" Value="#F3F3F3" />
         </Style>
 
         <Style Selector="TextBox.grid-filter">
@@ -29,8 +20,8 @@
             <Setter Property="Margin" Value="0" />
             <Setter Property="Padding" Value="5,0,4,0" />
             <Setter Property="CornerRadius" Value="0" />
-            <Setter Property="Background" Value="#FFF8D8" />
-            <Setter Property="BorderBrush" Value="#DDD9C2" />
+            <Setter Property="Background" Value="#FFFEEF" />
+            <Setter Property="BorderBrush" Value="#DDDCCB" />
             <Setter Property="BorderThickness" Value="0,0,1,1" />
             <Setter Property="FontSize" Value="11" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -80,54 +71,54 @@
                 <ColumnDefinition Width="2*" MinWidth="80" />
             </Grid.ColumnDefinitions>
 
-            <!-- SelectLine-style title row: white cells, sorting only. -->
-            <Border Grid.Row="0" Grid.ColumnSpan="7" BorderBrush="#D2D2D2" BorderThickness="1,1,0,0" IsHitTestVisible="False" />
+            <!-- SelectLine-style title row: plain white cells, no Fluent button chrome. -->
+            <Border Grid.Row="0" Grid.ColumnSpan="7" BorderBrush="#C9C9C9" BorderThickness="1,1,0,0" IsHitTestVisible="False" />
 
-            <Button Grid.Row="0" Grid.Column="0" Classes="grid-header" Tag="Name" Click="Sort_Click">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Name" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <Border Grid.Row="0" Grid.Column="0" Classes="grid-header" Tag="Name" Tapped="SortHeader_Tapped">
+                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Name" FontSize="11" VerticalAlignment="Center" />
                     <TextBlock x:Name="NameSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                 </Grid>
-            </Button>
-            <Button Grid.Row="0" Grid.Column="1" Classes="grid-header" Tag="Price" Click="Sort_Click">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Price" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </Border>
+            <Border Grid.Row="0" Grid.Column="1" Classes="grid-header" Tag="Price" Tapped="SortHeader_Tapped">
+                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Price" FontSize="11" VerticalAlignment="Center" />
                     <TextBlock x:Name="PriceSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                 </Grid>
-            </Button>
-            <Button Grid.Row="0" Grid.Column="2" Classes="grid-header" Tag="MinimumPrice" Click="Sort_Click">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Min. Price" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </Border>
+            <Border Grid.Row="0" Grid.Column="2" Classes="grid-header" Tag="MinimumPrice" Tapped="SortHeader_Tapped">
+                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Min. Price" FontSize="11" VerticalAlignment="Center" />
                     <TextBlock x:Name="MinimumPriceSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                 </Grid>
-            </Button>
-            <Button Grid.Row="0" Grid.Column="3" Classes="grid-header" Tag="Description" Click="Sort_Click">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Description" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </Border>
+            <Border Grid.Row="0" Grid.Column="3" Classes="grid-header" Tag="Description" Tapped="SortHeader_Tapped">
+                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Description" FontSize="11" VerticalAlignment="Center" />
                     <TextBlock x:Name="DescriptionSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                 </Grid>
-            </Button>
-            <Button Grid.Row="0" Grid.Column="4" Classes="grid-header" Tag="Specification" Click="Sort_Click">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Specification" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </Border>
+            <Border Grid.Row="0" Grid.Column="4" Classes="grid-header" Tag="Specification" Tapped="SortHeader_Tapped">
+                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Specification" FontSize="11" VerticalAlignment="Center" />
                     <TextBlock x:Name="SpecificationSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                 </Grid>
-            </Button>
-            <Button Grid.Row="0" Grid.Column="5" Classes="grid-header" Tag="Discount" Click="Sort_Click">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Discount" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </Border>
+            <Border Grid.Row="0" Grid.Column="5" Classes="grid-header" Tag="Discount" Tapped="SortHeader_Tapped">
+                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Discount" FontSize="11" VerticalAlignment="Center" />
                     <TextBlock x:Name="DiscountSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                 </Grid>
-            </Button>
-            <Button Grid.Row="0" Grid.Column="6" Classes="grid-header" Tag="Note" Click="Sort_Click">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Note" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </Border>
+            <Border Grid.Row="0" Grid.Column="6" Classes="grid-header" Tag="Note" Tapped="SortHeader_Tapped">
+                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Note" FontSize="11" VerticalAlignment="Center" />
                     <TextBlock x:Name="NoteSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
                 </Grid>
-            </Button>
+            </Border>
 
-            <!-- Separate pale-yellow search row, using the same live column widths. -->
-            <Border Grid.Row="1" Grid.ColumnSpan="7" BorderBrush="#DDD9C2" BorderThickness="1,0,0,0" IsHitTestVisible="False" />
+            <!-- Separate very pale yellow search row, using the same live column definitions. -->
+            <Border Grid.Row="1" Grid.ColumnSpan="7" BorderBrush="#DDDCCB" BorderThickness="1,0,0,0" IsHitTestVisible="False" />
             <TextBox Grid.Row="1" Grid.Column="0" Classes="grid-filter" Tag="Name" TextChanged="Filter_TextChanged" />
             <TextBox Grid.Row="1" Grid.Column="1" Classes="grid-filter" Tag="Price" TextChanged="Filter_TextChanged" />
             <TextBox Grid.Row="1" Grid.Column="2" Classes="grid-filter" Tag="MinimumPrice" TextChanged="Filter_TextChanged" />
@@ -136,13 +127,13 @@
             <TextBox Grid.Row="1" Grid.Column="5" Classes="grid-filter" Tag="Discount" TextChanged="Filter_TextChanged" />
             <TextBox Grid.Row="1" Grid.Column="6" Classes="grid-filter" Tag="Note" TextChanged="Filter_TextChanged" />
 
-            <!-- Thin resize handles. They resize both header and filter columns; the data columns follow in code-behind. -->
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="3" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="4" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="5" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" />
+            <!-- Transparent resize handles. Data columns are synchronized on every drag delta. -->
+            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
+            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
+            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
+            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="3" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
+            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="4" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
+            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="5" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
 
             <dg:DataGrid
                 x:Name="ArticleGrid"
@@ -150,15 +141,15 @@
                 Grid.ColumnSpan="7"
                 AutoGenerateColumns="False"
                 Background="White"
-                BorderBrush="#CFCFCF"
+                BorderBrush="#D4D4D4"
                 BorderThickness="1,0,1,1"
-                CanUserResizeColumns="True"
+                CanUserResizeColumns="False"
                 CanUserSortColumns="False"
                 FontSize="12"
                 GridLinesVisibility="All"
                 HeadersVisibility="None"
-                HorizontalGridLinesBrush="#E2E2E2"
-                VerticalGridLinesBrush="#E2E2E2"
+                HorizontalGridLinesBrush="#E4E4E4"
+                VerticalGridLinesBrush="#E4E4E4"
                 RowBackground="White"
                 RowHeight="24"
                 IsReadOnly="True"
@@ -180,7 +171,7 @@
                         <Setter Property="Background" Value="#EAF2F8" />
                     </Style>
                     <Style Selector="DataGridRow:selected">
-                        <Setter Property="Background" Value="#6AAFE0" />
+                        <Setter Property="Background" Value="#3394D6" />
                         <Setter Property="TextBlock.Foreground" Value="#111111" />
                     </Style>
                 </dg:DataGrid.Styles>
