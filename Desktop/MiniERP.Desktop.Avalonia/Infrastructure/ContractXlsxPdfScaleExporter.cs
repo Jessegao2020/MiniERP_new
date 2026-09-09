@@ -30,6 +30,11 @@ public static class ContractXlsxPdfScaleExporter
     // bottom spacer so the footer/signature remains anchored at the PDF position.
     private const double FirstPageSpacingReduction = 38d;
 
+    // ContractXlsxExporter deliberately pads the page to this absolute height before
+    // drawing the footer separator. Keep this invariant after all post-processing so
+    // page 1, continuation pages and single-page contracts share the same footer Y.
+    private const double FooterSeparatorTopHeight = 690d;
+
     public static void Export(Contract contract, Stream output)
     {
         using var intermediate = new MemoryStream();
@@ -62,6 +67,11 @@ public static class ContractXlsxPdfScaleExporter
                 NormalizeContinuationHeader(sheet, contract);
                 CompensateContinuationHeaderGrowth(sheet);
             }
+
+            // Do this last: all prior header/body adjustments may change cumulative
+            // row height. The footer separator itself must nevertheless remain at the
+            // same absolute position on every worksheet, matching the PDF template.
+            NormalizeFooterSeparatorPosition(sheet);
 
             var page = sheet.PageSetup;
             page.PageOrientation = XLPageOrientation.Portrait;
@@ -178,7 +188,9 @@ public static class ContractXlsxPdfScaleExporter
 
         // Keep the bottom-of-page elements at their existing absolute position.
         // On a single-page contract compensate before the signature block; on a
-        // multi-page first sheet compensate before the footer.
+        // multi-page first sheet compensate before the footer separator. Do not add
+        // the compensation to the separator row itself: that changes its height but
+        // leaves its top border too high, which was the page-1 mismatch seen in WPS.
         var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
         var signatureRow = 0;
         for (var row = 1; row <= lastRow; row++)
@@ -197,8 +209,8 @@ public static class ContractXlsxPdfScaleExporter
         }
 
         var footerRow = FindFooterCompanyRow(sheet);
-        if (footerRow > 0)
-            AddBlankSpaceBefore(sheet, footerRow, FirstPageSpacingReduction);
+        if (footerRow > 1)
+            AddBlankSpaceBefore(sheet, footerRow - 1, FirstPageSpacingReduction);
     }
 
     private static void NormalizeContinuationHeader(IXLWorksheet sheet, Contract contract)
@@ -278,6 +290,32 @@ public static class ContractXlsxPdfScaleExporter
             }
         }
         return footerRow;
+    }
+
+    private static void NormalizeFooterSeparatorPosition(IXLWorksheet sheet)
+    {
+        var footerRow = FindFooterCompanyRow(sheet);
+        if (footerRow <= 1)
+            return;
+
+        var separatorRow = footerRow - 1;
+
+        // The separator row itself should remain the thin 4 pt rule row created by
+        // ContractXlsxExporter. Any spacing compensation belongs before this row.
+        sheet.Row(separatorRow).Height = 4d;
+
+        var currentTop = 0d;
+        for (var row = 1; row < separatorRow; row++)
+            currentTop += sheet.Row(row).Height;
+
+        var delta = FooterSeparatorTopHeight - currentTop;
+        if (Math.Abs(delta) < 0.01d)
+            return;
+
+        if (delta > 0d)
+            AddBlankSpaceBefore(sheet, separatorRow, delta);
+        else
+            ReduceBlankSpaceBefore(sheet, separatorRow, -delta);
     }
 
     private static void AddBlankSpaceBefore(IXLWorksheet sheet, int anchorRow, double amount)
