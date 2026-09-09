@@ -6,13 +6,13 @@ namespace MiniERP.Desktop.Infrastructure;
 
 public static class ContractXlsxExporter
 {
-    // Keep these pagination numbers in sync with ContractPdfExporter. The Excel
-    // workbook deliberately uses one worksheet per PDF page so the editable
-    // version preserves the same document rhythm instead of letting Excel
-    // squeeze every line item onto one automatically scaled page.
+    // Keep these pagination numbers in sync with ContractPdfExporter. Non-final
+    // pages may use the available body area; the final item is checked against a
+    // smaller limit so Total / Terms / signatures still fit on the last page.
     private const float FirstPageItemsStartY = 350f;
     private const float ContinuationItemsStartY = 142f;
-    private const float ItemsPageLimitY = 610f;
+    private const float NonFinalItemsLimitY = 700f;
+    private const float FinalItemsLimitY = 610f;
     private const double FooterTopHeight = 690d;
     private const double SignatureTopHeight = 620d;
 
@@ -474,10 +474,14 @@ public static class ContractXlsxExporter
         var startNo = 1;
         var currentStart = 1;
 
-        foreach (var item in items)
+        for (var index = 0; index < items.Count; index++)
         {
+            var item = items[index];
             var height = MeasureItemHeight(item);
-            if (current.Count > 0 && y + height > ItemsPageLimitY)
+            var isLastItem = index == items.Count - 1;
+            var limit = isLastItem ? FinalItemsLimitY : NonFinalItemsLimitY;
+
+            if (current.Count > 0 && y + height > limit)
             {
                 pages.Add(new PagePlan(currentStart, current.ToList(), false));
                 startNo += current.Count;
