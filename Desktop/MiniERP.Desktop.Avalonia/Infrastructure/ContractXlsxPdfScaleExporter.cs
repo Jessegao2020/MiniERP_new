@@ -9,16 +9,12 @@ namespace MiniERP.Desktop.Infrastructure;
 /// Produces the editable Contract workbook using the PDF-matched workbook layout,
 /// then forces the OOXML worksheets to print at actual size. ClosedXML can leave
 /// fit-to-page attributes behind after FitToPages was used by the base exporter;
-/// LibreOffice prefers those attributes and scales the whole page even when Scale
-/// is later set to 100.
+/// LibreOffice/WPS may prefer those attributes and scale the whole page even when
+/// Scale is later set to 100.
 /// </summary>
 public static class ContractXlsxPdfScaleExporter
 {
-    // After removing spreadsheet auto-scaling, the latest side-by-side print preview
-    // showed the XLSX printable rule at roughly 79% of the PDF rule width while the
-    // left margin already matched. Expanding 0.49 by ~1 / 0.79 gives ~0.62, which
-    // brings the right edge, Seller/Buyer split and item columns back to the same
-    // printable width as ContractPdfExporter without changing font sizes or row heights.
+    // Final horizontal tuning from side-by-side PDF/XLSX print preview.
     private const double ColumnWidthFactor = 0.625d;
 
     public static void Export(Contract contract, Stream output)
@@ -38,16 +34,26 @@ public static class ContractXlsxPdfScaleExporter
             page.PaperSize = XLPaperSize.A4Paper;
             page.AdjustTo(100);
 
-            // Match the PDF's roughly 58 pt left/right margins.
+            // Match the PDF's left/right printable margins. Keep the top margin
+            // unchanged so the header stays aligned with the PDF; only reclaim a
+            // little bottom space because WPS was moving the final page-number row
+            // to a second, otherwise blank physical page.
             page.Margins.Left = 0.78d;
             page.Margins.Right = 0.78d;
             page.Margins.Top = 0.72d;
-            page.Margins.Bottom = 0.25d;
+            page.Margins.Bottom = 0.05d;
             page.Margins.Header = 0d;
             page.Margins.Footer = 0d;
             page.CenterHorizontally = false;
             page.CenterVertically = false;
             page.ShowGridlines = false;
+
+            // Explicit print area prevents WPS/Excel from extending printing into
+            // styled-but-empty rows/columns and makes every worksheet map to exactly
+            // one intended A4 contract page.
+            var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
+            page.PrintAreas.Clear();
+            page.PrintAreas.Add($"A1:H{lastRow}");
 
             sheet.SheetView.ZoomScale = 100;
             sheet.SheetView.ZoomScaleNormal = 100;
@@ -59,8 +65,8 @@ public static class ContractXlsxPdfScaleExporter
 
         // ClosedXML's in-memory PageSetup can still serialize fitToWidth/fitToHeight
         // and sheetPr/pageSetUpPr fitToPage from the earlier FitToPages call. Remove
-        // those OOXML flags after the final ClosedXML save so Excel/LibreOffice must
-        // honor scale=100 rather than silently shrinking the page again.
+        // those OOXML flags after the final ClosedXML save so Excel/WPS/LibreOffice
+        // must honor scale=100 rather than silently shrinking the page again.
         RemoveFitToPageFlags(normalized);
         normalized.Position = 0;
 
