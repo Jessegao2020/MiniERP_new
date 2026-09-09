@@ -12,7 +12,6 @@ public static class ContractXlsxExporter
 
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add("Contract");
-        sheet.SheetView.ShowGridLines = false;
 
         ConfigureColumns(sheet);
         BuildHeader(sheet, contract);
@@ -29,14 +28,14 @@ public static class ContractXlsxExporter
 
     private static void ConfigureColumns(IXLWorksheet sheet)
     {
-        sheet.Column(1).Width = 5.5;   // No.
-        sheet.Column(2).Width = 18;    // Product
-        sheet.Column(3).Width = 31;    // Description
-        sheet.Column(4).Width = 10;    // Qty
-        sheet.Column(5).Width = 9;     // Unit
-        sheet.Column(6).Width = 14;    // Unit price
-        sheet.Column(7).Width = 10;    // Discount
-        sheet.Column(8).Width = 16;    // Amount
+        sheet.Column(1).Width = 5.5;
+        sheet.Column(2).Width = 18;
+        sheet.Column(3).Width = 31;
+        sheet.Column(4).Width = 10;
+        sheet.Column(5).Width = 9;
+        sheet.Column(6).Width = 14;
+        sheet.Column(7).Width = 10;
+        sheet.Column(8).Width = 16;
     }
 
     private static void BuildHeader(IXLWorksheet sheet, Contract contract)
