@@ -4,6 +4,22 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
 
+    <UserControl.Styles>
+        <Style Selector="TextBox.grid-filter">
+            <Setter Property="Height" Value="22" />
+            <Setter Property="MinHeight" Value="22" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="5,0,4,0" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Background" Value="#FBFBFB" />
+            <Setter Property="BorderBrush" Value="#B7B7B7" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+    </UserControl.Styles>
+
     <Grid RowDefinitions="Auto,*,Auto">
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="3,0,0,0" Spacing="3">
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="New_Click">
@@ -34,77 +50,110 @@
         <dg:DataGrid
             x:Name="ArticleGrid"
             Grid.Row="1"
-            Margin="0,5,0,0"
+            Margin="0,4,0,0"
             AutoGenerateColumns="False"
+            Background="White"
+            BorderBrush="#AFAFAF"
+            BorderThickness="1"
             CanUserResizeColumns="True"
             CanUserSortColumns="True"
+            ColumnHeaderHeight="43"
+            FontSize="12"
             GridLinesVisibility="All"
+            HorizontalGridLinesBrush="#D0D0D0"
+            VerticalGridLinesBrush="#D0D0D0"
+            RowBackground="White"
+            AlternatingRowBackground="#F7F7F7"
+            RowHeight="24"
             IsReadOnly="True"
+            SelectionMode="Single"
             ItemsSource="{Binding Articles}"
             SelectedItem="{Binding SelectedArticle, Mode=TwoWay}"
             DoubleTapped="ArticleGrid_DoubleTapped">
 
+            <dg:DataGrid.Styles>
+                <Style Selector="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#E9E9E9" />
+                    <Setter Property="Foreground" Value="#202020" />
+                    <Setter Property="BorderBrush" Value="#AFAFAF" />
+                    <Setter Property="BorderThickness" Value="0,0,1,1" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                </Style>
+                <Style Selector="DataGridCell">
+                    <Setter Property="Padding" Value="5,2" />
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                </Style>
+                <Style Selector="DataGridRow:pointerover">
+                    <Setter Property="Background" Value="#EEF5FA" />
+                </Style>
+                <Style Selector="DataGridRow:selected">
+                    <Setter Property="Background" Value="#D7E8F5" />
+                </Style>
+            </dg:DataGrid.Styles>
+
             <dg:DataGrid.Columns>
                 <dg:DataGridTextColumn Width="3*" Binding="{Binding Name}">
                     <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Name" />
-                            <TextBox MinWidth="80" Height="24" Tag="Name" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
+                        <Grid RowDefinitions="20,22">
+                            <TextBlock Text="Name" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Name" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </Grid>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
                 <dg:DataGridTextColumn Width="*" Binding="{Binding Price}">
                     <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Price" />
-                            <TextBox MinWidth="60" Height="24" Tag="Price" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
+                        <Grid RowDefinitions="20,22">
+                            <TextBlock Text="Price" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Price" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </Grid>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
                 <dg:DataGridTextColumn Width="*" Binding="{Binding MinimumPrice}">
                     <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Min. Price" />
-                            <TextBox MinWidth="60" Height="24" Tag="MinimumPrice" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
+                        <Grid RowDefinitions="20,22">
+                            <TextBlock Text="Min. Price" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="MinimumPrice" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </Grid>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
                 <dg:DataGridTextColumn Width="2*" Binding="{Binding Description}">
                     <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Description" />
-                            <TextBox MinWidth="70" Height="24" Tag="Description" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
+                        <Grid RowDefinitions="20,22">
+                            <TextBlock Text="Description" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Description" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </Grid>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
                 <dg:DataGridTextColumn Width="2*" Binding="{Binding Specification}">
                     <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Specification" />
-                            <TextBox MinWidth="70" Height="24" Tag="Specification" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
+                        <Grid RowDefinitions="20,22">
+                            <TextBlock Text="Specification" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Specification" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </Grid>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
                 <dg:DataGridTextColumn Width="2*" Binding="{Binding Discount}">
                     <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Discount" />
-                            <TextBox MinWidth="70" Height="24" Tag="Discount" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
+                        <Grid RowDefinitions="20,22">
+                            <TextBlock Text="Discount" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Discount" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </Grid>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
 
                 <dg:DataGridTextColumn Width="2*" Binding="{Binding Note}">
                     <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Note" />
-                            <TextBox MinWidth="70" Height="24" Tag="Note" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
+                        <Grid RowDefinitions="20,22">
+                            <TextBlock Text="Note" Margin="5,0,4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="1" Classes="grid-filter" Tag="Note" Watermark="Filter" TextChanged="Filter_TextChanged" />
+                        </Grid>
                     </dg:DataGridTextColumn.Header>
                 </dg:DataGridTextColumn>
             </dg:DataGrid.Columns>
