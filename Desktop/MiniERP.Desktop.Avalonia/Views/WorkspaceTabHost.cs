@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -59,9 +60,11 @@ public sealed class WorkspaceTabHost : UserControl
     private const double TabHeight = 24d;
 
     private static readonly IBrush InactiveBackground = new SolidColorBrush(Color.Parse("#F0F0F0"));
+    private static readonly IBrush HoverBackground = new SolidColorBrush(Color.Parse("#E4E4E4"));
     private static readonly IBrush ActiveBackground = Brushes.White;
     private static readonly IBrush TabBorderBrush = new SolidColorBrush(Color.Parse("#A8A8A8"));
     private static readonly IBrush ActiveBorderBrush = new SolidColorBrush(Color.Parse("#858585"));
+    private static readonly IBrush CloseHoverBackground = new SolidColorBrush(Color.Parse("#D8D8D8"));
 
     private readonly StackPanel _tabPanel;
     private readonly ScrollViewer _scrollViewer;
@@ -254,45 +257,55 @@ public sealed class WorkspaceTabHost : UserControl
             FontSize = 12
         };
 
-        var selectButton = new Button
+        var titleHost = new Border
         {
-            Content = titleText,
+            Child = titleText,
             Padding = new Thickness(8, 0, 2, 0),
-            Margin = new Thickness(0),
             Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Left,
-            VerticalContentAlignment = VerticalAlignment.Center
+            VerticalAlignment = VerticalAlignment.Stretch
         };
-        ToolTip.SetTip(selectButton, descriptor.FullTitle);
-        selectButton.Click += (_, _) => SelectTab(tab);
+        ToolTip.SetTip(titleHost, descriptor.FullTitle);
 
-        var closeButton = new Button
+        // The close affordance is intentionally not a Button. Fluent Button hover
+        // styling paints a rectangular region; SelectLine-like tabs use a small,
+        // subtle circular hover target instead.
+        var closeGlyph = new TextBlock
         {
-            Content = "×",
-            Padding = new Thickness(0),
-            Margin = new Thickness(0),
-            MinWidth = 20,
+            Text = "×",
             FontSize = 11,
-            FontWeight = FontWeight.Normal,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            Opacity = 0.75,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
         };
-        ToolTip.SetTip(closeButton, "Close");
-        closeButton.Click += (_, _) => descriptor.Close();
+        var closeHost = new Border
+        {
+            Width = 18,
+            Height = 18,
+            CornerRadius = new CornerRadius(9),
+            Child = closeGlyph,
+            Background = Brushes.Transparent,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        ToolTip.SetTip(closeHost, "Close");
+        closeHost.PointerEntered += (_, _) => closeHost.Background = CloseHoverBackground;
+        closeHost.PointerExited += (_, _) => closeHost.Background = Brushes.Transparent;
+        closeHost.PointerPressed += (_, e) =>
+        {
+            if (e.GetCurrentPoint(closeHost).Properties.PointerUpdateKind != PointerUpdateKind.LeftButtonPressed)
+                return;
+
+            e.Handled = true;
+            descriptor.Close();
+        };
 
         var panel = new Grid();
         panel.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
-        panel.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(22)));
-        Grid.SetColumn(selectButton, 0);
-        Grid.SetColumn(closeButton, 1);
-        panel.Children.Add(selectButton);
-        panel.Children.Add(closeButton);
+        panel.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(24)));
+        Grid.SetColumn(titleHost, 0);
+        Grid.SetColumn(closeHost, 1);
+        panel.Children.Add(titleHost);
+        panel.Children.Add(closeHost);
 
         var border = new Border
         {
@@ -305,7 +318,29 @@ public sealed class WorkspaceTabHost : UserControl
             Margin = new Thickness(0, 0, -1, 0),
             VerticalAlignment = VerticalAlignment.Bottom
         };
+        ToolTip.SetTip(border, descriptor.FullTitle);
         border.ContextMenu = BuildTabContextMenu(tab);
+
+        // Hover belongs to the whole tab rectangle, not only to the title text area.
+        border.PointerEntered += (_, _) =>
+        {
+            if (!ReferenceEquals(tab, _selectedItem))
+                border.Background = HoverBackground;
+        };
+        border.PointerExited += (_, _) =>
+        {
+            border.Background = ReferenceEquals(tab, _selectedItem)
+                ? ActiveBackground
+                : InactiveBackground;
+        };
+        border.PointerPressed += (_, e) =>
+        {
+            if (e.GetCurrentPoint(border).Properties.PointerUpdateKind != PointerUpdateKind.LeftButtonPressed)
+                return;
+
+            SelectTab(tab);
+        };
+
         return border;
     }
 
