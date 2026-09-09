@@ -24,10 +24,25 @@ public static class ContractXlsxPdfScaleExporter
         intermediate.Position = 0;
 
         using var workbook = new XLWorkbook(intermediate);
-        foreach (var sheet in workbook.Worksheets)
+        for (var sheetIndex = 1; sheetIndex <= workbook.Worksheets.Count; sheetIndex++)
         {
+            var sheet = workbook.Worksheet(sheetIndex);
+
             for (var column = 1; column <= 8; column++)
                 sheet.Column(column).Width *= ColumnWidthFactor;
+
+            // Match the PDF body: no separator rule between individual items,
+            // only the table-header rule and one closing rule after the last item.
+            RemoveIntermediateItemRules(sheet);
+
+            // Keep bank-detail labels close to their values instead of leaving a
+            // large visual gap across the merged D:E label cells.
+            AlignFooterBankLabels(sheet);
+
+            // Every page uses the same full-size document header. The continuation
+            // marker is separate and small; the brand/title itself is identical.
+            if (sheetIndex > 1)
+                NormalizeContinuationHeader(sheet, contract);
 
             var page = sheet.PageSetup;
             page.PageOrientation = XLPageOrientation.Portrait;
@@ -77,6 +92,87 @@ public static class ContractXlsxPdfScaleExporter
         }
 
         normalized.CopyTo(output);
+    }
+
+    private static void RemoveIntermediateItemRules(IXLWorksheet sheet)
+    {
+        var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
+        var tableHeaderRow = 0;
+        for (var row = 1; row <= lastRow; row++)
+        {
+            if (string.Equals(sheet.Cell(row, 1).GetString(), "Item", StringComparison.OrdinalIgnoreCase))
+            {
+                tableHeaderRow = row;
+                break;
+            }
+        }
+
+        if (tableHeaderRow == 0)
+            return;
+
+        var lastDetailRow = 0;
+        for (var row = tableHeaderRow + 1; row <= lastRow; row++)
+        {
+            var itemText = sheet.Cell(row, 1).GetFormattedString().Trim();
+            if (!int.TryParse(itemText, out _))
+                continue;
+
+            var detailRow = row + 1;
+            if (detailRow > lastRow)
+                break;
+
+            sheet.Range(detailRow, 1, detailRow, 8).Style.Border.BottomBorder = XLBorderStyleValues.None;
+            lastDetailRow = detailRow;
+        }
+
+        if (lastDetailRow > 0)
+            sheet.Range(lastDetailRow, 1, lastDetailRow, 8).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+    }
+
+    private static void AlignFooterBankLabels(IXLWorksheet sheet)
+    {
+        var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
+        for (var row = 1; row <= lastRow; row++)
+        {
+            if (!string.Equals(sheet.Cell(row, 4).GetString(), "Bank Name:", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            for (var offset = 0; offset < 4 && row + offset <= lastRow; offset++)
+                sheet.Range(row + offset, 4, row + offset, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+            break;
+        }
+    }
+
+    private static void NormalizeContinuationHeader(IXLWorksheet sheet, Contract contract)
+    {
+        // Same brand geometry as page 1.
+        sheet.Range("A1:C2").Style.Font.FontSize = 17;
+        sheet.Range("D1:H1").Style.Font.FontSize = 10.2;
+        sheet.Range("D2:H2").Style.Font.FontSize = 7;
+        sheet.Row(1).Height = 22;
+        sheet.Row(2).Height = 16;
+        sheet.Row(3).Height = 8;
+
+        // Same Sales Contract title as page 1.
+        var title = sheet.Range("A4:H4");
+        title.Value = "Sales Contract";
+        title.Style.Font.Bold = true;
+        title.Style.Font.FontSize = 22;
+        title.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        title.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+        sheet.Row(4).Height = 30;
+
+        // Keep the continuation identity without shrinking the actual header.
+        var continued = sheet.Range("A5:H5");
+        if (!continued.IsMerged())
+            continued.Merge();
+        continued.Value = $"{contract.ContractNumber} — continued";
+        continued.Style.Font.FontSize = 7;
+        continued.Style.Font.Italic = true;
+        continued.Style.Font.FontColor = XLColor.Gray;
+        continued.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        continued.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+        sheet.Row(5).Height = 14;
     }
 
     private static void RemoveFitToPageFlags(MemoryStream packageStream)
