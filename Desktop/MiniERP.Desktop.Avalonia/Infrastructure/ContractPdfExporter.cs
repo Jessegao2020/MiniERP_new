@@ -11,6 +11,14 @@ public static class ContractPdfExporter
     private const float Right = 536f;
     private const float FooterLineY = 750f;
 
+    // Non-final pages only need room for the continuation marker, so use the
+    // available body area instead of reserving final-page totals/terms/signatures.
+    // The final item is still checked against the conservative final-page limit.
+    private const float FirstPageItemsStartY = 350f;
+    private const float ContinuationItemsStartY = 142f;
+    private const float NonFinalItemsLimitY = 700f;
+    private const float FinalItemsLimitY = 610f;
+
     private static readonly SKTypeface Regular = SKTypeface.FromFamilyName("DejaVu Sans", SKFontStyle.Normal) ?? SKTypeface.Default;
     private static readonly SKTypeface Bold = SKTypeface.FromFamilyName("DejaVu Sans", SKFontStyle.Bold) ?? SKTypeface.Default;
     private static readonly SKTypeface Italic = SKTypeface.FromFamilyName("DejaVu Sans", SKFontStyle.Italic) ?? SKTypeface.Default;
@@ -63,22 +71,26 @@ public static class ContractPdfExporter
     {
         var pages = new List<PagePlan>();
         var current = new List<ContractItem>();
-        var y = 350f;
+        var y = FirstPageItemsStartY;
         var startNo = 1;
         var currentStart = 1;
 
-        foreach (var item in items)
+        for (var index = 0; index < items.Count; index++)
         {
+            var item = items[index];
             var height = MeasureItemHeight(item);
-            var limit = 610f;
+            var isLastItem = index == items.Count - 1;
+            var limit = isLastItem ? FinalItemsLimitY : NonFinalItemsLimitY;
+
             if (current.Count > 0 && y + height > limit)
             {
                 pages.Add(new PagePlan(currentStart, current.ToList(), false));
                 startNo += current.Count;
                 currentStart = startNo;
                 current.Clear();
-                y = 142f;
+                y = ContinuationItemsStartY;
             }
+
             current.Add(item);
             y += height;
         }
