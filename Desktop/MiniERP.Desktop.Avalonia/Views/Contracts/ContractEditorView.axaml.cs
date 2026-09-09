@@ -148,7 +148,7 @@ public partial class ContractEditorView : UserControl
         try
         {
             await using var stream = await file.OpenWriteAsync();
-            ContractXlsxExporter.Export(ViewModel.Contract, stream);
+            ContractXlsxPdfScaleExporter.Export(ViewModel.Contract, stream);
             await stream.FlushAsync();
             ViewModel.SetStatusMessage("Editable XLSX exported.");
         }
