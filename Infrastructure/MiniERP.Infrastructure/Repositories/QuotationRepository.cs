@@ -7,51 +7,27 @@ namespace MiniERP.Infrastructure.Repositories
 {
     public class QuotationRepository : Repository<Quotation>, IQuotationRepository
     {
-        public QuotationRepository(ApplicationDbContext context) : base(context)
-        {
-        }
+        public QuotationRepository(ApplicationDbContext context) : base(context) { }
 
         public override async Task<IEnumerable<Quotation>> GetAllAsync()
-            => await _dbSet
-                .AsNoTracking()
-                .Include(q => q.Customer)
-                .Include(q => q.User)
-                .Include(q => q.Items)
-                .OrderByDescending(q => q.QuotationDate)
-                .ThenByDescending(q => q.Id)
-                .ToListAsync();
+            => await _dbSet.AsNoTracking().Include(q => q.Customer).Include(q => q.User).Include(q => q.Items)
+                .OrderByDescending(q => q.QuotationDate).ThenByDescending(q => q.Id).ToListAsync();
 
         public override async Task<Quotation?> GetByIdAsync(int id)
-            => await _dbSet
-                .AsNoTracking()
-                .Include(q => q.Customer)
-                .Include(q => q.User)
-                .Include(q => q.Items)
+            => await _dbSet.AsNoTracking().Include(q => q.Customer).Include(q => q.User).Include(q => q.Items)
                 .FirstOrDefaultAsync(q => q.Id == id);
 
         public async Task<Quotation?> GetByNumberAsync(string quotationNumber)
-            => await _dbSet
-                .AsNoTracking()
-                .Include(q => q.Customer)
-                .Include(q => q.User)
-                .Include(q => q.Items)
+            => await _dbSet.AsNoTracking().Include(q => q.Customer).Include(q => q.User).Include(q => q.Items)
                 .FirstOrDefaultAsync(q => q.QuotationNumber == quotationNumber);
 
         public async Task<IEnumerable<Quotation>> GetByCustomerIdAsync(int customerId)
-            => await _dbSet
-                .AsNoTracking()
-                .Include(q => q.Customer)
-                .Include(q => q.User)
-                .Include(q => q.Items)
-                .Where(q => q.CustomerId == customerId)
-                .OrderByDescending(q => q.QuotationDate)
-                .ToListAsync();
+            => await _dbSet.AsNoTracking().Include(q => q.Customer).Include(q => q.User).Include(q => q.Items)
+                .Where(q => q.CustomerId == customerId).OrderByDescending(q => q.QuotationDate).ToListAsync();
 
         public override async Task UpdateAsync(Quotation quotation)
         {
-            var existing = await _dbSet
-                .Include(item => item.Items)
-                .FirstOrDefaultAsync(item => item.Id == quotation.Id)
+            var existing = await _dbSet.Include(item => item.Items).FirstOrDefaultAsync(item => item.Id == quotation.Id)
                 ?? throw new InvalidOperationException($"Quotation {quotation.Id} no longer exists.");
 
             existing.QuotationNumber = quotation.QuotationNumber;
@@ -76,16 +52,12 @@ namespace MiniERP.Infrastructure.Repositories
 
             var incomingItems = quotation.Items.ToList();
             var incomingIds = incomingItems.Where(item => item.Id > 0).Select(item => item.Id).ToHashSet();
-
             foreach (var oldItem in existing.Items.Where(item => !incomingIds.Contains(item.Id)).ToList())
                 _context.QuotationItems.Remove(oldItem);
 
             foreach (var incoming in incomingItems)
             {
-                var tracked = incoming.Id > 0
-                    ? existing.Items.FirstOrDefault(item => item.Id == incoming.Id)
-                    : null;
-
+                var tracked = incoming.Id > 0 ? existing.Items.FirstOrDefault(item => item.Id == incoming.Id) : null;
                 if (tracked is not null)
                 {
                     CopyItem(incoming, tracked);
@@ -119,12 +91,9 @@ namespace MiniERP.Infrastructure.Repositories
         public override async Task DeleteAsync(int id)
         {
             var hasDownstreamDocuments =
-                await _context.Invoices.AnyAsync(invoice =>
-                    invoice.SourceDocumentType == DocumentSourceType.Quotation &&
-                    invoice.SourceDocumentId == id) ||
-                await _context.PackingLists.AnyAsync(packingList =>
-                    packingList.SourceDocumentType == DocumentSourceType.Quotation &&
-                    packingList.SourceDocumentId == id);
+                await _context.Invoices.AnyAsync(invoice => invoice.SourceDocumentType == DocumentSourceType.Quotation && invoice.SourceDocumentId == id) ||
+                await _context.PackingLists.AnyAsync(packingList => packingList.SourceDocumentType == DocumentSourceType.Quotation && packingList.SourceDocumentId == id) ||
+                await _context.Contracts.AnyAsync(contract => contract.SourceDocumentType == DocumentSourceType.Quotation && contract.SourceDocumentId == id);
 
             if (hasDownstreamDocuments)
                 throw new InvalidOperationException("This quotation has downstream sales documents and cannot be deleted.");

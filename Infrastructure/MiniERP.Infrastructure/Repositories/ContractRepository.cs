@@ -5,67 +5,56 @@ using MiniERP.Infrastructure.Data;
 
 namespace MiniERP.Infrastructure.Repositories;
 
-public sealed class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
+public sealed class ContractRepository : Repository<Contract>, IContractRepository
 {
-    public InvoiceRepository(ApplicationDbContext context) : base(context) { }
+    public ContractRepository(ApplicationDbContext context) : base(context) { }
 
-    public override async Task<IEnumerable<Invoice>> GetAllAsync()
-        => await Query().OrderByDescending(i => i.InvoiceDate).ThenByDescending(i => i.Id).ToListAsync();
+    public override async Task<IEnumerable<Contract>> GetAllAsync()
+        => await Query().OrderByDescending(c => c.ContractDate).ThenByDescending(c => c.Id).ToListAsync();
 
-    public override async Task<Invoice?> GetByIdAsync(int id)
-        => await Query().FirstOrDefaultAsync(i => i.Id == id);
+    public override async Task<Contract?> GetByIdAsync(int id)
+        => await Query().FirstOrDefaultAsync(c => c.Id == id);
 
-    public Task<Invoice?> GetByNumberAsync(string invoiceNumber)
-        => Query().FirstOrDefaultAsync(i => i.InvoiceNumber == invoiceNumber);
+    public Task<Contract?> GetByNumberAsync(string contractNumber)
+        => Query().FirstOrDefaultAsync(c => c.ContractNumber == contractNumber);
 
-    public async Task<IEnumerable<Invoice>> GetByTypeAsync(InvoiceType type)
-        => await Query().Where(i => i.Type == type).OrderByDescending(i => i.InvoiceDate).ThenByDescending(i => i.Id).ToListAsync();
+    public async Task<IEnumerable<Contract>> GetByCustomerIdAsync(int customerId)
+        => await Query().Where(c => c.CustomerId == customerId).OrderByDescending(c => c.ContractDate).ToListAsync();
 
-    public async Task<IEnumerable<Invoice>> GetByCustomerIdAsync(int customerId)
-        => await Query().Where(i => i.CustomerId == customerId).OrderByDescending(i => i.InvoiceDate).ToListAsync();
-
-    public override async Task UpdateAsync(Invoice invoice)
+    public override async Task UpdateAsync(Contract contract)
     {
-        var existing = await _dbSet.Include(i => i.Items).FirstOrDefaultAsync(i => i.Id == invoice.Id)
-            ?? throw new InvalidOperationException($"Invoice {invoice.Id} no longer exists.");
+        var existing = await _dbSet.Include(c => c.Items).FirstOrDefaultAsync(c => c.Id == contract.Id)
+            ?? throw new InvalidOperationException($"Contract {contract.Id} no longer exists.");
 
-        CopyHeader(invoice, existing);
-        SyncItems(invoice, existing);
+        CopyHeader(contract, existing);
+        SyncItems(contract, existing);
         await _context.SaveChangesAsync();
     }
 
     public override async Task DeleteAsync(int id)
     {
-        var isUsedAsInvoiceSource =
+        var hasDownstreamDocuments =
             await _context.Invoices.AnyAsync(invoice =>
-                invoice.SourceDocumentId == id &&
-                (invoice.SourceDocumentType == DocumentSourceType.ProformaInvoice ||
-                 invoice.SourceDocumentType == DocumentSourceType.CommercialInvoice)) ||
+                invoice.SourceDocumentType == DocumentSourceType.Contract && invoice.SourceDocumentId == id) ||
             await _context.PackingLists.AnyAsync(packingList =>
-                packingList.SourceDocumentId == id &&
-                (packingList.SourceDocumentType == DocumentSourceType.ProformaInvoice ||
-                 packingList.SourceDocumentType == DocumentSourceType.CommercialInvoice)) ||
-            await _context.Contracts.AnyAsync(contract =>
-                contract.SourceDocumentId == id &&
-                (contract.SourceDocumentType == DocumentSourceType.ProformaInvoice ||
-                 contract.SourceDocumentType == DocumentSourceType.CommercialInvoice));
+                packingList.SourceDocumentType == DocumentSourceType.Contract && packingList.SourceDocumentId == id);
 
-        if (isUsedAsInvoiceSource)
-            throw new InvalidOperationException("This invoice has downstream sales documents and cannot be deleted.");
+        if (hasDownstreamDocuments)
+            throw new InvalidOperationException("This contract has downstream sales documents and cannot be deleted.");
 
         await base.DeleteAsync(id);
     }
 
-    private IQueryable<Invoice> Query()
-        => _dbSet.AsNoTracking().Include(i => i.Customer).Include(i => i.User).Include(i => i.Items);
+    private IQueryable<Contract> Query()
+        => _dbSet.AsNoTracking().Include(c => c.Customer).Include(c => c.User).Include(c => c.Items);
 
-    private void SyncItems(Invoice source, Invoice target)
+    private void SyncItems(Contract source, Contract target)
     {
         var incoming = source.Items.ToList();
         var incomingIds = incoming.Where(i => i.Id > 0).Select(i => i.Id).ToHashSet();
 
         foreach (var old in target.Items.Where(i => !incomingIds.Contains(i.Id)).ToList())
-            _context.InvoiceItems.Remove(old);
+            _context.ContractItems.Remove(old);
 
         foreach (var item in incoming)
         {
@@ -75,25 +64,26 @@ public sealed class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
                 target.Items.Add(CloneItem(item));
                 continue;
             }
+
             CopyItem(item, tracked);
             tracked.LastModifiedAt = DateTime.Now;
         }
     }
 
-    private static void CopyHeader(Invoice source, Invoice target)
+    private static void CopyHeader(Contract source, Contract target)
     {
-        target.Type = source.Type;
-        target.InvoiceNumber = source.InvoiceNumber;
-        target.InvoiceDate = source.InvoiceDate;
-        target.DueDate = source.DueDate;
+        target.ContractNumber = source.ContractNumber;
+        target.ContractDate = source.ContractDate;
         target.CustomerId = source.CustomerId;
         target.UserId = source.UserId;
         target.Currency = source.Currency;
         target.ExchangeRate = source.ExchangeRate;
         target.DeliveryTerm = source.DeliveryTerm;
         target.PaymentTerm = source.PaymentTerm;
+        target.LeadTime = source.LeadTime;
         target.BankInformation = source.BankInformation;
         target.Remarks = source.Remarks;
+        target.TermsAndConditions = source.TermsAndConditions;
         target.CustomerPoNumber = source.CustomerPoNumber;
         target.CustomerPoDate = source.CustomerPoDate;
         target.CustomerNameSnapshot = source.CustomerNameSnapshot;
@@ -109,7 +99,7 @@ public sealed class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
         target.LastModifiedAt = DateTime.Now;
     }
 
-    private static InvoiceItem CloneItem(InvoiceItem source)
+    private static ContractItem CloneItem(ContractItem source)
         => new()
         {
             SortOrder = source.SortOrder,
@@ -129,7 +119,7 @@ public sealed class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
             LastModifiedAt = DateTime.Now
         };
 
-    private static void CopyItem(InvoiceItem source, InvoiceItem target)
+    private static void CopyItem(ContractItem source, ContractItem target)
     {
         target.SortOrder = source.SortOrder;
         target.SourceArticleId = source.SourceArticleId;

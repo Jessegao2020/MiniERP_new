@@ -19,6 +19,7 @@ namespace MiniERP.Infrastructure
             services.AddScoped<IQuotationRepository, QuotationRepository>();
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();
             services.AddScoped<IPackingListRepository, PackingListRepository>();
+            services.AddScoped<IContractRepository, ContractRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
 
             return services;
@@ -31,6 +32,7 @@ namespace MiniERP.Infrastructure
             services.AddScoped<IQuotationService, QuotationService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
             services.AddScoped<IPackingListService, PackingListService>();
+            services.AddScoped<IContractService, ContractService>();
             services.AddScoped<ISalesDocumentCopyService, SalesDocumentCopyService>();
             services.AddScoped<IUserService, UserService>();
 

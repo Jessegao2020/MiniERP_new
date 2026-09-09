@@ -11,6 +11,8 @@ public static class SalesDocumentPdfExporter
     private const float Right = 547f;
     private const float Bottom = 790f;
     private const float ContentBottom = 748f;
+    private const float InvoiceRowHeight = 30f;
+    private const float InvoiceContinuationReserve = 24f;
 
     private static readonly SKTypeface Regular = FindTypeface(SKFontStyle.Normal);
     private static readonly SKTypeface Bold = FindTypeface(SKFontStyle.Bold);
@@ -38,17 +40,26 @@ public static class SalesDocumentPdfExporter
 
             y = DrawInvoiceTableHeader(canvas, y);
 
-            // Keep enough room on the final page for total, bank information and remarks.
-            // A few extra pages are preferable to allowing terms to run into the footer.
-            var maxRows = page == 1 ? 10 : 14;
-            var take = Math.Min(maxRows, items.Count - index);
-            for (var row = 0; row < take; row++)
+            // Fill the page by actual remaining vertical space. Non-final pages only
+            // reserve the continuation marker; when the next item is the final item,
+            // reserve enough room for Total / Bank Information / Remarks as well.
+            var pageStartIndex = index;
+            while (index < items.Count)
             {
-                DrawInvoiceRow(canvas, index + row + 1, items[index + row], y);
-                y += 30f;
+                var isLastItem = index == items.Count - 1;
+                var reserve = isLastItem
+                    ? MeasureInvoiceClosingReserve(invoice)
+                    : InvoiceContinuationReserve;
+                var limit = ContentBottom - reserve;
+
+                if (index > pageStartIndex && y + InvoiceRowHeight > limit)
+                    break;
+
+                DrawInvoiceRow(canvas, index + 1, items[index], y);
+                y += InvoiceRowHeight;
+                index++;
             }
 
-            index += take;
             if (index == items.Count)
             {
                 y += 7f;
@@ -346,6 +357,26 @@ public static class SalesDocumentPdfExporter
         canvas.DrawText($"{pck.Cbm:0.####}", 500f, y + 15f, p);
         using var line = Stroke(0.35f, SKColors.LightGray);
         canvas.DrawLine(Left, y + 23f, Right, y + 23f, line);
+    }
+
+    private static float MeasureInvoiceClosingReserve(Invoice invoice)
+    {
+        // 7 pt gap before Total + 28 pt after Total, then the actual terms blocks.
+        var reserve = 35f;
+
+        if (!string.IsNullOrWhiteSpace(invoice.BankInformation))
+        {
+            var lines = SplitLines(invoice.BankInformation).Take(5).Count();
+            reserve += 19f + lines * 12f;
+        }
+
+        if (!string.IsNullOrWhiteSpace(invoice.Remarks))
+        {
+            var lines = SplitLines(invoice.Remarks).Take(4).Count();
+            reserve += 14f + lines * 12f;
+        }
+
+        return reserve + 8f;
     }
 
     private static void DrawInvoiceTerms(SKCanvas canvas, Invoice invoice, float y)

@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Microsoft.Extensions.DependencyInjection;
 using MiniERP.ApplicationLayer.Services;
 using MiniERP.Desktop.Views.Articles;
+using MiniERP.Desktop.Views.Contracts;
 using MiniERP.Desktop.Views.Customers;
 using MiniERP.Desktop.Views.Invoices;
 using MiniERP.Desktop.Views.PackingLists;
@@ -34,7 +35,7 @@ public partial class MainWindow : Window
     private void Invoice_Click(object? sender, RoutedEventArgs e) => OpenInvoiceList(InvoiceType.Commercial);
     private void PackingList_Click(object? sender, RoutedEventArgs e) => OpenPackingList();
     private void ProformaInvoice_Click(object? sender, RoutedEventArgs e) => OpenInvoiceList(InvoiceType.Proforma);
-    private void Contract_Click(object? sender, RoutedEventArgs e) => OpenPlaceholder("contract", "Contract", "Contract module is not migrated yet.");
+    private void Contract_Click(object? sender, RoutedEventArgs e) => OpenContractList();
     private void System_Click(object? sender, RoutedEventArgs e) => OpenSystemSettings();
     private void User_Click(object? sender, RoutedEventArgs e) => OpenUserSettings();
 
@@ -100,6 +101,7 @@ public partial class MainWindow : Window
         editor.Deleted += async (_, _) => await RefreshQuotationListAsync();
         editor.CreateInvoiceRequested += async (source, type) => await CreateInvoiceFromQuotationAsync(source.Id, type);
         editor.CreatePackingListRequested += async source => await CreatePackingListFromQuotationAsync(source.Id);
+        editor.CreateContractRequested += async source => await CreateContractFromQuotationAsync(source.Id);
         editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
     }
 
@@ -125,6 +127,7 @@ public partial class MainWindow : Window
         editor.Deleted += async (_, _) => await RefreshInvoiceListAsync(type);
         editor.CreateCommercialRequested += async source => await CreateInvoiceFromInvoiceAsync(source.Id, InvoiceType.Commercial);
         editor.CreatePackingListRequested += async source => await CreatePackingListFromInvoiceAsync(source.Id);
+        editor.CreateContractRequested += async source => await CreateContractFromInvoiceAsync(source.Id);
         editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
     }
 
@@ -149,13 +152,35 @@ public partial class MainWindow : Window
         editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
     }
 
+    private void OpenContractList()
+    {
+        const string key = "contract";
+        if (SelectExisting(key)) return;
+        var view = new ContractListView();
+        view.OpenContractRequested += OpenContractEditor;
+        AddWorkspace(key, "Contract", view);
+    }
+
+    private void OpenContractEditor(Contract? contract)
+    {
+        var key = contract is null ? "contract:new" : contract.Id > 0 ? $"contract:{contract.Id}" : $"contract:draft:{contract.ContractNumber}";
+        var title = contract is null ? "New Contract" : $"Contract: {contract.ContractNumber}";
+        if (SelectExisting(key)) return;
+        var editor = new ContractEditorView(contract);
+        var tab = AddWorkspace(key, title, editor);
+        editor.Saved += async (_, _) => await RefreshContractListAsync();
+        editor.Deleted += async (_, _) => await RefreshContractListAsync();
+        editor.CreateInvoiceRequested += async (source, type) => await CreateInvoiceFromContractAsync(source.Id, type);
+        editor.CreatePackingListRequested += async source => await CreatePackingListFromContractAsync(source.Id);
+        editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+    }
+
     private async Task CreateInvoiceFromQuotationAsync(int quotationId, InvoiceType type)
     {
         if (quotationId <= 0) return;
         using var scope = App.Services.CreateScope();
         var copy = scope.ServiceProvider.GetRequiredService<ISalesDocumentCopyService>();
-        var draft = await copy.CreateInvoiceFromQuotationAsync(quotationId, type);
-        OpenInvoiceEditor(draft, type);
+        OpenInvoiceEditor(await copy.CreateInvoiceFromQuotationAsync(quotationId, type), type);
     }
 
     private async Task CreatePackingListFromQuotationAsync(int quotationId)
@@ -163,8 +188,15 @@ public partial class MainWindow : Window
         if (quotationId <= 0) return;
         using var scope = App.Services.CreateScope();
         var copy = scope.ServiceProvider.GetRequiredService<ISalesDocumentCopyService>();
-        var draft = await copy.CreatePackingListFromQuotationAsync(quotationId);
-        OpenPackingListEditor(draft);
+        OpenPackingListEditor(await copy.CreatePackingListFromQuotationAsync(quotationId));
+    }
+
+    private async Task CreateContractFromQuotationAsync(int quotationId)
+    {
+        if (quotationId <= 0) return;
+        using var scope = App.Services.CreateScope();
+        var copy = scope.ServiceProvider.GetRequiredService<ISalesDocumentCopyService>();
+        OpenContractEditor(await copy.CreateContractFromQuotationAsync(quotationId));
     }
 
     private async Task CreateInvoiceFromInvoiceAsync(int invoiceId, InvoiceType targetType)
@@ -172,8 +204,7 @@ public partial class MainWindow : Window
         if (invoiceId <= 0) return;
         using var scope = App.Services.CreateScope();
         var copy = scope.ServiceProvider.GetRequiredService<ISalesDocumentCopyService>();
-        var draft = await copy.CreateInvoiceFromInvoiceAsync(invoiceId, targetType);
-        OpenInvoiceEditor(draft, targetType);
+        OpenInvoiceEditor(await copy.CreateInvoiceFromInvoiceAsync(invoiceId, targetType), targetType);
     }
 
     private async Task CreatePackingListFromInvoiceAsync(int invoiceId)
@@ -181,8 +212,31 @@ public partial class MainWindow : Window
         if (invoiceId <= 0) return;
         using var scope = App.Services.CreateScope();
         var copy = scope.ServiceProvider.GetRequiredService<ISalesDocumentCopyService>();
-        var draft = await copy.CreatePackingListFromInvoiceAsync(invoiceId);
-        OpenPackingListEditor(draft);
+        OpenPackingListEditor(await copy.CreatePackingListFromInvoiceAsync(invoiceId));
+    }
+
+    private async Task CreateContractFromInvoiceAsync(int invoiceId)
+    {
+        if (invoiceId <= 0) return;
+        using var scope = App.Services.CreateScope();
+        var copy = scope.ServiceProvider.GetRequiredService<ISalesDocumentCopyService>();
+        OpenContractEditor(await copy.CreateContractFromInvoiceAsync(invoiceId));
+    }
+
+    private async Task CreateInvoiceFromContractAsync(int contractId, InvoiceType targetType)
+    {
+        if (contractId <= 0) return;
+        using var scope = App.Services.CreateScope();
+        var copy = scope.ServiceProvider.GetRequiredService<ISalesDocumentCopyService>();
+        OpenInvoiceEditor(await copy.CreateInvoiceFromContractAsync(contractId, targetType), targetType);
+    }
+
+    private async Task CreatePackingListFromContractAsync(int contractId)
+    {
+        if (contractId <= 0) return;
+        using var scope = App.Services.CreateScope();
+        var copy = scope.ServiceProvider.GetRequiredService<ISalesDocumentCopyService>();
+        OpenPackingListEditor(await copy.CreatePackingListFromContractAsync(contractId));
     }
 
     private void OpenSystemSettings()
@@ -207,6 +261,7 @@ public partial class MainWindow : Window
         {
             if (tab.Content is ArticleEditorView articleEditor) articleEditor.RefreshExchangeRate();
             else if (tab.Content is QuotationEditorView quotationEditor) quotationEditor.RefreshExchangeRate();
+            else if (tab.Content is ContractEditorView contractEditor) contractEditor.RefreshExchangeRate();
         }
     }
 
@@ -214,28 +269,31 @@ public partial class MainWindow : Window
     {
         if (_openTabs.TryGetValue("article", out var tab) && tab.Content is ArticleListView list) await list.ReloadAsync();
     }
+
     private async Task RefreshCustomerListAsync()
     {
         if (_openTabs.TryGetValue("customer", out var tab) && tab.Content is CustomerListView list) await list.ReloadAsync();
     }
+
     private async Task RefreshQuotationListAsync()
     {
         if (_openTabs.TryGetValue("quotation", out var tab) && tab.Content is QuotationListView list) await list.ReloadAsync();
     }
+
     private async Task RefreshInvoiceListAsync(InvoiceType type)
     {
         var key = type == InvoiceType.Proforma ? "invoice:proforma" : "invoice:commercial";
         if (_openTabs.TryGetValue(key, out var tab) && tab.Content is InvoiceListView list) await list.ReloadAsync();
     }
+
     private async Task RefreshPackingListAsync()
     {
         if (_openTabs.TryGetValue("packing-list", out var tab) && tab.Content is PackingListListView list) await list.ReloadAsync();
     }
 
-    private void OpenPlaceholder(string key, string title, string description)
+    private async Task RefreshContractListAsync()
     {
-        if (SelectExisting(key)) return;
-        AddWorkspace(key, title, CreatePlaceholder(title, description));
+        if (_openTabs.TryGetValue("contract", out var tab) && tab.Content is ContractListView list) await list.ReloadAsync();
     }
 
     private bool SelectExisting(string key)
@@ -257,14 +315,6 @@ public partial class MainWindow : Window
         _workspaceTabs.Add(tab);
         ContentTabControl.SelectedItem = tab;
         return tab;
-    }
-
-    private static Control CreatePlaceholder(string title, string description)
-    {
-        var stack = new StackPanel { Spacing = 8, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-        stack.Children.Add(new TextBlock { Text = title, FontSize = 24, FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
-        stack.Children.Add(new TextBlock { Text = description, Opacity = 0.55, HorizontalAlignment = HorizontalAlignment.Center });
-        return stack;
     }
 
     private void CloseWorkspace(string key, TabItem tab)

@@ -18,6 +18,7 @@ public partial class InvoiceEditorView : UserControl
     public event EventHandler? RequestClose;
     public event Action<Invoice>? CreateCommercialRequested;
     public event Action<Invoice>? CreatePackingListRequested;
+    public event Action<Invoice>? CreateContractRequested;
 
     public InvoiceEditorView(Invoice? invoice, InvoiceType type)
     {
@@ -47,7 +48,6 @@ public partial class InvoiceEditorView : UserControl
             return;
         }
 
-        // Avalonia DataGrid 11 does not reliably repaint ObservableCollection.Move.
         ViewModel.SelectedItem = null;
         ViewModel.Items.RemoveAt(index);
         ViewModel.Items.Insert(index - 1, item);
@@ -139,6 +139,13 @@ public partial class InvoiceEditorView : UserControl
         if (!await ViewModel.SaveAsync()) return;
         Saved?.Invoke(this, EventArgs.Empty);
         CreatePackingListRequested?.Invoke(ViewModel.Invoice);
+    }
+
+    private async void CreateContract_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!await ViewModel.SaveAsync()) return;
+        Saved?.Invoke(this, EventArgs.Empty);
+        CreateContractRequested?.Invoke(ViewModel.Invoice);
     }
 
     private async void Save_Click(object? sender, RoutedEventArgs e)

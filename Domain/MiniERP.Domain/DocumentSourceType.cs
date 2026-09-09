@@ -6,5 +6,6 @@ public enum DocumentSourceType
     Quotation = 1,
     ProformaInvoice = 2,
     CommercialInvoice = 3,
-    PackingList = 4
+    PackingList = 4,
+    Contract = 5
 }

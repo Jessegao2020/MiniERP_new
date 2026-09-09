@@ -20,6 +20,8 @@ namespace MiniERP.Infrastructure.Data
         public DbSet<PackingList> PackingLists { get; set; }
         public DbSet<PackingListItem> PackingListItems { get; set; }
         public DbSet<PackingPackage> PackingPackages { get; set; }
+        public DbSet<Contract> Contracts { get; set; }
+        public DbSet<ContractItem> ContractItems { get; set; }
         public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -32,6 +34,10 @@ namespace MiniERP.Infrastructure.Data
 
             modelBuilder.Entity<PackingList>()
                 .HasIndex(packingList => packingList.PackingListNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<Contract>()
+                .HasIndex(contract => contract.ContractNumber)
                 .IsUnique();
 
             // Historical sales documents must not disappear when a customer or user is removed.
@@ -58,6 +64,18 @@ namespace MiniERP.Infrastructure.Data
                 .HasOne(packingList => packingList.User)
                 .WithMany()
                 .HasForeignKey(packingList => packingList.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Contract>()
+                .HasOne(contract => contract.Customer)
+                .WithMany()
+                .HasForeignKey(contract => contract.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Contract>()
+                .HasOne(contract => contract.User)
+                .WithMany()
+                .HasForeignKey(contract => contract.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
