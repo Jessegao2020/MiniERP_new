@@ -58,6 +58,7 @@ public sealed class WorkspaceTabHost : UserControl
 {
     private const double TabWidth = 150d;
     private const double TabHeight = 24d;
+    private const double ContentGap = 12d;
 
     private static readonly IBrush InactiveBackground = new SolidColorBrush(Color.Parse("#F0F0F0"));
     private static readonly IBrush HoverBackground = new SolidColorBrush(Color.Parse("#E4E4E4"));
@@ -446,6 +447,13 @@ public sealed class WorkspaceTabHost : UserControl
     private void UpdateNavigationState()
     {
         var count = Tabs().Count;
+
+        // Match the vertical breathing room used by the primary General/Documents/
+        // Settings navigation: document tabs stay compact, while the page content
+        // starts a little lower instead of touching the tab edge.
+        _contentHost.Margin = count > 0
+            ? new Thickness(0, ContentGap, 0, 0)
+            : new Thickness(0);
 
         // When there are no documents open, leave an unobtrusive strip in the same
         // background color rather than showing a wide grey toolbar.
