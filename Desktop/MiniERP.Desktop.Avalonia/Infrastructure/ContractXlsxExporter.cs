@@ -15,118 +15,139 @@ public static class ContractXlsxExporter
 
         ConfigureColumns(sheet);
         BuildHeader(sheet, contract);
-        var itemEndRow = BuildItems(sheet, contract);
-        var contentEndRow = BuildTermsAndSignatures(sheet, contract, itemEndRow + 2);
+        var tableEndRow = BuildItems(sheet, contract);
+        var closingEndRow = BuildClosingSections(sheet, contract, tableEndRow + 2);
+        var footerEndRow = BuildFooter(sheet, closingEndRow + 2);
 
+        sheet.Range(1, 1, footerEndRow, 8).Style.Font.FontName = "DejaVu Sans";
+        sheet.Range(1, 1, footerEndRow, 8).Style.Font.FontSize = 8;
         sheet.PageSetup.PageOrientation = XLPageOrientation.Portrait;
         sheet.PageSetup.PaperSize = XLPaperSize.A4Paper;
         sheet.PageSetup.FitToPages(1, 0);
 
-        sheet.Range(1, 1, contentEndRow, 8).Style.Font.FontSize = 10;
         workbook.SaveAs(output);
     }
 
     private static void ConfigureColumns(IXLWorksheet sheet)
     {
-        sheet.Column(1).Width = 5.5;
-        sheet.Column(2).Width = 18;
-        sheet.Column(3).Width = 31;
-        sheet.Column(4).Width = 10;
-        sheet.Column(5).Width = 9;
-        sheet.Column(6).Width = 14;
-        sheet.Column(7).Width = 10;
+        // The eight physical columns are grouped to reproduce the six visual
+        // columns used by ContractPdfExporter:
+        // A=Item, B:D=Product, E=Unit Price, F=Qty, G=Unit, H=Amount.
+        sheet.Column(1).Width = 6;
+        sheet.Column(2).Width = 11;
+        sheet.Column(3).Width = 15;
+        sheet.Column(4).Width = 16;
+        sheet.Column(5).Width = 15;
+        sheet.Column(6).Width = 8;
+        sheet.Column(7).Width = 8;
         sheet.Column(8).Width = 16;
     }
 
     private static void BuildHeader(IXLWorksheet sheet, Contract contract)
     {
-        var company = sheet.Range("A1:H1").Merge();
+        var logo = sheet.Range("A1:C2").Merge();
+        logo.Value = "FORLINX";
+        logo.Style.Font.Bold = true;
+        logo.Style.Font.FontSize = 18;
+        logo.Style.Font.FontColor = XLColor.Blue;
+        logo.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+        var company = sheet.Range("D1:H1").Merge();
         company.Value = "Baoding Forlinx Embedded Technology Co., Ltd";
         company.Style.Font.Bold = true;
-        company.Style.Font.FontSize = 15;
-        company.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-        sheet.Row(1).Height = 24;
+        company.Style.Font.FontSize = 10;
+        company.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        company.Style.Alignment.Vertical = XLAlignmentVerticalValues.Bottom;
 
-        var title = sheet.Range("A2:H2").Merge();
-        title.Value = "SALES CONTRACT";
+        var tagline = sheet.Range("D2:H2").Merge();
+        tagline.Value = "Trusted Designer & Manufacturer of System on Module";
+        tagline.Style.Font.Italic = true;
+        tagline.Style.Font.FontSize = 7;
+        tagline.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        tagline.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+
+        sheet.Row(1).Height = 20;
+        sheet.Row(2).Height = 16;
+        sheet.Range("A3:H3").Style.Border.TopBorder = XLBorderStyleValues.Thin;
+        sheet.Row(3).Height = 6;
+
+        var title = sheet.Range("A4:H4").Merge();
+        title.Value = "Sales Contract";
         title.Style.Font.Bold = true;
-        title.Style.Font.FontSize = 18;
-        title.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-        sheet.Row(2).Height = 28;
+        title.Style.Font.FontSize = 20;
+        title.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        title.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+        sheet.Row(4).Height = 28;
 
-        sheet.Range("A4:D4").Merge().Value = "SELLER";
-        sheet.Range("E4:H4").Merge().Value = "BUYER";
-        StyleSectionHeader(sheet.Range("A4:D4"));
-        StyleSectionHeader(sheet.Range("E4:H4"));
+        sheet.Range("A6:D6").Merge().Value = "SELLER";
+        sheet.Range("E6:H6").Merge().Value = "BUYER";
+        sheet.Range("A6:H6").Style.Font.Bold = true;
+        sheet.Range("A6:H6").Style.Font.FontSize = 9;
 
-        sheet.Range("A5:D5").Merge().Value = "Baoding Forlinx Embedded Technology Co., Ltd";
-        sheet.Range("A6:D8").Merge().Value = "2699 Xiangyang North Street\n071000 Baoding\nChina";
-        sheet.Range("A9:D9").Merge().Value = FormatContact(
-            contract.SalesContactNameSnapshot,
-            contract.SalesContactPhoneSnapshot,
-            contract.SalesContactEmailSnapshot);
+        sheet.Range("A7:D7").Merge().Value = "Baoding Forlinx Embedded Technology Co., Ltd";
+        sheet.Range("A8:D8").Merge().Value = "2699 Xiangyang North Street";
+        sheet.Range("A9:D9").Merge().Value = "071000 Baoding, China";
 
-        sheet.Range("E5:H5").Merge().Value = contract.CustomerNameSnapshot ?? string.Empty;
-        sheet.Range("E6:H8").Merge().Value = contract.CustomerAddressSnapshot ?? string.Empty;
-        sheet.Range("E9:H9").Merge().Value = string.IsNullOrWhiteSpace(contract.CustomerContactSnapshot)
-            ? string.Empty
-            : $"Contact: {contract.CustomerContactSnapshot}";
+        sheet.Range("E7:H7").Merge().Value = contract.CustomerNameSnapshot ?? string.Empty;
+        sheet.Range("E8:H8").Merge().Value = contract.CustomerContactSnapshot ?? string.Empty;
 
-        foreach (var range in new[] { sheet.Range("A5:D5"), sheet.Range("A6:D8"), sheet.Range("A9:D9"), sheet.Range("E5:H5"), sheet.Range("E6:H8"), sheet.Range("E9:H9") })
-        {
-            range.Style.Alignment.WrapText = true;
-            range.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
-        }
+        var buyerAddress = SplitLines(contract.CustomerAddressSnapshot).Take(4).ToList();
+        for (var index = 0; index < 4; index++)
+            sheet.Range(9 + index, 5, 9 + index, 8).Merge().Value = index < buyerAddress.Count ? buyerAddress[index] : string.Empty;
 
-        sheet.Range("A11:B11").Merge().Value = "Contract No.";
-        sheet.Range("C11:D11").Merge().Value = contract.ContractNumber;
-        sheet.Range("E11:F11").Merge().Value = "Contract Date";
-        sheet.Range("G11:H11").Merge().Value = contract.ContractDate;
-        sheet.Range("G11:H11").Style.DateFormat.Format = "yyyy-mm-dd";
+        sheet.Range("A7:H12").Style.Alignment.WrapText = true;
+        sheet.Range("A7:H12").Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+        for (var row = 7; row <= 12; row++) sheet.Row(row).Height = 15;
 
-        sheet.Range("A12:B12").Merge().Value = "Customer PO";
-        sheet.Range("C12:D12").Merge().Value = contract.CustomerPoNumber ?? string.Empty;
-        sheet.Range("E12:F12").Merge().Value = "PO Date";
-        if (contract.CustomerPoDate is not null)
-        {
-            sheet.Range("G12:H12").Merge().Value = contract.CustomerPoDate.Value;
-            sheet.Range("G12:H12").Style.DateFormat.Format = "yyyy-mm-dd";
-        }
-        else
-        {
-            sheet.Range("G12:H12").Merge().Value = string.Empty;
-        }
+        AddMetaRow(sheet, 14, "Contract No.", contract.ContractNumber,
+            "Date", contract.ContractDate.ToString("MM.dd.yyyy"));
+        AddMetaRow(sheet, 15, "Customer PO", contract.CustomerPoNumber ?? string.Empty,
+            "PO Date", contract.CustomerPoDate?.ToString("MM.dd.yyyy") ?? string.Empty);
+        AddMetaRow(sheet, 16, "Payment Term", contract.PaymentTerm ?? string.Empty,
+            "Delivery Term", contract.DeliveryTerm ?? string.Empty);
+        AddMetaRow(sheet, 17, "Lead Time", contract.LeadTime ?? string.Empty,
+            "Contact", contract.SalesContactNameSnapshot ?? string.Empty);
+        AddMetaRow(sheet, 18, "Phone", contract.SalesContactPhoneSnapshot ?? string.Empty,
+            "Email", contract.SalesContactEmailSnapshot ?? string.Empty);
 
-        sheet.Range("A13:B13").Merge().Value = "Payment Term";
-        sheet.Range("C13:D13").Merge().Value = contract.PaymentTerm ?? string.Empty;
-        sheet.Range("E13:F13").Merge().Value = "Delivery Term";
-        sheet.Range("G13:H13").Merge().Value = contract.DeliveryTerm ?? string.Empty;
+        sheet.Range("A14:B18").Style.Font.Bold = true;
+        sheet.Range("E14:F18").Style.Font.Bold = true;
+        sheet.Range("A14:H18").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+        sheet.Range("A14:H18").Style.Alignment.WrapText = true;
+        for (var row = 14; row <= 18; row++) sheet.Row(row).Height = 17;
+    }
 
-        sheet.Range("A14:B14").Merge().Value = "Lead Time";
-        sheet.Range("C14:D14").Merge().Value = contract.LeadTime ?? string.Empty;
-        sheet.Range("E14:F14").Merge().Value = "Currency";
-        sheet.Range("G14:H14").Merge().Value = contract.Currency;
-
-        var metadata = sheet.Range("A11:H14");
-        metadata.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-        metadata.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-        metadata.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-        sheet.Range("A11:B14").Style.Font.Bold = true;
-        sheet.Range("E11:F14").Style.Font.Bold = true;
+    private static void AddMetaRow(
+        IXLWorksheet sheet,
+        int row,
+        string leftLabel,
+        string leftValue,
+        string rightLabel,
+        string rightValue)
+    {
+        sheet.Range(row, 1, row, 2).Merge().Value = leftLabel;
+        sheet.Range(row, 3, row, 4).Merge().Value = leftValue;
+        sheet.Range(row, 5, row, 6).Merge().Value = rightLabel;
+        sheet.Range(row, 7, row, 8).Merge().Value = rightValue;
     }
 
     private static int BuildItems(IXLWorksheet sheet, Contract contract)
     {
-        const int headerRow = 16;
-        var headers = new[] { "No.", "Product", "Description", "Qty", "Unit", "Unit Price", "Disc. %", "Amount" };
-        for (var col = 1; col <= headers.Length; col++)
-            sheet.Cell(headerRow, col).Value = headers[col - 1];
+        const int headerRow = 20;
+
+        sheet.Cell(headerRow, 1).Value = "Item";
+        sheet.Range(headerRow, 2, headerRow, 4).Merge().Value = "Product";
+        sheet.Cell(headerRow, 5).Value = $"Unit Price ({contract.Currency})";
+        sheet.Cell(headerRow, 6).Value = "Qty";
+        sheet.Cell(headerRow, 7).Value = "Unit";
+        sheet.Cell(headerRow, 8).Value = "Amount";
 
         var header = sheet.Range(headerRow, 1, headerRow, 8);
-        StyleSectionHeader(header);
+        header.Style.Font.Bold = true;
+        header.Style.Font.FontSize = 8.5;
+        header.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         header.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-        header.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-        header.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+        header.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
         sheet.Row(headerRow).Height = 23;
 
         var orderedItems = contract.Items
@@ -135,133 +156,181 @@ public static class ContractXlsxExporter
             .ToList();
 
         var row = headerRow + 1;
+        var itemNo = 1;
         foreach (var item in orderedItems)
         {
-            sheet.Cell(row, 1).Value = row - headerRow;
-            sheet.Cell(row, 2).Value = item.ArticleName;
-            sheet.Cell(row, 3).Value = item.Description ?? string.Empty;
-            sheet.Cell(row, 4).Value = item.Quantity;
-            sheet.Cell(row, 5).Value = string.IsNullOrWhiteSpace(item.Unit) ? "PCS" : item.Unit;
-            sheet.Cell(row, 6).Value = item.UnitPrice;
-            sheet.Cell(row, 7).Value = item.DiscountPercent;
-            sheet.Cell(row, 8).FormulaA1 = $"=ROUND(D{row}*F{row}*(1-G{row}/100),2)";
+            var mainRow = row;
+            var detailRow = row + 1;
+            var unit = string.IsNullOrWhiteSpace(item.Unit) ? "PCS" : item.Unit;
+            var netPrice = decimal.Round(
+                item.UnitPrice * (1m - item.DiscountPercent / 100m),
+                2,
+                MidpointRounding.AwayFromZero);
 
-            sheet.Cell(row, 4).Style.NumberFormat.Format = "0.####";
-            sheet.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
-            sheet.Cell(row, 7).Style.NumberFormat.Format = "0.##";
-            sheet.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00";
-            sheet.Range(row, 1, row, 8).Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
-            sheet.Range(row, 2, row, 3).Style.Alignment.WrapText = true;
-            sheet.Range(row, 1, row, 8).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-            sheet.Row(row).Height = Math.Max(24, 15 + CountVisualLines(item.Description) * 12);
-            row++;
-        }
+            sheet.Range(mainRow, 1, detailRow, 1).Merge().Value = itemNo++;
+            sheet.Range(mainRow, 2, mainRow, 4).Merge().Value = item.ArticleName;
+            sheet.Range(detailRow, 2, detailRow, 4).Merge().Value = item.Description ?? string.Empty;
+            sheet.Range(mainRow, 5, detailRow, 5).Merge().Value = netPrice;
+            sheet.Range(mainRow, 6, detailRow, 6).Merge().Value = item.Quantity;
+            sheet.Range(mainRow, 7, detailRow, 7).Merge().Value = unit;
+            sheet.Range(mainRow, 8, detailRow, 8).Merge();
+            sheet.Cell(mainRow, 8).FormulaA1 = $"=ROUND(E{mainRow}*F{mainRow},2)";
 
-        var lastItemRow = row - 1;
-        var itemArea = sheet.Range(headerRow, 1, lastItemRow, 8);
-        itemArea.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-        itemArea.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+            sheet.Range(mainRow, 2, mainRow, 4).Style.Font.Bold = true;
+            sheet.Range(mainRow, 2, mainRow, 4).Style.Font.FontSize = 8.8;
+            sheet.Range(detailRow, 2, detailRow, 4).Style.Font.FontSize = 7.1;
+            sheet.Range(detailRow, 2, detailRow, 4).Style.Alignment.WrapText = true;
 
-        sheet.Range(row, 1, row, 6).Merge().Value = "TOTAL";
-        sheet.Range(row, 1, row, 6).Style.Font.Bold = true;
-        sheet.Range(row, 1, row, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-        sheet.Cell(row, 7).Value = contract.Currency;
-        sheet.Cell(row, 7).Style.Font.Bold = true;
-        sheet.Cell(row, 8).FormulaA1 = $"=SUM(H{headerRow + 1}:H{lastItemRow})";
-        sheet.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00";
-        sheet.Cell(row, 8).Style.Font.Bold = true;
-        sheet.Range(row, 1, row, 8).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-        sheet.Range(row, 1, row, 8).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-        sheet.Row(row).Height = 24;
+            sheet.Range(mainRow, 1, detailRow, 8).Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+            sheet.Range(mainRow, 1, detailRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            sheet.Range(mainRow, 5, detailRow, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+            sheet.Range(mainRow, 7, detailRow, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            sheet.Range(mainRow, 8, detailRow, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
 
-        return row;
-    }
+            sheet.Cell(mainRow, 5).Style.NumberFormat.Format = "#,##0.00";
+            sheet.Cell(mainRow, 6).Style.NumberFormat.Format = "0.####";
+            sheet.Cell(mainRow, 8).Style.NumberFormat.Format = "#,##0.00";
 
-    private static int BuildTermsAndSignatures(IXLWorksheet sheet, Contract contract, int startRow)
-    {
-        var row = startRow;
+            sheet.Row(mainRow).Height = 18;
+            sheet.Row(detailRow).Height = Math.Max(18, 8 + CountVisualLines(item.Description, 58) * 10);
+            sheet.Range(detailRow, 1, detailRow, 8).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
 
-        row = AddTextSection(sheet, row, "Terms and Conditions", contract.TermsAndConditions);
-        row = AddTextSection(sheet, row, "Remarks", contract.Remarks);
-        row = AddTextSection(sheet, row, "Bank Information", contract.BankInformation);
-
-        if (contract.SourceDocumentType != DocumentSourceType.None && !string.IsNullOrWhiteSpace(contract.SourceDocumentNumber))
-        {
-            sheet.Range(row, 1, row, 8).Merge().Value = $"Source document: {contract.SourceDocumentType} {contract.SourceDocumentNumber}";
-            sheet.Range(row, 1, row, 8).Style.Font.Italic = true;
-            sheet.Range(row, 1, row, 8).Style.Font.FontColor = XLColor.Gray;
             row += 2;
         }
 
-        sheet.Range(row, 1, row, 4).Merge().Value = "SELLER SIGNATURE / COMPANY STAMP";
-        sheet.Range(row, 5, row, 8).Merge().Value = "BUYER SIGNATURE / COMPANY STAMP";
-        StyleSectionHeader(sheet.Range(row, 1, row, 4));
-        StyleSectionHeader(sheet.Range(row, 5, row, 8));
+        var totalRow = row + 1;
+        sheet.Range(totalRow, 5, totalRow, 7).Merge().Value = "Total";
+        sheet.Range(totalRow, 5, totalRow, 7).Style.Font.Bold = true;
+        sheet.Range(totalRow, 5, totalRow, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        sheet.Cell(totalRow, 8).FormulaA1 = $"=SUM(H{headerRow + 1}:H{row - 1})";
+        sheet.Cell(totalRow, 8).Style.NumberFormat.Format = "#,##0.00";
+        sheet.Cell(totalRow, 8).Style.Font.Bold = true;
+        sheet.Cell(totalRow, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        sheet.Range(totalRow, 5, totalRow, 8).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+        sheet.Row(totalRow).Height = 20;
+
+        return totalRow;
+    }
+
+    private static int BuildClosingSections(IXLWorksheet sheet, Contract contract, int startRow)
+    {
+        var row = startRow;
+        var terms = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(contract.PaymentTerm))
+            terms.Add($"Payment Term: {contract.PaymentTerm}");
+        if (!string.IsNullOrWhiteSpace(contract.DeliveryTerm))
+            terms.Add($"Delivery Term: {contract.DeliveryTerm}");
+        if (!string.IsNullOrWhiteSpace(contract.LeadTime))
+            terms.Add($"Lead Time: {contract.LeadTime}");
+        if (!string.IsNullOrWhiteSpace(contract.BankInformation))
+            terms.Add($"Bank Information: {contract.BankInformation}");
+        if (!string.IsNullOrWhiteSpace(contract.Remarks))
+            terms.Add($"Remarks: {contract.Remarks}");
+        if (!string.IsNullOrWhiteSpace(contract.TermsAndConditions))
+            terms.Add(contract.TermsAndConditions.Trim());
+
+        if (terms.Count > 0)
+        {
+            sheet.Range(row, 1, row, 8).Merge().Value = "Terms and Conditions";
+            sheet.Range(row, 1, row, 8).Style.Font.Bold = true;
+            sheet.Range(row, 1, row, 8).Style.Font.FontSize = 8.5;
+            sheet.Row(row).Height = 18;
+            row++;
+
+            foreach (var paragraph in terms)
+            {
+                var lines = CountVisualLines(paragraph, 105);
+                var range = sheet.Range(row, 1, row, 8).Merge();
+                range.Value = paragraph;
+                range.Style.Alignment.WrapText = true;
+                range.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+                range.Style.Font.FontSize = 7.6;
+                sheet.Row(row).Height = Math.Max(16, 8 + lines * 10);
+                row++;
+            }
+        }
+
+        row += 2;
+        sheet.Range(row, 1, row, 4).Merge().Value = "For Seller";
+        sheet.Range(row, 5, row, 8).Merge().Value = "For Buyer";
+        sheet.Range(row, 1, row, 8).Style.Font.Bold = true;
+        sheet.Range(row, 1, row, 8).Style.Font.FontSize = 8.5;
         row++;
 
-        var signatureTop = row;
-        var signatureBottom = row + 7;
-        var sellerBox = sheet.Range(signatureTop, 1, signatureBottom, 4).Merge();
-        var buyerBox = sheet.Range(signatureTop, 5, signatureBottom, 8).Merge();
-        sellerBox.Value = "Paste company stamp / signature here";
-        buyerBox.Value = "Paste customer stamp / signature here";
-        foreach (var box in new[] { sellerBox, buyerBox })
-        {
-            box.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-            box.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            box.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-            box.Style.Font.FontColor = XLColor.Gray;
-            box.Style.Font.Italic = true;
-        }
-        for (var r = signatureTop; r <= signatureBottom; r++) sheet.Row(r).Height = 22;
+        // Keep an intentionally blank area so a transparent company stamp or
+        // handwritten signature image can be pasted without shifting the template.
+        var stampTop = row;
+        var stampBottom = row + 3;
+        for (var current = stampTop; current <= stampBottom; current++)
+            sheet.Row(current).Height = 18;
 
-        row = signatureBottom + 2;
-        sheet.Range(row, 1, row, 8).Merge().Value = "This XLSX is intentionally editable for internal approval, customs/bank submission preparation, and insertion of signatures or company stamps.";
-        sheet.Range(row, 1, row, 8).Style.Font.FontSize = 8;
-        sheet.Range(row, 1, row, 8).Style.Font.FontColor = XLColor.Gray;
-        sheet.Range(row, 1, row, 8).Style.Alignment.WrapText = true;
+        row = stampBottom + 1;
+        sheet.Range(row, 1, row, 4).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+        sheet.Range(row, 5, row, 8).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+        sheet.Range(row, 1, row, 4).Merge().Value = "Authorized Signature / Stamp";
+        sheet.Range(row, 5, row, 8).Merge().Value = "Authorized Signature / Stamp";
+        sheet.Range(row, 1, row, 8).Style.Font.FontSize = 7.6;
+        sheet.Row(row).Height = 16;
 
         return row;
     }
 
-    private static int AddTextSection(IXLWorksheet sheet, int row, string title, string? value)
+    private static int BuildFooter(IXLWorksheet sheet, int startRow)
     {
-        if (string.IsNullOrWhiteSpace(value)) return row;
+        var lineRow = startRow;
+        sheet.Range(lineRow, 1, lineRow, 8).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+        sheet.Row(lineRow).Height = 7;
 
-        sheet.Range(row, 1, row, 8).Merge().Value = title;
-        StyleSectionHeader(sheet.Range(row, 1, row, 8));
-        row++;
+        var row = lineRow + 1;
+        var leftLines = new[]
+        {
+            "Baoding Forlinx Embedded Technology Co., Ltd",
+            "2699 Xiangyang North Street",
+            "071000 Baoding",
+            "China"
+        };
 
-        var textRange = sheet.Range(row, 1, row + 2, 8).Merge();
-        textRange.Value = value.Trim();
-        textRange.Style.Alignment.WrapText = true;
-        textRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
-        textRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-        for (var r = row; r <= row + 2; r++) sheet.Row(r).Height = 22;
-        return row + 4;
+        var labels = new[] { "Bank Name:", "Bank Address:", "Bank Account:", "Swift Code:" };
+        var values = new[]
+        {
+            "China Construction Bank",
+            "345 Longxing West Rd, Baoding, China",
+            "1301 4600 6002 2010 0241",
+            "PCBCCNBJ"
+        };
+
+        for (var index = 0; index < 4; index++)
+        {
+            sheet.Range(row + index, 1, row + index, 3).Merge().Value = leftLines[index];
+            sheet.Range(row + index, 4, row + index, 5).Merge().Value = labels[index];
+            sheet.Range(row + index, 6, row + index, 8).Merge().Value = values[index];
+            sheet.Range(row + index, 4, row + index, 5).Style.Font.Bold = true;
+            sheet.Row(row + index).Height = 14;
+        }
+
+        sheet.Range(row, 1, row, 3).Style.Font.Bold = true;
+        sheet.Range(row, 1, row + 3, 8).Style.Font.FontSize = 6.4;
+        sheet.Range(row, 1, row + 3, 8).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+        return row + 3;
     }
 
-    private static void StyleSectionHeader(IXLRange range)
-    {
-        range.Style.Font.Bold = true;
-        range.Style.Fill.BackgroundColor = XLColor.LightGray;
-        range.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-    }
+    private static IEnumerable<string> SplitLines(string? value)
+        => (value ?? string.Empty)
+            .Replace("\r\n", "\n")
+            .Replace('\r', '\n')
+            .Split('\n')
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .Select(line => line.Trim());
 
-    private static string FormatContact(string? name, string? phone, string? email)
-    {
-        var parts = new List<string>();
-        if (!string.IsNullOrWhiteSpace(name)) parts.Add($"Contact: {name}");
-        if (!string.IsNullOrWhiteSpace(phone)) parts.Add($"Phone: {phone}");
-        if (!string.IsNullOrWhiteSpace(email)) parts.Add($"Email: {email}");
-        return string.Join("   ", parts);
-    }
-
-    private static int CountVisualLines(string? value)
+    private static int CountVisualLines(string? value, int charactersPerLine)
     {
         if (string.IsNullOrWhiteSpace(value)) return 1;
-        var explicitLines = value.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None).Length;
-        var wrappedLines = (int)Math.Ceiling(value.Length / 48d);
-        return Math.Clamp(Math.Max(explicitLines, wrappedLines), 1, 8);
+        var normalized = value.Replace("\r\n", "\n").Replace('\r', '\n');
+        var count = 0;
+        foreach (var line in normalized.Split('\n'))
+            count += Math.Max(1, (int)Math.Ceiling(line.Length / (double)charactersPerLine));
+        return Math.Clamp(count, 1, 12);
     }
 }
