@@ -35,6 +35,20 @@ public partial class InvoiceListView : UserControl
         ApplySort();
     }
 
+    public async Task ReloadAndSelectAsync(int? invoiceId)
+    {
+        await ReloadAsync();
+        if (invoiceId is null || invoiceId <= 0) return;
+        var selected = ViewModel.Invoices.FirstOrDefault(row => row.Id == invoiceId.Value);
+        if (selected is null) return;
+        ViewModel.SelectedInvoice = selected;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (InvoiceGrid.Columns.Count > 0)
+                InvoiceGrid.ScrollIntoView(selected, InvoiceGrid.Columns[0]);
+        }, DispatcherPriority.Loaded);
+    }
+
     public InvoiceType Type => _type;
 
     private void New_Click(object? sender, RoutedEventArgs e) => OpenInvoiceRequested?.Invoke(null);
