@@ -2,7 +2,12 @@
     x:Class="MiniERP.Desktop.Views.Quotations.QuotationEditorView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
+    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
+    xmlns:infra="clr-namespace:MiniERP.Desktop.Infrastructure">
+
+    <UserControl.Resources>
+        <infra:DateTimeOffsetDateConverter x:Key="DateValueConverter" />
+    </UserControl.Resources>
 
     <UserControl.Styles>
         <!-- Compact SelectLine-like section navigator. -->
@@ -63,7 +68,7 @@
                 </Grid>
 
                 <TextBlock Grid.Column="4" Classes="field-label" Margin="10,0,0,0" Text="Date" />
-                <CalendarDatePicker Grid.Column="5" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding QuotationDate, Mode=TwoWay}" />
+                <CalendarDatePicker Grid.Column="5" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding QuotationDate, Mode=TwoWay, Converter={StaticResource DateValueConverter}}" />
 
                 <TextBlock Grid.Column="6" Classes="field-label" Margin="10,0,0,0" Text="User" />
                 <ComboBox Grid.Column="7" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
@@ -89,7 +94,7 @@
                                 </Grid>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Valid Until" />
-                                <CalendarDatePicker Grid.Row="1" Grid.Column="1" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding ValidUntil, Mode=TwoWay}" />
+                                <CalendarDatePicker Grid.Row="1" Grid.Column="1" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding ValidUntil, Mode=TwoWay, Converter={StaticResource DateValueConverter}}" />
                             </Grid>
                         </StackPanel>
                     </ScrollViewer>
@@ -170,9 +175,9 @@
 
                                 <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
                                     <TextBlock Grid.Column="0" Classes="field-label" Text="Description EN" />
-                                    <TextBox Grid.Column="1" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Text="{Binding SelectedItem.Description, Mode=TwoWay}" />
+                                    <TextBox Grid.Column="1" AcceptsReturn="True" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" Text="{Binding SelectedItem.Description, Mode=TwoWay}" />
                                     <TextBlock Grid.Column="2" Classes="field-label" Margin="8,0,0,0" Text="Specification" />
-                                    <TextBox Grid.Column="3" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Text="{Binding SelectedItem.Specification, Mode=TwoWay}" />
+                                    <TextBox Grid.Column="3" AcceptsReturn="True" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" Text="{Binding SelectedItem.Specification, Mode=TwoWay}" />
                                 </Grid>
                             </Grid>
                         </Border>
