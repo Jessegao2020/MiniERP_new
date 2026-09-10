@@ -41,4 +41,7 @@ public partial class UserSettingsView : UserControl
 
     private async void Refresh_Click(object? sender, RoutedEventArgs e)
         => await ViewModel.LoadAsync();
+
+    private void Grid_LoadingRow(object? sender, DataGridRowEventArgs e)
+        => SelectLineGridSupport.ApplyAlternateRow(e);
 }
