@@ -22,7 +22,7 @@ public static class EditorWorkflowSupport
         WriteIndented = false
     };
 
-    public static Button AddGridViewToggle(UserControl owner, RoutedEventHandler clickHandler)
+    public static Button AddGridViewToggle(UserControl owner, EventHandler<RoutedEventArgs> clickHandler)
     {
         if (owner.Content is not Grid root)
             throw new InvalidOperationException("Editor root must be a Grid.");
