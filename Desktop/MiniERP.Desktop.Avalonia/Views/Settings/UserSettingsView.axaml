@@ -14,12 +14,12 @@
 
         <dg:DataGrid
             x:Name="UserGrid"
-            Classes="selectline-grid"
             Grid.Row="1"
             Grid.Column="0"
             Margin="5"
             AutoGenerateColumns="False"
             CanUserSortColumns="True"
+            RowHeight="24"
             IsReadOnly="True"
             LoadingRow="Grid_LoadingRow"
             ItemsSource="{Binding Users}"
