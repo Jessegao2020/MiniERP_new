@@ -15,7 +15,8 @@ public partial class ArticleWorkspaceView : UserControl
         InitializeComponent();
 
         _listView = new ArticleListView();
-        _listView.OpenArticleRequested += ShowEditor;
+        _listView.OpenArticleRequested += article => ShowEditor(article, forceNew: false);
+        _listView.DuplicateArticleRequested += article => ShowEditor(article, forceNew: true);
         ViewHost.Content = _listView;
     }
 
@@ -24,14 +25,14 @@ public partial class ArticleWorkspaceView : UserControl
     public void RefreshExchangeRate()
         => _editorView?.RefreshExchangeRate();
 
-    private void ShowEditor(Article? article)
+    private void ShowEditor(Article? article, bool forceNew)
     {
-        var editor = new ArticleEditorView(article);
+        var editor = new ArticleEditorView(article, forceNew);
         editor.Saved += Editor_Saved;
         editor.Deleted += Editor_Deleted;
         editor.RequestClose += Editor_RequestClose;
 
-        _returnArticleId = article?.Id;
+        _returnArticleId = forceNew ? null : article?.Id;
         _deleted = false;
         _editorView = editor;
         ViewHost.Content = editor;
