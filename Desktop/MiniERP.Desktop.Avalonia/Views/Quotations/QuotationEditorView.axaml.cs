@@ -10,6 +10,7 @@ namespace MiniERP.Desktop.Views.Quotations;
 
 public partial class QuotationEditorView : UserControl
 {
+    private readonly EditorDirtyMonitor _dirtyMonitor;
     private QuotationEditorViewModel ViewModel => (QuotationEditorViewModel)DataContext!;
 
     public event EventHandler? Saved;
@@ -19,15 +20,43 @@ public partial class QuotationEditorView : UserControl
     public event Action<Quotation>? CreatePackingListRequested;
     public event Action<Quotation>? CreateContractRequested;
 
+    public int QuotationId => ViewModel.Quotation.Id;
+
     public QuotationEditorView(Quotation? quotation)
     {
         InitializeComponent();
         var settings = App.Services.GetRequiredService<AppSettingsService>();
         DataContext = new QuotationEditorViewModel(quotation, settings);
-        AttachedToVisualTree += async (_, _) => await ViewModel.LoadLookupsAsync();
+
+        var saveButton = EditorWorkflowSupport.AddGridViewToggle(this, GridView_Click);
+        _dirtyMonitor = new EditorDirtyMonitor(saveButton, CaptureEditState);
+        AttachedToVisualTree += async (_, _) =>
+        {
+            await ViewModel.LoadLookupsAsync();
+            _dirtyMonitor.Start();
+        };
     }
 
+    public void StopTracking() => _dirtyMonitor.Dispose();
     public void RefreshExchangeRate() => ViewModel.RefreshExchangeRateFromSettings();
+
+    private string CaptureEditState()
+        => EditorWorkflowSupport.Snapshot(new
+        {
+            ViewModel.Quotation,
+            CustomerId = ViewModel.SelectedCustomer?.Id,
+            ContactId = ViewModel.SelectedCustomerContact?.Id,
+            UserId = ViewModel.SelectedUser?.Id,
+            ViewModel.QuotationDate,
+            ViewModel.ValidUntil,
+            ViewModel.Currency,
+            ViewModel.ExchangeRateSnapshot,
+            Items = ViewModel.Items.ToArray()
+        });
+
+    private void GridView_Click(object? sender, RoutedEventArgs e)
+        => RequestClose?.Invoke(this, EventArgs.Empty);
+
     private void AddItem_Click(object? sender, RoutedEventArgs e) => ViewModel.AddSelectedArticle();
     private void RemoveItem_Click(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedItem();
 
@@ -111,6 +140,7 @@ public partial class QuotationEditorView : UserControl
     private async void CreatePi_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
         CreateInvoiceRequested?.Invoke(ViewModel.Quotation, InvoiceType.Proforma);
     }
@@ -118,6 +148,7 @@ public partial class QuotationEditorView : UserControl
     private async void CreateInvoice_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
         CreateInvoiceRequested?.Invoke(ViewModel.Quotation, InvoiceType.Commercial);
     }
@@ -125,6 +156,7 @@ public partial class QuotationEditorView : UserControl
     private async void CreatePackingList_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
         CreatePackingListRequested?.Invoke(ViewModel.Quotation);
     }
@@ -132,6 +164,7 @@ public partial class QuotationEditorView : UserControl
     private async void CreateContract_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
         CreateContractRequested?.Invoke(ViewModel.Quotation);
     }
@@ -139,8 +172,8 @@ public partial class QuotationEditorView : UserControl
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
-        RequestClose?.Invoke(this, EventArgs.Empty);
     }
 
     private void Discard_Click(object? sender, RoutedEventArgs e) => RequestClose?.Invoke(this, EventArgs.Empty);
