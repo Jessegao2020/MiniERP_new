@@ -160,7 +160,7 @@
                         </WrapPanel>
 
                         <!-- Staged position editor. Nothing here writes to the overview until the local Save button is pressed. -->
-                        <Border x:Name="PositionEditorPanel" Grid.Row="1" Padding="8,7" Background="#FAFAFA" BorderBrush="#CCCCCC" BorderThickness="1" IsEnabled="False">
+                        <Border x:Name="PositionEditorPanel" Grid.Row="1" Padding="8,7" Background="#FAFAFA" BorderBrush="#CCCCCC" BorderThickness="1">
                             <Grid RowDefinitions="Auto,Auto,128" RowSpacing="7">
                                 <TextBlock Grid.Row="0" FontWeight="SemiBold" Text="Selected Position" />
 
@@ -187,9 +187,7 @@
                                     </Grid>
                                     <Grid Width="155" Margin="0,0,10,4" ColumnDefinitions="52,*" ColumnSpacing="6">
                                         <TextBlock Grid.Column="0" Classes="field-label" Text="Amount" />
-                                        <Border Grid.Column="1" Padding="6,0" Background="White" BorderBrush="#B8B8B8" BorderThickness="1">
-                                            <TextBlock x:Name="PositionAmountText" VerticalAlignment="Center" />
-                                        </Border>
+                                        <TextBox x:Name="PositionAmountText" Grid.Column="1" IsReadOnly="True" IsTabStop="False" />
                                     </Grid>
                                 </WrapPanel>
 
