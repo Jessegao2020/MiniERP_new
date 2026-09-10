@@ -7,7 +7,7 @@
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
 
-        <!-- Reusable SelectLine-style DataGrid skin for grids that do not need a separate filter row. -->
+        <!-- Reusable SelectLine-style DataGrid skin. Row height stays view-specific so document item rows may grow for multiline descriptions. -->
         <Style Selector="DataGrid.selectline-grid">
             <Setter Property="Background" Value="White" />
             <Setter Property="BorderBrush" Value="#D4D4D4" />
@@ -18,7 +18,6 @@
             <Setter Property="HorizontalGridLinesBrush" Value="#E4E4E4" />
             <Setter Property="VerticalGridLinesBrush" Value="#E4E4E4" />
             <Setter Property="RowBackground" Value="White" />
-            <Setter Property="RowHeight" Value="24" />
         </Style>
         <Style Selector="DataGrid.selectline-grid DataGridColumnHeader">
             <Setter Property="Background" Value="White" />
