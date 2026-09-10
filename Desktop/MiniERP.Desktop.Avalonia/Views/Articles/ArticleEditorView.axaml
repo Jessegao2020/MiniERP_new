@@ -5,6 +5,12 @@
 
     <Grid RowDefinitions="Auto,*,Auto">
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0" Spacing="3">
+            <Button Width="28" Padding="3,2" Background="Transparent" BorderThickness="0" Click="GridView_Click" ToolTip.Tip="Grid view">
+                <TextBlock Text="▦" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Button>
+
+            <Border Width="1" Margin="3,3" Background="#D0D0D0" />
+
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <TextBlock Text="✓" />
