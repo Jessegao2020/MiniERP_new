@@ -29,6 +29,9 @@ public partial class ArticleEditorView : UserControl
     public void RefreshExchangeRate()
         => ViewModel.RefreshExchangeRate();
 
+    private void GridView_Click(object? sender, RoutedEventArgs e)
+        => RequestClose?.Invoke(this, EventArgs.Empty);
+
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
