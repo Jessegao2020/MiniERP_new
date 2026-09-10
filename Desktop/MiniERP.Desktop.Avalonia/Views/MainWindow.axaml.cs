@@ -43,7 +43,6 @@ public partial class MainWindow : Window
     {
         const string key = "article";
         if (SelectExisting(key)) return;
-
         AddWorkspace(key, "Article", new ArticleWorkspaceView());
     }
 
@@ -51,115 +50,160 @@ public partial class MainWindow : Window
     {
         const string key = "customer";
         if (SelectExisting(key)) return;
-        var view = new CustomerListView();
-        view.OpenCustomerRequested += OpenCustomerEditor;
-        AddWorkspace(key, "Customer", view);
+        AddWorkspace(key, "Customer", new CustomerWorkspaceView());
     }
 
     private void OpenCustomerEditor(Customer? customer)
     {
-        var key = customer is null ? "customer:new" : $"customer:{customer.Id}";
-        var title = customer is null ? "New Customer" : $"Customer Details: {customer.Name}";
-        if (SelectExisting(key)) return;
-        var editor = new CustomerEditorView(customer);
-        var tab = AddWorkspace(key, title, editor);
-        editor.Saved += async (_, _) => await RefreshCustomerListAsync();
-        editor.Deleted += async (_, _) => await RefreshCustomerListAsync();
-        editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+        const string key = "customer";
+        var workspace = GetOrCreateCustomerWorkspace();
+        workspace.ShowEditor(customer);
+        SelectExisting(key);
+    }
+
+    private CustomerWorkspaceView GetOrCreateCustomerWorkspace()
+    {
+        const string key = "customer";
+        if (_openTabs.TryGetValue(key, out var existing) && existing.Content is CustomerWorkspaceView workspace)
+            return workspace;
+
+        var created = new CustomerWorkspaceView();
+        AddWorkspace(key, "Customer", created);
+        return created;
     }
 
     private void OpenQuotationList()
     {
         const string key = "quotation";
         if (SelectExisting(key)) return;
-        var view = new QuotationListView();
-        view.OpenQuotationRequested += OpenQuotationEditor;
-        AddWorkspace(key, "Quotation", view);
+        AddWorkspace(key, "Quotation", CreateQuotationWorkspace());
     }
 
     private void OpenQuotationEditor(Quotation? quotation)
     {
-        var key = quotation is null ? "quotation:new" : $"quotation:{quotation.Id}";
-        var title = quotation is null ? "New Quotation" : $"Quotation: {quotation.QuotationNumber}";
-        if (SelectExisting(key)) return;
-        var editor = new QuotationEditorView(quotation);
-        var tab = AddWorkspace(key, title, editor);
-        editor.Saved += async (_, _) => await RefreshQuotationListAsync();
-        editor.Deleted += async (_, _) => await RefreshQuotationListAsync();
-        editor.CreateInvoiceRequested += async (source, type) => await CreateInvoiceFromQuotationAsync(source.Id, type);
-        editor.CreatePackingListRequested += async source => await CreatePackingListFromQuotationAsync(source.Id);
-        editor.CreateContractRequested += async source => await CreateContractFromQuotationAsync(source.Id);
-        editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+        const string key = "quotation";
+        var workspace = GetOrCreateQuotationWorkspace();
+        workspace.ShowEditor(quotation);
+        SelectExisting(key);
+    }
+
+    private QuotationWorkspaceView CreateQuotationWorkspace()
+    {
+        var workspace = new QuotationWorkspaceView();
+        workspace.CreateInvoiceRequested += async (source, type) => await CreateInvoiceFromQuotationAsync(source.Id, type);
+        workspace.CreatePackingListRequested += async source => await CreatePackingListFromQuotationAsync(source.Id);
+        workspace.CreateContractRequested += async source => await CreateContractFromQuotationAsync(source.Id);
+        return workspace;
+    }
+
+    private QuotationWorkspaceView GetOrCreateQuotationWorkspace()
+    {
+        const string key = "quotation";
+        if (_openTabs.TryGetValue(key, out var existing) && existing.Content is QuotationWorkspaceView workspace)
+            return workspace;
+
+        var created = CreateQuotationWorkspace();
+        AddWorkspace(key, "Quotation", created);
+        return created;
     }
 
     private void OpenInvoiceList(InvoiceType type)
     {
-        var key = type == InvoiceType.Proforma ? "invoice:proforma" : "invoice:commercial";
+        var key = InvoiceWorkspaceKey(type);
         var title = type == InvoiceType.Proforma ? "P/I" : "Invoice";
         if (SelectExisting(key)) return;
-        var view = new InvoiceListView(type);
-        view.OpenInvoiceRequested += invoice => OpenInvoiceEditor(invoice, type);
-        AddWorkspace(key, title, view);
+        AddWorkspace(key, title, CreateInvoiceWorkspace(type));
     }
 
     private void OpenInvoiceEditor(Invoice? invoice, InvoiceType type)
     {
-        var prefix = type == InvoiceType.Proforma ? "pi" : "invoice";
-        var key = invoice is null ? $"{prefix}:new" : invoice.Id > 0 ? $"{prefix}:{invoice.Id}" : $"{prefix}:draft:{invoice.InvoiceNumber}";
-        var title = invoice is null ? $"New {(type == InvoiceType.Proforma ? "P/I" : "Invoice")}" : $"{(type == InvoiceType.Proforma ? "P/I" : "Invoice")}: {invoice.InvoiceNumber}";
-        if (SelectExisting(key)) return;
-        var editor = new InvoiceEditorView(invoice, type);
-        var tab = AddWorkspace(key, title, editor);
-        editor.Saved += async (_, _) => await RefreshInvoiceListAsync(type);
-        editor.Deleted += async (_, _) => await RefreshInvoiceListAsync(type);
-        editor.CreateCommercialRequested += async source => await CreateInvoiceFromInvoiceAsync(source.Id, InvoiceType.Commercial);
-        editor.CreatePackingListRequested += async source => await CreatePackingListFromInvoiceAsync(source.Id);
-        editor.CreateContractRequested += async source => await CreateContractFromInvoiceAsync(source.Id);
-        editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+        var key = InvoiceWorkspaceKey(type);
+        var workspace = GetOrCreateInvoiceWorkspace(type);
+        workspace.ShowEditor(invoice);
+        SelectExisting(key);
     }
+
+    private InvoiceWorkspaceView CreateInvoiceWorkspace(InvoiceType type)
+    {
+        var workspace = new InvoiceWorkspaceView(type);
+        workspace.CreateCommercialRequested += async source => await CreateInvoiceFromInvoiceAsync(source.Id, InvoiceType.Commercial);
+        workspace.CreatePackingListRequested += async source => await CreatePackingListFromInvoiceAsync(source.Id);
+        workspace.CreateContractRequested += async source => await CreateContractFromInvoiceAsync(source.Id);
+        return workspace;
+    }
+
+    private InvoiceWorkspaceView GetOrCreateInvoiceWorkspace(InvoiceType type)
+    {
+        var key = InvoiceWorkspaceKey(type);
+        if (_openTabs.TryGetValue(key, out var existing) && existing.Content is InvoiceWorkspaceView workspace)
+            return workspace;
+
+        var created = CreateInvoiceWorkspace(type);
+        AddWorkspace(key, type == InvoiceType.Proforma ? "P/I" : "Invoice", created);
+        return created;
+    }
+
+    private static string InvoiceWorkspaceKey(InvoiceType type)
+        => type == InvoiceType.Proforma ? "invoice:proforma" : "invoice:commercial";
 
     private void OpenPackingList()
     {
         const string key = "packing-list";
         if (SelectExisting(key)) return;
-        var view = new PackingListListView();
-        view.OpenPackingListRequested += OpenPackingListEditor;
-        AddWorkspace(key, "P/L", view);
+        AddWorkspace(key, "P/L", new PackingListWorkspaceView());
     }
 
     private void OpenPackingListEditor(PackingList? packingList)
     {
-        var key = packingList is null ? "packing-list:new" : packingList.Id > 0 ? $"packing-list:{packingList.Id}" : $"packing-list:draft:{packingList.PackingListNumber}";
-        var title = packingList is null ? "New Packing List" : $"P/L: {packingList.PackingListNumber}";
-        if (SelectExisting(key)) return;
-        var editor = new PackingListEditorView(packingList);
-        var tab = AddWorkspace(key, title, editor);
-        editor.Saved += async (_, _) => await RefreshPackingListAsync();
-        editor.Deleted += async (_, _) => await RefreshPackingListAsync();
-        editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+        const string key = "packing-list";
+        var workspace = GetOrCreatePackingListWorkspace();
+        workspace.ShowEditor(packingList);
+        SelectExisting(key);
+    }
+
+    private PackingListWorkspaceView GetOrCreatePackingListWorkspace()
+    {
+        const string key = "packing-list";
+        if (_openTabs.TryGetValue(key, out var existing) && existing.Content is PackingListWorkspaceView workspace)
+            return workspace;
+
+        var created = new PackingListWorkspaceView();
+        AddWorkspace(key, "P/L", created);
+        return created;
     }
 
     private void OpenContractList()
     {
         const string key = "contract";
         if (SelectExisting(key)) return;
-        var view = new ContractListView();
-        view.OpenContractRequested += OpenContractEditor;
-        AddWorkspace(key, "Contract", view);
+        AddWorkspace(key, "Contract", CreateContractWorkspace());
     }
 
     private void OpenContractEditor(Contract? contract)
     {
-        var key = contract is null ? "contract:new" : contract.Id > 0 ? $"contract:{contract.Id}" : $"contract:draft:{contract.ContractNumber}";
-        var title = contract is null ? "New Contract" : $"Contract: {contract.ContractNumber}";
-        if (SelectExisting(key)) return;
-        var editor = new ContractEditorView(contract);
-        var tab = AddWorkspace(key, title, editor);
-        editor.Saved += async (_, _) => await RefreshContractListAsync();
-        editor.Deleted += async (_, _) => await RefreshContractListAsync();
-        editor.CreateInvoiceRequested += async (source, type) => await CreateInvoiceFromContractAsync(source.Id, type);
-        editor.CreatePackingListRequested += async source => await CreatePackingListFromContractAsync(source.Id);
-        editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+        const string key = "contract";
+        var workspace = GetOrCreateContractWorkspace();
+        workspace.ShowEditor(contract);
+        SelectExisting(key);
+    }
+
+    private ContractWorkspaceView CreateContractWorkspace()
+    {
+        var workspace = new ContractWorkspaceView();
+        workspace.CreateInvoiceRequested += async (source, type) => await CreateInvoiceFromContractAsync(source.Id, type);
+        workspace.CreatePackingListRequested += async source => await CreatePackingListFromContractAsync(source.Id);
+        return workspace;
+    }
+
+    private ContractWorkspaceView GetOrCreateContractWorkspace()
+    {
+        const string key = "contract";
+        if (_openTabs.TryGetValue(key, out var existing) && existing.Content is ContractWorkspaceView workspace)
+            return workspace;
+
+        var created = CreateContractWorkspace();
+        AddWorkspace(key, "Contract", created);
+        return created;
     }
 
     private async Task CreateInvoiceFromQuotationAsync(int quotationId, InvoiceType type)
@@ -247,8 +291,8 @@ public partial class MainWindow : Window
         foreach (var tab in _workspaceTabs)
         {
             if (tab.Content is ArticleWorkspaceView articleWorkspace) articleWorkspace.RefreshExchangeRate();
-            else if (tab.Content is QuotationEditorView quotationEditor) quotationEditor.RefreshExchangeRate();
-            else if (tab.Content is ContractEditorView contractEditor) contractEditor.RefreshExchangeRate();
+            else if (tab.Content is QuotationWorkspaceView quotationWorkspace) quotationWorkspace.RefreshExchangeRate();
+            else if (tab.Content is ContractWorkspaceView contractWorkspace) contractWorkspace.RefreshExchangeRate();
         }
     }
 
@@ -260,28 +304,33 @@ public partial class MainWindow : Window
 
     private async Task RefreshCustomerListAsync()
     {
-        if (_openTabs.TryGetValue("customer", out var tab) && tab.Content is CustomerListView list) await list.ReloadAsync();
+        if (_openTabs.TryGetValue("customer", out var tab) && tab.Content is CustomerWorkspaceView workspace)
+            await workspace.ReloadListAsync();
     }
 
     private async Task RefreshQuotationListAsync()
     {
-        if (_openTabs.TryGetValue("quotation", out var tab) && tab.Content is QuotationListView list) await list.ReloadAsync();
+        if (_openTabs.TryGetValue("quotation", out var tab) && tab.Content is QuotationWorkspaceView workspace)
+            await workspace.ReloadListAsync();
     }
 
     private async Task RefreshInvoiceListAsync(InvoiceType type)
     {
-        var key = type == InvoiceType.Proforma ? "invoice:proforma" : "invoice:commercial";
-        if (_openTabs.TryGetValue(key, out var tab) && tab.Content is InvoiceListView list) await list.ReloadAsync();
+        var key = InvoiceWorkspaceKey(type);
+        if (_openTabs.TryGetValue(key, out var tab) && tab.Content is InvoiceWorkspaceView workspace)
+            await workspace.ReloadListAsync();
     }
 
     private async Task RefreshPackingListAsync()
     {
-        if (_openTabs.TryGetValue("packing-list", out var tab) && tab.Content is PackingListListView list) await list.ReloadAsync();
+        if (_openTabs.TryGetValue("packing-list", out var tab) && tab.Content is PackingListWorkspaceView workspace)
+            await workspace.ReloadListAsync();
     }
 
     private async Task RefreshContractListAsync()
     {
-        if (_openTabs.TryGetValue("contract", out var tab) && tab.Content is ContractListView list) await list.ReloadAsync();
+        if (_openTabs.TryGetValue("contract", out var tab) && tab.Content is ContractWorkspaceView workspace)
+            await workspace.ReloadListAsync();
     }
 
     private bool SelectExisting(string key)
