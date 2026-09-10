@@ -5,77 +5,65 @@ namespace MiniERP.Desktop.Infrastructure;
 
 public static class SalesDocumentPdfExporter
 {
-    private const float PageWidth = 595f;
-    private const float PageHeight = 842f;
-    private const float Left = 48f;
-    private const float Right = 547f;
-    private const float Bottom = 790f;
-    private const float ContentBottom = 748f;
-    private const float InvoiceRowHeight = 30f;
-    private const float InvoiceContinuationReserve = 24f;
+    private const float PageWidth = DocumentPdfStyle.PageWidth;
+    private const float PageHeight = DocumentPdfStyle.PageHeight;
+    private const float Left = DocumentPdfStyle.Left;
+    private const float Right = DocumentPdfStyle.Right;
+    private const float ContentBottom = 704f;
 
-    private static readonly SKTypeface Regular = FindTypeface(SKFontStyle.Normal);
-    private static readonly SKTypeface Bold = FindTypeface(SKFontStyle.Bold);
+    private const float ItemCenterX = 72f;
+    private const float ProductX = 88f;
+    private const float ProductWidth = 215f;
+    private const float UnitPriceRightX = 350f;
+    private const float QuantityRightX = 411f;
+    private const float UnitCenterX = 440f;
+    private const float AmountRightX = 536f;
+
+    private static readonly SKTypeface Regular = DocumentPdfStyle.Regular;
+    private static readonly SKTypeface Bold = DocumentPdfStyle.Bold;
+    private static readonly SKTypeface Italic = DocumentPdfStyle.Italic;
 
     public static void ExportInvoice(Invoice invoice, Stream output)
     {
         if (invoice.Items.Count == 0)
             throw new InvalidOperationException("The invoice needs at least one item before it can be exported.");
 
+        var items = invoice.Items.OrderBy(i => i.SortOrder).ThenBy(i => i.Id).ToList();
+        var pages = BuildInvoicePages(items, invoice);
+
         using var document = SKDocument.CreatePdf(output)
             ?? throw new InvalidOperationException("Could not create PDF document.");
 
-        var items = invoice.Items.OrderBy(i => i.SortOrder).ThenBy(i => i.Id).ToList();
-        var index = 0;
-        var page = 1;
-
-        while (index < items.Count)
+        for (var pageIndex = 0; pageIndex < pages.Count; pageIndex++)
         {
+            var page = pages[pageIndex];
             var canvas = document.BeginPage(PageWidth, PageHeight);
             canvas.Clear(SKColors.White);
-            var y = DrawHeader(canvas, invoice.DocumentTitle, invoice.InvoiceNumber, invoice.InvoiceDate, page);
 
-            if (page == 1)
-                y = DrawInvoiceParties(canvas, invoice, y);
+            var y = pageIndex == 0
+                ? DrawInvoiceFirstPageHeader(canvas, invoice)
+                : DrawContinuationHeader(canvas, invoice.DocumentTitle, invoice.InvoiceNumber);
+            y = DrawInvoiceTableHeader(canvas, invoice.Currency, y);
 
-            y = DrawInvoiceTableHeader(canvas, y);
-
-            // Fill the page by actual remaining vertical space. Non-final pages only
-            // reserve the continuation marker; when the next item is the final item,
-            // reserve enough room for Total / Bank Information / Remarks as well.
-            var pageStartIndex = index;
-            while (index < items.Count)
+            var itemNumber = page.StartItemNumber;
+            foreach (var item in page.Items)
             {
-                var isLastItem = index == items.Count - 1;
-                var reserve = isLastItem
-                    ? MeasureInvoiceClosingReserve(invoice)
-                    : InvoiceContinuationReserve;
-                var limit = ContentBottom - reserve;
-
-                if (index > pageStartIndex && y + InvoiceRowHeight > limit)
-                    break;
-
-                DrawInvoiceRow(canvas, index + 1, items[index], y);
-                y += InvoiceRowHeight;
-                index++;
+                var rowHeight = MeasureInvoiceItemHeight(item);
+                DrawInvoiceRow(canvas, itemNumber++, item, y, rowHeight);
+                y += rowHeight;
             }
 
-            if (index == items.Count)
-            {
-                y += 7f;
-                DrawRightValue(canvas, "Total", $"{invoice.Currency} {invoice.TotalAmount:N2}", y, 10f, 11f);
-                y += 28f;
-                DrawInvoiceTerms(canvas, invoice, y);
-            }
+            using (var tableEnd = Stroke(0.8f, SKColors.Black))
+                canvas.DrawLine(Left, y + 2f, Right, y + 2f, tableEnd);
+            y += 7f;
+
+            if (page.IsLast)
+                DrawInvoiceClosing(canvas, invoice, y);
             else
-            {
-                using var continued = TextPaint(8f, Regular, SKColors.DimGray);
-                canvas.DrawText("Continued on next page...", Left, y + 14f, continued);
-            }
+                DocumentPdfStyle.DrawContinuedOnNextPage(canvas, y + 8f);
 
-            DrawFooter(canvas, page);
+            DocumentPdfStyle.DrawFooter(canvas, pageIndex + 1, pages.Count);
             document.EndPage();
-            page++;
         }
 
         document.Close();
@@ -88,51 +76,54 @@ public static class SalesDocumentPdfExporter
         if (packingList.Packages.Count == 0)
             throw new InvalidOperationException("The packing list needs at least one package/carton row before it can be exported.");
 
+        var items = packingList.Items.OrderBy(i => i.SortOrder).ThenBy(i => i.Id).ToList();
+        var packages = packingList.Packages.OrderBy(p => p.SortOrder).ThenBy(p => p.Id).ToList();
+        var pageCount = CountPackingPages(items, packages);
+
         using var document = SKDocument.CreatePdf(output)
             ?? throw new InvalidOperationException("Could not create PDF document.");
 
-        var items = packingList.Items.OrderBy(i => i.SortOrder).ThenBy(i => i.Id).ToList();
-        var packages = packingList.Packages.OrderBy(p => p.SortOrder).ThenBy(p => p.Id).ToList();
         var itemIndex = 0;
         var packageIndex = 0;
-        var page = 1;
+        var pageNumber = 1;
+        var canvas = BeginPackingPage(document, packingList, pageNumber, firstPage: true, out var y);
 
-        var canvas = BeginPackingPage(document, packingList, page, includeParties: true, out var y);
-        using var section = TextPaint(10f, Bold);
-
+        using var section = Paint(9f, Bold);
         canvas.DrawText("Goods", Left, y, section);
         y += 12f;
         y = DrawPackingItemHeader(canvas, y);
 
         while (itemIndex < items.Count)
         {
-            if (y + 26f > ContentBottom)
+            var rowHeight = MeasurePackingItemHeight(items[itemIndex]);
+            if (y + rowHeight > ContentBottom)
             {
-                DrawContinued(canvas, y);
-                EndPackingPage(document, canvas, page);
-                page++;
-                canvas = BeginPackingPage(document, packingList, page, includeParties: false, out y);
+                DocumentPdfStyle.DrawContinuedOnNextPage(canvas, Math.Min(y + 8f, 716f));
+                DocumentPdfStyle.DrawFooter(canvas, pageNumber, pageCount);
+                document.EndPage();
+
+                pageNumber++;
+                canvas = BeginPackingPage(document, packingList, pageNumber, firstPage: false, out y);
                 canvas.DrawText("Goods — continued", Left, y, section);
                 y += 12f;
                 y = DrawPackingItemHeader(canvas, y);
             }
 
-            DrawPackingItemRow(canvas, items[itemIndex], y);
-            y += 26f;
+            DrawPackingItemRow(canvas, itemIndex + 1, items[itemIndex], y, rowHeight);
+            y += rowHeight;
             itemIndex++;
         }
 
-        // Start the carton section on the same page when there is enough useful room;
-        // otherwise move it cleanly to a new page.
+        using (var goodsEnd = Stroke(0.8f, SKColors.Black))
+            canvas.DrawLine(Left, y + 2f, Right, y + 2f, goodsEnd);
+        y += 14f;
+
         if (y + 82f > ContentBottom)
         {
-            EndPackingPage(document, canvas, page);
-            page++;
-            canvas = BeginPackingPage(document, packingList, page, includeParties: false, out y);
-        }
-        else
-        {
-            y += 12f;
+            DocumentPdfStyle.DrawFooter(canvas, pageNumber, pageCount);
+            document.EndPage();
+            pageNumber++;
+            canvas = BeginPackingPage(document, packingList, pageNumber, firstPage: false, out y);
         }
 
         canvas.DrawText("Packages / Cartons", Left, y, section);
@@ -141,311 +132,466 @@ public static class SalesDocumentPdfExporter
 
         while (packageIndex < packages.Count)
         {
-            if (y + 24f > ContentBottom)
+            const float rowHeight = 24f;
+            if (y + rowHeight > ContentBottom)
             {
-                DrawContinued(canvas, y);
-                EndPackingPage(document, canvas, page);
-                page++;
-                canvas = BeginPackingPage(document, packingList, page, includeParties: false, out y);
+                DocumentPdfStyle.DrawContinuedOnNextPage(canvas, Math.Min(y + 8f, 716f));
+                DocumentPdfStyle.DrawFooter(canvas, pageNumber, pageCount);
+                document.EndPage();
+
+                pageNumber++;
+                canvas = BeginPackingPage(document, packingList, pageNumber, firstPage: false, out y);
                 canvas.DrawText("Packages / Cartons — continued", Left, y, section);
                 y += 12f;
                 y = DrawPackageHeader(canvas, y);
             }
 
             DrawPackageRow(canvas, packages[packageIndex], y);
-            y += 24f;
+            y += rowHeight;
             packageIndex++;
         }
 
-        // Keep the totals together. If the last carton lands too close to the footer,
-        // give the summary its own continuation page rather than clipping it.
-        if (y + 34f > ContentBottom)
+        using (var packagesEnd = Stroke(0.8f, SKColors.Black))
+            canvas.DrawLine(Left, y + 2f, Right, y + 2f, packagesEnd);
+        y += 16f;
+
+        if (y + 28f > ContentBottom)
         {
-            EndPackingPage(document, canvas, page);
-            page++;
-            canvas = BeginPackingPage(document, packingList, page, includeParties: false, out y);
+            DocumentPdfStyle.DrawFooter(canvas, pageNumber, pageCount);
+            document.EndPage();
+            pageNumber++;
+            canvas = BeginPackingPage(document, packingList, pageNumber, firstPage: false, out y);
         }
 
-        y += 13f;
-        using var total = TextPaint(9f, Bold);
-        canvas.DrawText(
-            $"Total Qty: {packingList.TotalQuantity:0.####}    Cartons: {packingList.TotalCartons}    N.W.: {packingList.TotalNetWeight:0.###} kg    G.W.: {packingList.TotalGrossWeight:0.###} kg    CBM: {packingList.TotalCbm:0.####}",
-            Left,
-            y,
-            total);
-
-        EndPackingPage(document, canvas, page);
+        DrawPackingTotals(canvas, packingList, y);
+        DocumentPdfStyle.DrawFooter(canvas, pageNumber, pageCount);
+        document.EndPage();
         document.Close();
     }
 
-    private static SKCanvas BeginPackingPage(SKDocument document, PackingList packingList, int page, bool includeParties, out float y)
+    private static List<InvoicePagePlan> BuildInvoicePages(IReadOnlyList<InvoiceItem> items, Invoice invoice)
+    {
+        var pages = new List<InvoicePagePlan>();
+        var current = new List<InvoiceItem>();
+        var y = 354f;
+        var currentStart = 1;
+        var nextStart = 1;
+        var closingHeight = MeasureInvoiceClosingHeight(invoice);
+
+        for (var index = 0; index < items.Count; index++)
+        {
+            var item = items[index];
+            var height = MeasureInvoiceItemHeight(item);
+            var isLastItem = index == items.Count - 1;
+            var limit = isLastItem ? ContentBottom - closingHeight : 684f;
+
+            if (current.Count > 0 && y + height > limit)
+            {
+                pages.Add(new InvoicePagePlan(currentStart, current.ToList(), false));
+                nextStart += current.Count;
+                currentStart = nextStart;
+                current.Clear();
+                y = 150f;
+            }
+
+            current.Add(item);
+            y += height;
+        }
+
+        pages.Add(new InvoicePagePlan(currentStart, current.ToList(), true));
+        return pages;
+    }
+
+    private static float DrawInvoiceFirstPageHeader(SKCanvas canvas, Invoice invoice)
+    {
+        DocumentPdfStyle.DrawBrandHeader(canvas, 71f, 108f);
+        using var title = Paint(24f, Bold);
+        RightText(canvas, invoice.DocumentTitle, Right - 3f, 146f, title);
+
+        using var customerName = Paint(9.3f, Bold);
+        using var customerText = Paint(8.4f, Regular);
+        var customerY = 178f;
+        canvas.DrawText(invoice.CustomerNameSnapshot ?? string.Empty, Left + 3f, customerY, customerName);
+        customerY += 13f;
+
+        if (!string.IsNullOrWhiteSpace(invoice.CustomerContactSnapshot))
+        {
+            canvas.DrawText(invoice.CustomerContactSnapshot, Left + 3f, customerY, customerText);
+            customerY += 13f;
+        }
+
+        var printableAddress = CountryRegionNames.ExpandAddressCountry(invoice.CustomerAddressSnapshot);
+        foreach (var line in SplitLines(printableAddress).Take(4))
+        {
+            canvas.DrawText(line, Left + 3f, customerY, customerText);
+            customerY += 13f;
+        }
+
+        using var label = Paint(8.5f, Bold);
+        using var value = Paint(8.3f, Regular);
+        var metaY = 178f;
+        const float step = 13f;
+        const float labelX = 354f;
+        const float valueX = 443f;
+
+        DrawMeta(canvas, "Date", invoice.InvoiceDate.ToString("MM.dd.yyyy"), labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Invoice No.", invoice.InvoiceNumber, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Contact", invoice.SalesContactNameSnapshot ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Phone", invoice.SalesContactPhoneSnapshot ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Email", invoice.SalesContactEmailSnapshot ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Payment Term", invoice.PaymentTerm ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Delivery Term", invoice.DeliveryTerm ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Customer PO", invoice.CustomerPoNumber ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "PO Date", invoice.CustomerPoDate?.ToString("MM.dd.yyyy") ?? string.Empty, labelX, valueX, metaY, label, value);
+
+        return 317f;
+    }
+
+    private static float DrawPackingFirstPageHeader(SKCanvas canvas, PackingList packingList)
+    {
+        DocumentPdfStyle.DrawBrandHeader(canvas, 71f, 108f);
+        using var title = Paint(24f, Bold);
+        RightText(canvas, "Packing List", Right - 3f, 146f, title);
+
+        using var customerName = Paint(9.3f, Bold);
+        using var customerText = Paint(8.4f, Regular);
+        var customerY = 178f;
+        canvas.DrawText(packingList.CustomerNameSnapshot ?? string.Empty, Left + 3f, customerY, customerName);
+        customerY += 13f;
+
+        if (!string.IsNullOrWhiteSpace(packingList.CustomerContactSnapshot))
+        {
+            canvas.DrawText(packingList.CustomerContactSnapshot, Left + 3f, customerY, customerText);
+            customerY += 13f;
+        }
+
+        var printableAddress = CountryRegionNames.ExpandAddressCountry(packingList.CustomerAddressSnapshot);
+        foreach (var line in SplitLines(printableAddress).Take(4))
+        {
+            canvas.DrawText(line, Left + 3f, customerY, customerText);
+            customerY += 13f;
+        }
+
+        using var label = Paint(8.5f, Bold);
+        using var value = Paint(8.3f, Regular);
+        var metaY = 178f;
+        const float step = 13f;
+        const float labelX = 354f;
+        const float valueX = 443f;
+
+        DrawMeta(canvas, "Date", packingList.PackingDate.ToString("MM.dd.yyyy"), labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Packing List No.", packingList.PackingListNumber, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Contact", packingList.SalesContactNameSnapshot ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Phone", packingList.SalesContactPhoneSnapshot ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Email", packingList.SalesContactEmailSnapshot ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Delivery Term", packingList.DeliveryTerm ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Customer PO", packingList.CustomerPoNumber ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "PO Date", packingList.CustomerPoDate?.ToString("MM.dd.yyyy") ?? string.Empty, labelX, valueX, metaY, label, value); metaY += step;
+        DrawMeta(canvas, "Source", packingList.SourceDocumentNumber ?? string.Empty, labelX, valueX, metaY, label, value);
+
+        return 317f;
+    }
+
+    private static float DrawContinuationHeader(SKCanvas canvas, string title, string number)
+    {
+        DocumentPdfStyle.DrawBrandHeader(canvas, 55f, 88f);
+        using var small = Paint(10f, Bold);
+        canvas.DrawText($"{title} {number} — continued", Left, 108f, small);
+        return 116f;
+    }
+
+    private static float DrawInvoiceTableHeader(SKCanvas canvas, string currency, float y)
+    {
+        using var header = Paint(9f, Bold);
+        using var currencyPaint = Paint(8f, Bold);
+        using var line = Stroke(0.8f, new SKColor(70, 70, 70));
+
+        DocumentPdfStyle.CenterText(canvas, $"({currency})", 337f, y + 3f, currencyPaint);
+        var baseline = y + 17f;
+        DocumentPdfStyle.CenterText(canvas, "Item", ItemCenterX, baseline, header);
+        canvas.DrawText("Product", ProductX, baseline, header);
+        RightText(canvas, "Unit Price", UnitPriceRightX, baseline, header);
+        RightText(canvas, "Quantity", QuantityRightX, baseline, header);
+        DocumentPdfStyle.CenterText(canvas, "Unit", UnitCenterX, baseline, header);
+        RightText(canvas, "Amount", AmountRightX, baseline, header);
+        canvas.DrawLine(Left, baseline + 5f, Right, baseline + 5f, line);
+        return baseline + 17f;
+    }
+
+    private static float MeasureInvoiceItemHeight(InvoiceItem item)
+    {
+        using var detail = Paint(7.2f, Regular);
+        var lines = WrapText(item.Description, ProductWidth, detail);
+        return Math.Max(45f, 30f + lines.Count * 10f);
+    }
+
+    private static void DrawInvoiceRow(SKCanvas canvas, int number, InvoiceItem item, float y, float height)
+    {
+        using var name = Paint(9f, Bold);
+        using var detail = Paint(7.2f, Regular);
+        using var normal = Paint(8.5f, Regular);
+
+        var baseline = y + 12f;
+        DocumentPdfStyle.CenterText(canvas, number.ToString(), ItemCenterX, baseline, normal);
+        canvas.DrawText(item.ArticleName, ProductX, baseline, name);
+
+        var netPrice = decimal.Round(
+            item.UnitPrice * (1m - item.DiscountPercent / 100m),
+            2,
+            MidpointRounding.AwayFromZero);
+        RightText(canvas, FormatMoney(netPrice, item.Currency), UnitPriceRightX, baseline, normal);
+        RightText(canvas, FormatQuantity(item.Quantity), QuantityRightX, baseline, normal);
+        DocumentPdfStyle.CenterText(canvas, string.IsNullOrWhiteSpace(item.Unit) ? "PCS" : item.Unit, UnitCenterX, baseline, normal);
+        RightText(canvas, FormatMoney(item.LineTotal, item.Currency), AmountRightX, baseline, normal);
+
+        var detailY = baseline + 14f;
+        foreach (var line in WrapText(item.Description, ProductWidth, detail))
+        {
+            canvas.DrawText(line, ProductX, detailY, detail);
+            detailY += 10f;
+        }
+    }
+
+    private static void DrawInvoiceClosing(SKCanvas canvas, Invoice invoice, float y)
+    {
+        using var totalLabel = Paint(9f, Bold);
+        using var totalAmount = Paint(9f, Bold);
+        using var line = Stroke(0.8f, SKColors.Black);
+
+        RightText(canvas, "Total", 438f, y + 15f, totalLabel);
+        RightText(canvas, FormatMoney(invoice.TotalAmount, invoice.Currency), Right, y + 15f, totalAmount);
+        canvas.DrawLine(350f, y + 20f, Right, y + 20f, line);
+        y += 39f;
+
+        using var heading = Paint(8.5f, Bold);
+        using var text = Paint(7.6f, Regular);
+        if (!string.IsNullOrWhiteSpace(invoice.BankInformation))
+        {
+            canvas.DrawText("Bank Information", Left, y, heading);
+            y += 13f;
+            foreach (var wrapped in WrapText(invoice.BankInformation, Right - Left, text).Take(5))
+            {
+                canvas.DrawText(wrapped, Left, y, text);
+                y += 10f;
+            }
+            y += 5f;
+        }
+
+        if (!string.IsNullOrWhiteSpace(invoice.Remarks))
+        {
+            canvas.DrawText("Remarks", Left, y, heading);
+            y += 13f;
+            foreach (var wrapped in WrapText(invoice.Remarks, Right - Left, text).Take(4))
+            {
+                canvas.DrawText(wrapped, Left, y, text);
+                y += 10f;
+            }
+        }
+    }
+
+    private static float MeasureInvoiceClosingHeight(Invoice invoice)
+    {
+        using var text = Paint(7.6f, Regular);
+        var height = 39f;
+        if (!string.IsNullOrWhiteSpace(invoice.BankInformation))
+            height += 18f + WrapText(invoice.BankInformation, Right - Left, text).Take(5).Count() * 10f;
+        if (!string.IsNullOrWhiteSpace(invoice.Remarks))
+            height += 13f + WrapText(invoice.Remarks, Right - Left, text).Take(4).Count() * 10f;
+        return height + 8f;
+    }
+
+    private static SKCanvas BeginPackingPage(
+        SKDocument document,
+        PackingList packingList,
+        int pageNumber,
+        bool firstPage,
+        out float y)
     {
         var canvas = document.BeginPage(PageWidth, PageHeight);
         canvas.Clear(SKColors.White);
-        y = DrawHeader(canvas, "Packing List", packingList.PackingListNumber, packingList.PackingDate, page);
-        if (includeParties)
-            y = DrawPackingParties(canvas, packingList, y);
+        y = firstPage
+            ? DrawPackingFirstPageHeader(canvas, packingList)
+            : DrawContinuationHeader(canvas, "Packing List", packingList.PackingListNumber);
         return canvas;
-    }
-
-    private static void EndPackingPage(SKDocument document, SKCanvas canvas, int page)
-    {
-        DrawFooter(canvas, page);
-        document.EndPage();
-    }
-
-    private static void DrawContinued(SKCanvas canvas, float y)
-    {
-        using var continued = TextPaint(8f, Regular, SKColors.DimGray);
-        canvas.DrawText("Continued on next page...", Left, Math.Min(y + 14f, ContentBottom + 6f), continued);
-    }
-
-    private static float DrawHeader(SKCanvas canvas, string title, string number, DateTime date, int page)
-    {
-        var blue = new SKColor(0, 108, 181);
-        using var brand = TextPaint(19f, Bold, blue);
-        using var company = TextPaint(9f, Bold);
-        using var small = TextPaint(7f, Regular, SKColors.DimGray);
-        canvas.DrawText("FORLINX", Left, 62f, brand);
-        RightText(canvas, "Baoding Forlinx Embedded Technology Co., Ltd", Right, 54f, company);
-        RightText(canvas, "Trusted Designer & Manufacturer of System on Module", Right, 67f, small);
-        using var rule = Stroke(0.8f, SKColors.DimGray);
-        canvas.DrawLine(Left, 82f, Right, 82f, rule);
-
-        using var titlePaint = TextPaint(22f, Bold);
-        RightText(canvas, title, Right, 118f, titlePaint);
-        using var meta = TextPaint(8.5f, Regular);
-        canvas.DrawText($"No.: {number}", Left, 115f, meta);
-        canvas.DrawText($"Date: {date:MM.dd.yyyy}", Left, 129f, meta);
-        if (page > 1) canvas.DrawText($"Page: {page}", Left, 143f, meta);
-        return page == 1 ? 154f : 168f;
-    }
-
-    private static float DrawInvoiceParties(SKCanvas canvas, Invoice invoice, float y)
-    {
-        using var label = TextPaint(8.5f, Bold);
-        using var text = TextPaint(8.3f, Regular);
-        canvas.DrawText("Bill To", Left, y, label);
-        canvas.DrawText(invoice.CustomerNameSnapshot ?? string.Empty, Left, y + 15f, label);
-        var customerY = y + 29f;
-        if (!string.IsNullOrWhiteSpace(invoice.CustomerContactSnapshot))
-        {
-            canvas.DrawText(invoice.CustomerContactSnapshot, Left, customerY, text);
-            customerY += 13f;
-        }
-        foreach (var line in SplitLines(invoice.CustomerAddressSnapshot).Take(4))
-        {
-            canvas.DrawText(line, Left, customerY, text);
-            customerY += 13f;
-        }
-
-        var metaX = 350f;
-        DrawMeta(canvas, "PO No.", invoice.CustomerPoNumber, metaX, y, label, text);
-        DrawMeta(canvas, "PO Date", invoice.CustomerPoDate?.ToString("MM.dd.yyyy"), metaX, y + 15f, label, text);
-        DrawMeta(canvas, "Contact", invoice.SalesContactNameSnapshot, metaX, y + 30f, label, text);
-        DrawMeta(canvas, "Payment", invoice.PaymentTerm, metaX, y + 45f, label, text);
-        DrawMeta(canvas, "Delivery", invoice.DeliveryTerm, metaX, y + 60f, label, text);
-        DrawMeta(canvas, "Source", invoice.SourceDocumentNumber, metaX, y + 75f, label, text);
-        return Math.Max(customerY, y + 96f) + 8f;
-    }
-
-    private static float DrawPackingParties(SKCanvas canvas, PackingList packingList, float y)
-    {
-        using var label = TextPaint(8.5f, Bold);
-        using var text = TextPaint(8.3f, Regular);
-        canvas.DrawText("Ship To", Left, y, label);
-        canvas.DrawText(packingList.CustomerNameSnapshot ?? string.Empty, Left, y + 15f, label);
-        var customerY = y + 29f;
-        if (!string.IsNullOrWhiteSpace(packingList.CustomerContactSnapshot))
-        {
-            canvas.DrawText(packingList.CustomerContactSnapshot, Left, customerY, text);
-            customerY += 13f;
-        }
-        foreach (var line in SplitLines(packingList.CustomerAddressSnapshot).Take(4))
-        {
-            canvas.DrawText(line, Left, customerY, text);
-            customerY += 13f;
-        }
-        var metaX = 350f;
-        DrawMeta(canvas, "PO No.", packingList.CustomerPoNumber, metaX, y, label, text);
-        DrawMeta(canvas, "PO Date", packingList.CustomerPoDate?.ToString("MM.dd.yyyy"), metaX, y + 15f, label, text);
-        DrawMeta(canvas, "Contact", packingList.SalesContactNameSnapshot, metaX, y + 30f, label, text);
-        DrawMeta(canvas, "Delivery", packingList.DeliveryTerm, metaX, y + 45f, label, text);
-        DrawMeta(canvas, "Source", packingList.SourceDocumentNumber, metaX, y + 60f, label, text);
-        return Math.Max(customerY, y + 82f) + 8f;
-    }
-
-    private static float DrawInvoiceTableHeader(SKCanvas canvas, float y)
-    {
-        DrawTableBand(canvas, y, 22f);
-        using var p = TextPaint(8f, Bold, SKColors.White);
-        canvas.DrawText("#", Left + 5f, y + 15f, p);
-        canvas.DrawText("Product / Description", Left + 30f, y + 15f, p);
-        RightText(canvas, "Qty", 350f, y + 15f, p);
-        canvas.DrawText("Unit", 365f, y + 15f, p);
-        RightText(canvas, "Unit Price", 459f, y + 15f, p);
-        RightText(canvas, "Amount", Right - 5f, y + 15f, p);
-        return y + 22f;
-    }
-
-    private static void DrawInvoiceRow(SKCanvas canvas, int number, InvoiceItem item, float y)
-    {
-        using var p = TextPaint(8f, Regular);
-        using var bold = TextPaint(8f, Bold);
-        canvas.DrawText(number.ToString(), Left + 5f, y + 18f, p);
-        canvas.DrawText(Trim(item.ArticleName, 34), Left + 30f, y + 12f, bold);
-        if (!string.IsNullOrWhiteSpace(item.Description))
-        {
-            using var small = TextPaint(6.7f, Regular, SKColors.DimGray);
-            canvas.DrawText(Trim(item.Description, 48), Left + 30f, y + 24f, small);
-        }
-        RightText(canvas, item.Quantity.ToString("0.####"), 350f, y + 18f, p);
-        canvas.DrawText(item.Unit, 365f, y + 18f, p);
-        RightText(canvas, item.UnitPrice.ToString("N2"), 459f, y + 18f, p);
-        RightText(canvas, item.LineTotal.ToString("N2"), Right - 5f, y + 18f, p);
-        using var line = Stroke(0.35f, SKColors.LightGray);
-        canvas.DrawLine(Left, y + 29f, Right, y + 29f, line);
     }
 
     private static float DrawPackingItemHeader(SKCanvas canvas, float y)
     {
-        DrawTableBand(canvas, y, 22f);
-        using var p = TextPaint(8f, Bold, SKColors.White);
-        canvas.DrawText("Product / Description", Left + 5f, y + 15f, p);
-        RightText(canvas, "Qty", 470f, y + 15f, p);
-        canvas.DrawText("Unit", 490f, y + 15f, p);
-        return y + 22f;
+        using var header = Paint(9f, Bold);
+        using var line = Stroke(0.8f, new SKColor(70, 70, 70));
+        var baseline = y + 17f;
+        DocumentPdfStyle.CenterText(canvas, "Item", ItemCenterX, baseline, header);
+        canvas.DrawText("Product", ProductX, baseline, header);
+        RightText(canvas, "Quantity", 470f, baseline, header);
+        canvas.DrawText("Unit", 490f, baseline, header);
+        canvas.DrawLine(Left, baseline + 5f, Right, baseline + 5f, line);
+        return baseline + 17f;
     }
 
-    private static void DrawPackingItemRow(SKCanvas canvas, PackingListItem item, float y)
+    private static float MeasurePackingItemHeight(PackingListItem item)
     {
-        using var p = TextPaint(8f, Regular);
-        using var bold = TextPaint(8f, Bold);
-        canvas.DrawText(Trim(item.ArticleName, 50), Left + 5f, y + 11f, bold);
-        if (!string.IsNullOrWhiteSpace(item.Description))
+        using var detail = Paint(7.2f, Regular);
+        var lines = WrapText(item.Description, 310f, detail);
+        return Math.Max(40f, 28f + lines.Count * 10f);
+    }
+
+    private static void DrawPackingItemRow(SKCanvas canvas, int number, PackingListItem item, float y, float height)
+    {
+        using var name = Paint(9f, Bold);
+        using var detail = Paint(7.2f, Regular);
+        using var normal = Paint(8.5f, Regular);
+
+        var baseline = y + 12f;
+        DocumentPdfStyle.CenterText(canvas, number.ToString(), ItemCenterX, baseline, normal);
+        canvas.DrawText(item.ArticleName, ProductX, baseline, name);
+        RightText(canvas, FormatQuantity(item.Quantity), 470f, baseline, normal);
+        canvas.DrawText(string.IsNullOrWhiteSpace(item.Unit) ? "PCS" : item.Unit, 490f, baseline, normal);
+
+        var detailY = baseline + 14f;
+        foreach (var line in WrapText(item.Description, 310f, detail))
         {
-            using var small = TextPaint(6.7f, Regular, SKColors.DimGray);
-            canvas.DrawText(Trim(item.Description, 65), Left + 5f, y + 22f, small);
+            canvas.DrawText(line, ProductX, detailY, detail);
+            detailY += 10f;
         }
-        RightText(canvas, item.Quantity.ToString("0.####"), 470f, y + 15f, p);
-        canvas.DrawText(item.Unit, 490f, y + 15f, p);
     }
 
     private static float DrawPackageHeader(SKCanvas canvas, float y)
     {
-        DrawTableBand(canvas, y, 22f);
-        using var p = TextPaint(7.4f, Bold, SKColors.White);
-        canvas.DrawText("Carton", Left + 4f, y + 15f, p);
-        canvas.DrawText("Count", 105f, y + 15f, p);
-        canvas.DrawText("Contents", 145f, y + 15f, p);
-        canvas.DrawText("L×W×H cm", 300f, y + 15f, p);
-        canvas.DrawText("N.W.", 395f, y + 15f, p);
-        canvas.DrawText("G.W.", 445f, y + 15f, p);
-        canvas.DrawText("CBM", 500f, y + 15f, p);
-        return y + 22f;
+        using var header = Paint(8f, Bold);
+        using var line = Stroke(0.8f, new SKColor(70, 70, 70));
+        var baseline = y + 17f;
+        canvas.DrawText("Carton", Left + 2f, baseline, header);
+        canvas.DrawText("Count", 112f, baseline, header);
+        canvas.DrawText("Contents", 151f, baseline, header);
+        canvas.DrawText("L×W×H cm", 302f, baseline, header);
+        canvas.DrawText("N.W.", 394f, baseline, header);
+        canvas.DrawText("G.W.", 443f, baseline, header);
+        canvas.DrawText("CBM", 493f, baseline, header);
+        canvas.DrawLine(Left, baseline + 5f, Right, baseline + 5f, line);
+        return baseline + 17f;
     }
 
-    private static void DrawPackageRow(SKCanvas canvas, PackingPackage pck, float y)
+    private static void DrawPackageRow(SKCanvas canvas, PackingPackage package, float y)
     {
-        using var p = TextPaint(7.2f, Regular);
-        canvas.DrawText(Trim(pck.CartonNumber, 13), Left + 4f, y + 15f, p);
-        canvas.DrawText(pck.PackageCount.ToString(), 105f, y + 15f, p);
-        canvas.DrawText(Trim(pck.Contents, 22), 145f, y + 15f, p);
-        canvas.DrawText($"{pck.LengthCm:0.##}×{pck.WidthCm:0.##}×{pck.HeightCm:0.##}", 300f, y + 15f, p);
-        canvas.DrawText($"{pck.NetWeightKg:0.###}", 395f, y + 15f, p);
-        canvas.DrawText($"{pck.GrossWeightKg:0.###}", 445f, y + 15f, p);
-        canvas.DrawText($"{pck.Cbm:0.####}", 500f, y + 15f, p);
-        using var line = Stroke(0.35f, SKColors.LightGray);
-        canvas.DrawLine(Left, y + 23f, Right, y + 23f, line);
+        using var text = Paint(7.6f, Regular);
+        canvas.DrawText(Trim(package.CartonNumber, 13), Left + 2f, y + 14f, text);
+        canvas.DrawText(package.PackageCount.ToString(), 112f, y + 14f, text);
+        canvas.DrawText(Trim(package.Contents, 22), 151f, y + 14f, text);
+        canvas.DrawText($"{package.LengthCm:0.##}×{package.WidthCm:0.##}×{package.HeightCm:0.##}", 302f, y + 14f, text);
+        canvas.DrawText($"{package.NetWeightKg:0.###}", 394f, y + 14f, text);
+        canvas.DrawText($"{package.GrossWeightKg:0.###}", 443f, y + 14f, text);
+        canvas.DrawText($"{package.Cbm:0.####}", 493f, y + 14f, text);
     }
 
-    private static float MeasureInvoiceClosingReserve(Invoice invoice)
+    private static void DrawPackingTotals(SKCanvas canvas, PackingList packingList, float y)
     {
-        // 7 pt gap before Total + 28 pt after Total, then the actual terms blocks.
-        var reserve = 35f;
-
-        if (!string.IsNullOrWhiteSpace(invoice.BankInformation))
-        {
-            var lines = SplitLines(invoice.BankInformation).Take(5).Count();
-            reserve += 19f + lines * 12f;
-        }
-
-        if (!string.IsNullOrWhiteSpace(invoice.Remarks))
-        {
-            var lines = SplitLines(invoice.Remarks).Take(4).Count();
-            reserve += 14f + lines * 12f;
-        }
-
-        return reserve + 8f;
+        using var label = Paint(8.5f, Bold);
+        using var value = Paint(8.3f, Regular);
+        canvas.DrawText("Summary", Left, y, label);
+        y += 14f;
+        canvas.DrawText(
+            $"Total Qty: {packingList.TotalQuantity:0.####}    Cartons: {packingList.TotalCartons}    " +
+            $"N.W.: {packingList.TotalNetWeight:0.###} kg    G.W.: {packingList.TotalGrossWeight:0.###} kg    " +
+            $"CBM: {packingList.TotalCbm:0.####}",
+            Left,
+            y,
+            value);
     }
 
-    private static void DrawInvoiceTerms(SKCanvas canvas, Invoice invoice, float y)
+    private static int CountPackingPages(IReadOnlyList<PackingListItem> items, IReadOnlyList<PackingPackage> packages)
     {
-        using var label = TextPaint(8.5f, Bold);
-        using var text = TextPaint(8f, Regular);
-        if (!string.IsNullOrWhiteSpace(invoice.BankInformation))
+        var pages = 1;
+        var y = 317f + 12f;
+        y = SimulateHeader(y);
+
+        foreach (var item in items)
         {
-            canvas.DrawText("Bank Information", Left, y, label);
-            var yy = y + 14f;
-            foreach (var line in SplitLines(invoice.BankInformation).Take(5))
+            var height = MeasurePackingItemHeight(item);
+            if (y + height > ContentBottom)
             {
-                canvas.DrawText(line, Left, yy, text);
-                yy += 12f;
+                pages++;
+                y = 116f + 12f;
+                y = SimulateHeader(y);
             }
-            y = yy + 5f;
+            y += height;
         }
-        if (!string.IsNullOrWhiteSpace(invoice.Remarks))
+
+        y += 16f;
+        if (y + 82f > ContentBottom)
         {
-            canvas.DrawText("Remarks", Left, y, label);
-            var yy = y + 14f;
-            foreach (var line in SplitLines(invoice.Remarks).Take(4))
-            {
-                canvas.DrawText(line, Left, yy, text);
-                yy += 12f;
-            }
+            pages++;
+            y = 116f;
         }
+
+        y += 12f;
+        y = SimulateHeader(y);
+        foreach (var _ in packages)
+        {
+            const float height = 24f;
+            if (y + height > ContentBottom)
+            {
+                pages++;
+                y = 116f + 12f;
+                y = SimulateHeader(y);
+            }
+            y += height;
+        }
+
+        y += 18f;
+        if (y + 28f > ContentBottom)
+            pages++;
+
+        return pages;
     }
 
-    private static void DrawMeta(SKCanvas canvas, string label, string? value, float x, float y, SKPaint labelPaint, SKPaint valuePaint)
+    private static float SimulateHeader(float y) => y + 34f;
+
+    private static void DrawMeta(
+        SKCanvas canvas,
+        string label,
+        string value,
+        float labelX,
+        float valueX,
+        float y,
+        SKPaint labelPaint,
+        SKPaint valuePaint)
     {
-        canvas.DrawText(label, x, y, labelPaint);
-        canvas.DrawText(value ?? string.Empty, x + 62f, y, valuePaint);
+        canvas.DrawText(label, labelX, y, labelPaint);
+        canvas.DrawText(value ?? string.Empty, valueX, y, valuePaint);
     }
 
-    private static void DrawRightValue(SKCanvas canvas, string label, string value, float y, float labelSize, float valueSize)
+    private static List<string> WrapText(string? value, float width, SKPaint paint)
     {
-        using var l = TextPaint(labelSize, Bold);
-        using var v = TextPaint(valueSize, Bold);
-        RightText(canvas, label, 450f, y, l);
-        RightText(canvas, value, Right, y, v);
+        var result = new List<string>();
+        foreach (var paragraph in SplitLines(value))
+        {
+            var words = paragraph.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length == 0) continue;
+
+            var current = words[0];
+            for (var index = 1; index < words.Length; index++)
+            {
+                var candidate = current + " " + words[index];
+                if (paint.MeasureText(candidate) <= width)
+                {
+                    current = candidate;
+                }
+                else
+                {
+                    result.Add(current);
+                    current = words[index];
+                }
+            }
+            result.Add(current);
+        }
+        return result;
     }
-
-    private static void DrawTableBand(SKCanvas canvas, float y, float height)
-    {
-        using var fill = new SKPaint { IsAntialias = true, Color = new SKColor(55, 75, 90), Style = SKPaintStyle.Fill };
-        canvas.DrawRect(Left, y, Right - Left, height, fill);
-    }
-
-    private static void DrawFooter(SKCanvas canvas, int page)
-    {
-        using var rule = Stroke(0.5f, SKColors.Gray);
-        canvas.DrawLine(Left, Bottom - 20f, Right, Bottom - 20f, rule);
-        using var p = TextPaint(7f, Regular, SKColors.DimGray);
-        canvas.DrawText("Baoding Forlinx Embedded Technology Co., Ltd", Left, Bottom - 7f, p);
-        RightText(canvas, $"Page {page}", Right, Bottom - 7f, p);
-    }
-
-    private static SKPaint TextPaint(float size, SKTypeface typeface, SKColor? color = null)
-        => new() { IsAntialias = true, TextSize = size, Typeface = typeface, Color = color ?? SKColors.Black };
-
-    private static SKPaint Stroke(float width, SKColor color)
-        => new() { IsAntialias = true, Color = color, StrokeWidth = width, Style = SKPaintStyle.Stroke };
-
-    private static void RightText(SKCanvas canvas, string text, float right, float y, SKPaint paint)
-        => canvas.DrawText(text, right - paint.MeasureText(text), y, paint);
 
     private static IEnumerable<string> SplitLines(string? value)
-        => (value ?? string.Empty).Replace("\r\n", "\n").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        => (value ?? string.Empty)
+            .Replace("\r\n", "\n")
+            .Replace('\r', '\n')
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     private static string Trim(string? value, int max)
     {
@@ -453,8 +599,22 @@ public static class SalesDocumentPdfExporter
         return text.Length <= max ? text : text[..Math.Max(1, max - 1)] + "…";
     }
 
-    private static SKTypeface FindTypeface(SKFontStyle style)
-        => SKTypeface.FromFamilyName("DejaVu Sans", style)
-           ?? SKTypeface.FromFamilyName(null, style)
-           ?? SKTypeface.Default;
+    private static string FormatMoney(decimal value, string currency)
+        => string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase)
+            ? $"${value:N2}"
+            : $"CNY {value:N2}";
+
+    private static string FormatQuantity(decimal value)
+        => value == decimal.Truncate(value) ? value.ToString("0") : value.ToString("0.####");
+
+    private static SKPaint Paint(float size, SKTypeface typeface, SKColor? color = null)
+        => DocumentPdfStyle.Paint(size, typeface, color);
+
+    private static SKPaint Stroke(float width, SKColor color)
+        => DocumentPdfStyle.Stroke(width, color);
+
+    private static void RightText(SKCanvas canvas, string? text, float right, float y, SKPaint paint)
+        => DocumentPdfStyle.RightText(canvas, text, right, y, paint);
+
+    private sealed record InvoicePagePlan(int StartItemNumber, List<InvoiceItem> Items, bool IsLast);
 }
