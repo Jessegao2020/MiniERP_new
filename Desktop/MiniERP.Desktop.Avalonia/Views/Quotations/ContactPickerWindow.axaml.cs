@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
+using MiniERP.Desktop.Infrastructure;
 using MiniERP.Domain;
 
 namespace MiniERP.Desktop.Views.Quotations;
@@ -11,39 +13,30 @@ public partial class ContactPickerWindow : Window
     private readonly List<CustomerContact> _allContacts;
     private readonly ObservableCollection<CustomerContact> _visibleContacts = new();
     private readonly Dictionary<string, string> _filters = new(StringComparer.OrdinalIgnoreCase);
+    private readonly SelectLineSortState _sortState = new();
     private readonly int? _currentContactId;
 
     public ContactPickerWindow(IEnumerable<CustomerContact> contacts, int? currentContactId = null)
     {
         InitializeComponent();
-
-        _allContacts = contacts
-            .OrderBy(contact => contact.Name)
-            .ToList();
+        _allContacts = contacts.OrderBy(contact => contact.Name).ToList();
         _currentContactId = currentContactId;
-
         ContactGrid.ItemsSource = _visibleContacts;
         ApplyFilters();
+        Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Loaded);
     }
 
     private void Filter_TextChanged(object? sender, TextChangedEventArgs e)
     {
-        if (sender is not TextBox textBox || textBox.Tag is not string field)
-            return;
-
+        if (sender is not TextBox textBox || textBox.Tag is not string field) return;
         var value = textBox.Text?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(value))
-            _filters.Remove(field);
-        else
-            _filters[field] = value;
-
+        if (string.IsNullOrWhiteSpace(value)) _filters.Remove(field); else _filters[field] = value;
         ApplyFilters();
     }
 
     private void ApplyFilters()
     {
         IEnumerable<CustomerContact> filtered = _allContacts;
-
         foreach (var filter in _filters)
         {
             filtered = filtered.Where(contact => filter.Key switch
@@ -55,36 +48,53 @@ public partial class ContactPickerWindow : Window
         }
 
         _visibleContacts.Clear();
-        foreach (var contact in filtered)
-            _visibleContacts.Add(contact);
+        foreach (var contact in filtered) _visibleContacts.Add(contact);
+        ApplySort();
 
         if (_currentContactId is not null && ContactGrid.SelectedItem is null)
         {
             var current = _visibleContacts.FirstOrDefault(contact => contact.Id == _currentContactId.Value);
-            if (current is not null)
-                ContactGrid.SelectedItem = current;
+            if (current is not null) ContactGrid.SelectedItem = current;
         }
 
-        StatusText.Text = _filters.Count == 0
-            ? $"{_visibleContacts.Count} contact(s)"
-            : $"{_visibleContacts.Count} of {_allContacts.Count} contact(s)";
+        StatusText.Text = _filters.Count == 0 ? $"{_visibleContacts.Count} contact(s)" : $"{_visibleContacts.Count} of {_allContacts.Count} contact(s)";
     }
+
+    private void SortHeader_Tapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Border border || border.Tag is not string field) return;
+        _sortState.Toggle(field);
+        ApplySort();
+        TitleSortArrow.Text = _sortState.Arrow("Title");
+        NameSortArrow.Text = _sortState.Arrow("Name");
+    }
+
+    private void ApplySort()
+    {
+        if (_sortState.Field is { } field)
+            SelectLineGridSupport.SortInPlace(_visibleContacts, field, _sortState.Ascending);
+    }
+
+    private void TableLayout_SizeChanged(object? sender, SizeChangedEventArgs e)
+        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
+
+    private void ColumnSplitter_DragDelta(object? sender, VectorEventArgs e)
+        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
+
+    private void SyncDataGridColumnWidths()
+        => SelectLineGridSupport.SyncColumnWidths(ContactTableLayout, ContactGrid);
+
+    private void Grid_LoadingRow(object? sender, DataGridRowEventArgs e)
+        => SelectLineGridSupport.ApplyAlternateRow(e);
 
     private static bool Matches(string? value, string filter)
         => (value ?? string.Empty).Contains(filter, StringComparison.OrdinalIgnoreCase);
 
-    private void ContactGrid_DoubleTapped(object? sender, TappedEventArgs e)
-        => CloseSelected();
-
-    private void Ok_Click(object? sender, RoutedEventArgs e)
-        => CloseSelected();
-
-    private void Cancel_Click(object? sender, RoutedEventArgs e)
-        => Close(null);
-
+    private void ContactGrid_DoubleTapped(object? sender, TappedEventArgs e) => CloseSelected();
+    private void Ok_Click(object? sender, RoutedEventArgs e) => CloseSelected();
+    private void Cancel_Click(object? sender, RoutedEventArgs e) => Close(null);
     private void CloseSelected()
     {
-        if (ContactGrid.SelectedItem is CustomerContact contact)
-            Close(contact);
+        if (ContactGrid.SelectedItem is CustomerContact contact) Close(contact);
     }
 }
