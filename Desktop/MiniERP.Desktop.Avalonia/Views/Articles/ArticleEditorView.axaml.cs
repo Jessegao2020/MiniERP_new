@@ -21,12 +21,12 @@ public partial class ArticleEditorView : UserControl
 
     public int ArticleId => ViewModel.Article.Id;
 
-    public ArticleEditorView(Article? article)
+    public ArticleEditorView(Article? article, bool forceNew = false)
     {
         InitializeComponent();
 
         var settings = App.Services.GetRequiredService<AppSettingsService>();
-        DataContext = new ArticleEditorViewModel(article, settings);
+        DataContext = new ArticleEditorViewModel(article, settings, forceNew);
         _priceFilter = new DecimalTextBoxFilter(PriceTextBox);
 
         AttachedToVisualTree += (_, _) =>
@@ -52,7 +52,6 @@ public partial class ArticleEditorView : UserControl
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
-
         Saved?.Invoke(this, EventArgs.Empty);
     }
 
