@@ -187,7 +187,9 @@ public static class QuotationPdfExporter
 
     private static void DrawBrandHeader(SKCanvas canvas, float logoBaseline, float lineY)
     {
-        DrawOfficialLogo(canvas, Left, logoBaseline - 26f);
+        // The source PNG has transparent padding above the artwork. Offset it so the
+        // visible top of the official logo aligns with the company-name text block.
+        DrawOfficialLogo(canvas, Left, logoBaseline - 17f);
 
         using var company = Paint(10.2f, Bold);
         using var tagline = Paint(7.1f, Italic);
