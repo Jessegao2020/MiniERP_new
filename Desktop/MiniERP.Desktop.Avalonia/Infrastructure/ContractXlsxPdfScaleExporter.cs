@@ -14,25 +14,9 @@ namespace MiniERP.Desktop.Infrastructure;
 /// </summary>
 public static class ContractXlsxPdfScaleExporter
 {
-    // Final horizontal tuning from side-by-side PDF/XLSX print preview.
     private const double ColumnWidthFactor = 0.625d;
-
-    // ContractXlsxExporter originally lays out continuation sheets using its compact
-    // header. NormalizeContinuationHeader expands rows 1-5 from 66 pt to 90 pt.
-    // The original bottom spacer was already calculated before that expansion, so
-    // without compensating for these 24 pt the signature/footer shifts down and WPS
-    // can push the last footer rows onto an otherwise blank physical page.
     private const double ContinuationHeaderGrowth = 24d;
-
-    // The first-page party/address rows were 15 pt and the metadata rows were 17 pt,
-    // while ContractPdfExporter advances those sections by 12 pt and 13 pt. Tighten
-    // the XLSX to the same cadence, then put the reclaimed space back into the large
-    // bottom spacer so the footer/signature remains anchored at the PDF position.
     private const double FirstPageSpacingReduction = 38d;
-
-    // ContractXlsxExporter deliberately pads the page to this absolute height before
-    // drawing the footer separator. Keep this invariant after all post-processing so
-    // page 1, continuation pages and single-page contracts share the same footer Y.
     private const double FooterSeparatorTopHeight = 690d;
 
     public static void Export(Contract contract, Stream output)
@@ -49,39 +33,29 @@ public static class ContractXlsxPdfScaleExporter
             for (var column = 1; column <= 8; column++)
                 sheet.Column(column).Width *= ColumnWidthFactor;
 
-            // Match the PDF body: no separator rule between individual items,
-            // only the table-header rule and one closing rule after the last item.
             RemoveIntermediateItemRules(sheet);
-
-            // Keep bank-detail labels at the same visual start point as the PDF,
-            // without sticking them directly against the value column.
             AlignFooterBankLabels(sheet);
 
             if (sheetIndex == 1)
                 NormalizeFirstPageVerticalSpacing(sheet);
 
-            // Every page uses the same full-size document header. The continuation
-            // marker is separate and small; the brand/title itself is identical.
             if (sheetIndex > 1)
             {
                 NormalizeContinuationHeader(sheet, contract);
                 CompensateContinuationHeaderGrowth(sheet);
             }
 
-            // Do this last: all prior header/body adjustments may change cumulative
-            // row height. The footer separator itself must nevertheless remain at the
-            // same absolute position on every worksheet, matching the PDF template.
+            // Insert the same official logo used by the approved Quotation PDF only
+            // after final column normalization, otherwise image anchoring can be
+            // distorted when the workbook is rescaled for WPS/Excel printing.
+            ApplyOfficialLogo(sheet);
+
             NormalizeFooterSeparatorPosition(sheet);
 
             var page = sheet.PageSetup;
             page.PageOrientation = XLPageOrientation.Portrait;
             page.PaperSize = XLPaperSize.A4Paper;
             page.AdjustTo(100);
-
-            // Match the PDF's left/right printable margins. Keep the top margin
-            // unchanged so the header stays aligned with the PDF; only reclaim a
-            // little bottom space because WPS was moving the final page-number row
-            // to a second, otherwise blank physical page.
             page.Margins.Left = 0.78d;
             page.Margins.Right = 0.78d;
             page.Margins.Top = 0.72d;
@@ -92,9 +66,6 @@ public static class ContractXlsxPdfScaleExporter
             page.CenterVertically = false;
             page.ShowGridlines = false;
 
-            // Explicit print area prevents WPS/Excel from extending printing into
-            // styled-but-empty rows/columns and makes every worksheet map to exactly
-            // one intended A4 contract page.
             var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
             page.PrintAreas.Clear();
             page.PrintAreas.Add($"A1:H{lastRow}");
@@ -107,10 +78,6 @@ public static class ContractXlsxPdfScaleExporter
         using var normalized = new MemoryStream();
         workbook.SaveAs(normalized);
 
-        // ClosedXML's in-memory PageSetup can still serialize fitToWidth/fitToHeight
-        // and sheetPr/pageSetUpPr fitToPage from the earlier FitToPages call. Remove
-        // those OOXML flags after the final ClosedXML save so Excel/WPS/LibreOffice
-        // must honor scale=100 rather than silently shrinking the page again.
         RemoveFitToPageFlags(normalized);
         normalized.Position = 0;
 
@@ -121,6 +88,23 @@ public static class ContractXlsxPdfScaleExporter
         }
 
         normalized.CopyTo(output);
+    }
+
+    private static void ApplyOfficialLogo(IXLWorksheet sheet)
+    {
+        sheet.Range("A1:C2").Clear(XLClearOptions.Contents);
+        using var stream = new MemoryStream(DocumentBrandAssets.ForlinxLogoPng);
+        var picture = sheet.AddPicture(stream);
+
+        const int width = 132;
+        var height = picture.OriginalWidth > 0
+            ? Math.Max(1, (int)Math.Round(width * picture.OriginalHeight / (double)picture.OriginalWidth))
+            : 32;
+        picture.Width = width;
+        picture.Height = height;
+        // Slight downward offset mirrors the final Quotation PDF alignment where
+        // the visible logo top is level with the company-name block.
+        picture.MoveTo(sheet.Cell(1, 1), 0, 6);
     }
 
     private static void RemoveIntermediateItemRules(IXLWorksheet sheet)
@@ -178,19 +162,12 @@ public static class ContractXlsxPdfScaleExporter
 
     private static void NormalizeFirstPageVerticalSpacing(IXLWorksheet sheet)
     {
-        // PDF seller/buyer address lines advance by 12 pt.
         for (var row = 7; row <= 12; row++)
             sheet.Row(row).Height = 12;
 
-        // PDF Contract No./Date/... metadata advances by 13 pt.
         for (var row = 14; row <= 18; row++)
             sheet.Row(row).Height = 13;
 
-        // Keep the bottom-of-page elements at their existing absolute position.
-        // On a single-page contract compensate before the signature block; on a
-        // multi-page first sheet compensate before the footer separator. Do not add
-        // the compensation to the separator row itself: that changes its height but
-        // leaves its top border too high, which was the page-1 mismatch seen in WPS.
         var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
         var signatureRow = 0;
         for (var row = 1; row <= lastRow; row++)
@@ -215,24 +192,20 @@ public static class ContractXlsxPdfScaleExporter
 
     private static void NormalizeContinuationHeader(IXLWorksheet sheet, Contract contract)
     {
-        // Same brand geometry as page 1.
-        sheet.Range("A1:C2").Style.Font.FontSize = 17;
         sheet.Range("D1:H1").Style.Font.FontSize = 10.2;
-        sheet.Range("D2:H2").Style.Font.FontSize = 7;
+        sheet.Range("D2:H2").Style.Font.FontSize = 7.1;
         sheet.Row(1).Height = 22;
         sheet.Row(2).Height = 16;
         sheet.Row(3).Height = 8;
 
-        // Same Sales Contract title as page 1.
         var title = sheet.Range("A4:H4");
         title.Value = "Sales Contract";
         title.Style.Font.Bold = true;
-        title.Style.Font.FontSize = 22;
+        title.Style.Font.FontSize = 24;
         title.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
         title.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         sheet.Row(4).Height = 30;
 
-        // Keep the continuation identity without shrinking the actual header.
         var continued = sheet.Range("A5:H5");
         if (!continued.IsMerged())
             continued.Merge();
@@ -248,10 +221,6 @@ public static class ContractXlsxPdfScaleExporter
     private static void CompensateContinuationHeaderGrowth(IXLWorksheet sheet)
     {
         var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
-
-        // On the final page, take the extra header height out of the large blank
-        // spacer immediately before the signature block. This moves both signature
-        // and footer back to the absolute Y positions calculated by the base layout.
         var signatureRow = 0;
         for (var row = 1; row <= lastRow; row++)
         {
@@ -268,8 +237,6 @@ public static class ContractXlsxPdfScaleExporter
             return;
         }
 
-        // Non-final continuation pages have no signature block. Compensate against
-        // the footer spacer instead so their footer also remains on the intended A4.
         var footerRow = FindFooterCompanyRow(sheet);
         if (footerRow > 0)
             ReduceBlankSpaceBefore(sheet, footerRow, ContinuationHeaderGrowth);
@@ -299,9 +266,6 @@ public static class ContractXlsxPdfScaleExporter
             return;
 
         var separatorRow = footerRow - 1;
-
-        // The separator row itself should remain the thin 4 pt rule row created by
-        // ContractXlsxExporter. Any spacing compensation belongs before this row.
         sheet.Row(separatorRow).Height = 4d;
 
         var currentTop = 0d;
@@ -370,7 +334,7 @@ public static class ContractXlsxPdfScaleExporter
 
             XDocument document;
             using (var input = entry.Open())
-                document = XDocument.Load(input, System.Xml.Linq.LoadOptions.PreserveWhitespace);
+                document = XDocument.Load(input, LoadOptions.PreserveWhitespace);
 
             var root = document.Root;
             if (root is null) continue;
@@ -392,7 +356,7 @@ public static class ContractXlsxPdfScaleExporter
             entry.Delete();
             var replacement = archive.CreateEntry(sheetName, CompressionLevel.Optimal);
             using var outputStream = replacement.Open();
-            document.Save(outputStream, System.Xml.Linq.SaveOptions.DisableFormatting);
+            document.Save(outputStream, SaveOptions.DisableFormatting);
         }
     }
 }
