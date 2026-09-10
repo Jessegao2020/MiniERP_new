@@ -3,80 +3,30 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
-    Title="Select Article"
-    Width="1080"
-    Height="650"
-    MinWidth="820"
-    MinHeight="440"
-    WindowStartupLocation="CenterOwner">
-
+    Title="Select Article" Width="1080" Height="650" MinWidth="820" MinHeight="440" WindowStartupLocation="CenterOwner">
+    <Window.Styles>
+        <Style Selector="Border.grid-header"><Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#C9C9C9" /><Setter Property="BorderThickness" Value="0,0,1,1" /></Style>
+        <Style Selector="Border.grid-header:pointerover"><Setter Property="Background" Value="#F3F3F3" /></Style>
+        <Style Selector="TextBox.grid-filter"><Setter Property="Height" Value="22" /><Setter Property="Margin" Value="0" /><Setter Property="Padding" Value="5,0,4,0" /><Setter Property="CornerRadius" Value="0" /><Setter Property="Background" Value="#FFFEEF" /><Setter Property="BorderBrush" Value="#DDDCCB" /><Setter Property="BorderThickness" Value="0,0,1,1" /><Setter Property="FontSize" Value="11" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+    </Window.Styles>
     <Grid RowDefinitions="*,Auto,Auto">
-        <dg:DataGrid
-            x:Name="ArticleGrid"
-            Grid.Row="0"
-            Margin="8"
-            AutoGenerateColumns="False"
-            CanUserResizeColumns="True"
-            CanUserSortColumns="True"
-            GridLinesVisibility="All"
-            IsReadOnly="True"
-            DoubleTapped="ArticleGrid_DoubleTapped">
-
-            <dg:DataGrid.Columns>
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding Name}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Name" />
-                            <TextBox MinWidth="120" Height="24" Tag="Name" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding Name_EN}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Name EN" />
-                            <TextBox MinWidth="120" Height="24" Tag="Name_EN" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="95" Binding="{Binding Price, StringFormat='{}{0:N2}'}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="CNY Price" />
-                            <TextBox MinWidth="70" Height="24" Tag="Price" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="2.5*" Binding="{Binding Description_EN}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Description EN" />
-                            <TextBox MinWidth="150" Height="24" Tag="Description_EN" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding Category}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Category" />
-                            <TextBox MinWidth="80" Height="24" Tag="Category" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-            </dg:DataGrid.Columns>
-        </dg:DataGrid>
-
-        <Border Grid.Row="1" Padding="8,4" Background="#F2F2F2" BorderBrush="LightGray" BorderThickness="1,1,1,0">
-            <TextBlock x:Name="StatusText" Foreground="#666666" />
-        </Border>
-
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" Spacing="8">
-            <Button Width="90" IsDefault="True" Click="Ok_Click" Content="OK" />
-            <Button Width="90" IsCancel="True" Click="Cancel_Click" Content="Cancel" />
-        </StackPanel>
+        <Grid x:Name="ArticleTableLayout" Grid.Row="0" Margin="8" RowDefinitions="24,22,*" SizeChanged="TableLayout_SizeChanged">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="2*" MinWidth="120" /><ColumnDefinition Width="2*" MinWidth="120" /><ColumnDefinition Width="95" MinWidth="70" /><ColumnDefinition Width="2.5*" MinWidth="150" /><ColumnDefinition Width="1.2*" MinWidth="80" /></Grid.ColumnDefinitions>
+            <Border Grid.Row="0" Grid.ColumnSpan="5" BorderBrush="#C9C9C9" BorderThickness="1,1,0,0" IsHitTestVisible="False" />
+            <Border Grid.Row="0" Grid.Column="0" Classes="grid-header" Tag="Name" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Name" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="NameSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="1" Classes="grid-header" Tag="Name_EN" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Name EN" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="NameEnSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="2" Classes="grid-header" Tag="Price" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="CNY Price" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="PriceSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="3" Classes="grid-header" Tag="Description_EN" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Description EN" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="DescriptionSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="4" Classes="grid-header" Tag="Category" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Category" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="CategorySortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="1" Grid.ColumnSpan="5" Background="#FFFEEF" BorderBrush="#DDDCCB" BorderThickness="1,0,0,0" IsHitTestVisible="False" />
+            <TextBox Grid.Row="1" Grid.Column="0" Classes="grid-filter" Tag="Name" TextChanged="Filter_TextChanged" /><TextBox Grid.Row="1" Grid.Column="1" Classes="grid-filter" Tag="Name_EN" TextChanged="Filter_TextChanged" /><TextBox Grid.Row="1" Grid.Column="2" Classes="grid-filter" Tag="Price" TextChanged="Filter_TextChanged" /><TextBox Grid.Row="1" Grid.Column="3" Classes="grid-filter" Tag="Description_EN" TextChanged="Filter_TextChanged" /><TextBox Grid.Row="1" Grid.Column="4" Classes="grid-filter" Tag="Category" TextChanged="Filter_TextChanged" />
+            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" /><GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" /><GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" /><GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="3" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
+            <dg:DataGrid x:Name="ArticleGrid" Grid.Row="2" Grid.ColumnSpan="5" AutoGenerateColumns="False" Background="White" BorderBrush="#D4D4D4" BorderThickness="1,0,1,1" CanUserResizeColumns="False" CanUserSortColumns="False" FontSize="12" GridLinesVisibility="All" HeadersVisibility="None" HorizontalGridLinesBrush="#E4E4E4" VerticalGridLinesBrush="#E4E4E4" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" DoubleTapped="ArticleGrid_DoubleTapped">
+                <dg:DataGrid.Styles><Style Selector="DataGridCell"><Setter Property="Padding" Value="5,2" /></Style><Style Selector="DataGridRow.alternate"><Setter Property="Background" Value="#F3F3F3" /></Style><Style Selector="DataGridRow:pointerover"><Setter Property="Background" Value="#EAF2F8" /></Style><Style Selector="DataGridRow:selected"><Setter Property="Background" Value="#3394D6" /><Setter Property="TextBlock.Foreground" Value="#111111" /></Style></dg:DataGrid.Styles>
+                <dg:DataGrid.Columns><dg:DataGridTextColumn Width="2*" Binding="{Binding Name}" /><dg:DataGridTextColumn Width="2*" Binding="{Binding Name_EN}" /><dg:DataGridTextColumn Width="95" Binding="{Binding Price, StringFormat='{}{0:N2}'}" /><dg:DataGridTextColumn Width="2.5*" Binding="{Binding Description_EN}" /><dg:DataGridTextColumn Width="1.2*" Binding="{Binding Category}" /></dg:DataGrid.Columns>
+            </dg:DataGrid>
+        </Grid>
+        <Border Grid.Row="1" Padding="8,4" Background="#F2F2F2" BorderBrush="LightGray" BorderThickness="1,1,1,0"><TextBlock x:Name="StatusText" Foreground="#666666" /></Border>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" Spacing="8"><Button Width="90" IsDefault="True" Click="Ok_Click" Content="OK" /><Button Width="90" IsCancel="True" Click="Cancel_Click" Content="Cancel" /></StackPanel>
     </Grid>
 </Window>
