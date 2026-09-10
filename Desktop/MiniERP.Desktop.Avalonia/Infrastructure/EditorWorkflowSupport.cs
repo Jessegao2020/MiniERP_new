@@ -91,6 +91,11 @@ public sealed class EditorDirtyMonitor : IDisposable
 
     public void Start()
     {
+        // A details view can be detached/re-attached when another workspace tab is
+        // selected. Do not redefine the clean baseline in that case, otherwise an
+        // unsaved edit would incorrectly become "clean" merely by switching tabs.
+        if (_started) return;
+
         _cleanState = SafeCapture();
         _started = true;
         IsDirty = false;
