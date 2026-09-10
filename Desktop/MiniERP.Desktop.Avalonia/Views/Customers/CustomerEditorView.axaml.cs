@@ -24,9 +24,7 @@ public partial class CustomerEditorView : UserControl
 
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
-        if (!await ViewModel.SaveAsync())
-            return;
-
+        if (!await ViewModel.SaveAsync()) return;
         Saved?.Invoke(this, EventArgs.Empty);
         RequestClose?.Invoke(this, EventArgs.Empty);
     }
@@ -38,44 +36,27 @@ public partial class CustomerEditorView : UserControl
     {
         if (!ViewModel.IsNew)
         {
-            var confirmed = await ConfirmationDialog.ShowAsync(
-                this,
-                "Delete Customer",
-                $"Delete customer '{ViewModel.Customer.Name}'? This cannot be undone.");
-
-            if (!confirmed)
-                return;
+            var confirmed = await ConfirmationDialog.ShowAsync(this, "Delete Customer", $"Delete customer '{ViewModel.Customer.Name}'? This cannot be undone.");
+            if (!confirmed) return;
         }
 
-        if (!await ViewModel.DeleteAsync())
-            return;
-
+        if (!await ViewModel.DeleteAsync()) return;
         Deleted?.Invoke(this, EventArgs.Empty);
         RequestClose?.Invoke(this, EventArgs.Empty);
     }
 
     private async void PickCountry_Click(object? sender, RoutedEventArgs e)
     {
-        if (TopLevel.GetTopLevel(this) is not Window owner)
-            return;
-
+        if (TopLevel.GetTopLevel(this) is not Window owner) return;
         var picker = new CountryPickerWindow(ViewModel.Customer.Country);
         var selectedCode = await picker.ShowDialog<string?>(owner);
-        if (!string.IsNullOrWhiteSpace(selectedCode))
-            ViewModel.SetCountry(selectedCode);
+        if (!string.IsNullOrWhiteSpace(selectedCode)) ViewModel.SetCountry(selectedCode);
     }
 
-    private void Address_Click(object? sender, RoutedEventArgs e)
-        => ShowAddress();
-
-    private void Contact_Click(object? sender, RoutedEventArgs e)
-        => ShowContacts();
-
-    private void QuoteHistory_Click(object? sender, RoutedEventArgs e)
-        => ShowHistory("Quote History");
-
-    private void OrderHistory_Click(object? sender, RoutedEventArgs e)
-        => ShowHistory("Order History");
+    private void Address_Click(object? sender, RoutedEventArgs e) => ShowAddress();
+    private void Contact_Click(object? sender, RoutedEventArgs e) => ShowContacts();
+    private void QuoteHistory_Click(object? sender, RoutedEventArgs e) => ShowHistory("Quote History");
+    private void OrderHistory_Click(object? sender, RoutedEventArgs e) => ShowHistory("Order History");
 
     private void NewContact_Click(object? sender, RoutedEventArgs e)
     {
@@ -85,6 +66,9 @@ public partial class CustomerEditorView : UserControl
 
     private void DeleteContact_Click(object? sender, RoutedEventArgs e)
         => ViewModel.DeleteSelectedContact();
+
+    private void SelectLineGrid_LoadingRow(object? sender, DataGridRowEventArgs e)
+        => SelectLineGridSupport.ApplyAlternateRow(e);
 
     private void ShowAddress()
     {
