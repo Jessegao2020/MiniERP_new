@@ -43,21 +43,8 @@ public partial class MainWindow : Window
     {
         const string key = "article";
         if (SelectExisting(key)) return;
-        var view = new ArticleListView();
-        view.OpenArticleRequested += OpenArticleEditor;
-        AddWorkspace(key, "Article", view);
-    }
 
-    private void OpenArticleEditor(Article? article)
-    {
-        var key = article is null ? "article:new" : $"article:{article.Id}";
-        var title = article is null ? "New Article" : "Article Details";
-        if (SelectExisting(key)) return;
-        var editor = new ArticleEditorView(article);
-        var tab = AddWorkspace(key, title, editor);
-        editor.Saved += async (_, _) => await RefreshArticleListAsync();
-        editor.Deleted += async (_, _) => await RefreshArticleListAsync();
-        editor.RequestClose += (_, _) => CloseWorkspace(key, tab);
+        AddWorkspace(key, "Article", new ArticleWorkspaceView());
     }
 
     private void OpenCustomerList()
@@ -259,7 +246,7 @@ public partial class MainWindow : Window
     {
         foreach (var tab in _workspaceTabs)
         {
-            if (tab.Content is ArticleEditorView articleEditor) articleEditor.RefreshExchangeRate();
+            if (tab.Content is ArticleWorkspaceView articleWorkspace) articleWorkspace.RefreshExchangeRate();
             else if (tab.Content is QuotationEditorView quotationEditor) quotationEditor.RefreshExchangeRate();
             else if (tab.Content is ContractEditorView contractEditor) contractEditor.RefreshExchangeRate();
         }
@@ -267,7 +254,8 @@ public partial class MainWindow : Window
 
     private async Task RefreshArticleListAsync()
     {
-        if (_openTabs.TryGetValue("article", out var tab) && tab.Content is ArticleListView list) await list.ReloadAsync();
+        if (_openTabs.TryGetValue("article", out var tab) && tab.Content is ArticleWorkspaceView workspace)
+            await workspace.ReloadListAsync();
     }
 
     private async Task RefreshCustomerListAsync()
