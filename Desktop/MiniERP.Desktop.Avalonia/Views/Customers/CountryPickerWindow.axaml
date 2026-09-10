@@ -3,7 +3,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
-    Title="Country" Width="420" Height="360" CanResize="False" WindowStartupLocation="CenterOwner">
+    Title="Country / Region" Width="420" Height="360" CanResize="False" WindowStartupLocation="CenterOwner">
     <Window.Styles>
         <Style Selector="Border.grid-header"><Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#C9C9C9" /><Setter Property="BorderThickness" Value="0,0,1,1" /></Style>
         <Style Selector="Border.grid-header:pointerover"><Setter Property="Background" Value="#F3F3F3" /></Style>
@@ -14,7 +14,7 @@
             <Grid.ColumnDefinitions><ColumnDefinition Width="80" MinWidth="60" /><ColumnDefinition Width="*" MinWidth="160" /></Grid.ColumnDefinitions>
             <Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="#C9C9C9" BorderThickness="1,1,0,0" IsHitTestVisible="False" />
             <Border Grid.Row="0" Grid.Column="0" Classes="grid-header" Tag="Code" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Code" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="CodeSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
-            <Border Grid.Row="0" Grid.Column="1" Classes="grid-header" Tag="Name" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Country" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="NameSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="1" Classes="grid-header" Tag="Name" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Country / Region" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="NameSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
             <Border Grid.Row="1" Grid.ColumnSpan="2" Background="#FFFEEF" BorderBrush="#DDDCCB" BorderThickness="1,0,0,0" IsHitTestVisible="False" />
             <TextBox x:Name="CodeFilterTextBox" Grid.Row="1" Grid.Column="0" Classes="grid-filter" TextChanged="Filter_TextChanged" /><TextBox x:Name="NameFilterTextBox" Grid.Row="1" Grid.Column="1" Classes="grid-filter" TextChanged="Filter_TextChanged" />
             <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
