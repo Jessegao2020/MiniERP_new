@@ -29,6 +29,17 @@ public partial class QuotationEditorView : UserControl
     public QuotationEditorView(Quotation? quotation)
     {
         InitializeComponent();
+
+        // Keep the empty staged editor visually consistent with the rest of the ERP.
+        // There is no editing target until a position is double-clicked, but disabling
+        // the whole panel makes Fluent render every input with a heavy gray fill.
+        PositionEditorPanel.IsEnabled = true;
+
+        // Amount is a read-only Border/TextBlock rather than a TextBox. Give it an
+        // explicit minimum height so a wrapped line containing only Amount does not
+        // collapse to the TextBlock's natural text height.
+        PositionAmountText.MinHeight = 32;
+
         var settings = App.Services.GetRequiredService<AppSettingsService>();
         DataContext = new QuotationEditorViewModel(quotation, settings);
 
@@ -152,7 +163,10 @@ public partial class QuotationEditorView : UserControl
             PositionDiscountTextBox.Text = string.Empty;
             PositionDescriptionTextBox.Text = string.Empty;
             PositionAmountText.Text = string.Empty;
-            PositionEditorPanel.IsEnabled = false;
+
+            // Keep the empty editor enabled so it retains the normal white ERP input
+            // appearance. Without an editing target TextChanged is ignored below.
+            PositionEditorPanel.IsEnabled = true;
             PositionSaveButton.IsEnabled = false;
         }
         finally
