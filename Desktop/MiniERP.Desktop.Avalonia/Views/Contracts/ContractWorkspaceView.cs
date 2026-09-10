@@ -40,7 +40,7 @@ public sealed class ContractWorkspaceView : UserControl
     {
         if (sender is not ContractEditorView editor) return;
         editor.RequestClose -= Editor_RequestClose;
-        var id = _deleted ? null : editor.ContractId > 0 ? editor.ContractId : null;
+        int? id = _deleted ? null : editor.ContractId > 0 ? editor.ContractId : null;
         editor.StopTracking();
         _editorView = null;
         Content = _listView;
