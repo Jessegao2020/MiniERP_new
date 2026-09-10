@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Customers;
 using MiniERP.Domain;
@@ -9,6 +10,7 @@ namespace MiniERP.Desktop.Views.Customers;
 
 public partial class CustomerListView : UserControl
 {
+    private readonly SelectLineSortState _sortState = new();
     private CustomerListViewModel ViewModel => (CustomerListViewModel)DataContext!;
 
     public event Action<Customer?>? OpenCustomerRequested;
@@ -17,10 +19,19 @@ public partial class CustomerListView : UserControl
     {
         InitializeComponent();
         DataContext = new CustomerListViewModel();
-        AttachedToVisualTree += async (_, _) => await ViewModel.LoadAsync();
+        AttachedToVisualTree += async (_, _) =>
+        {
+            await ViewModel.LoadAsync();
+            ApplySort();
+            Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Loaded);
+        };
     }
 
-    public Task ReloadAsync() => ViewModel.LoadAsync();
+    public async Task ReloadAsync()
+    {
+        await ViewModel.LoadAsync();
+        ApplySort();
+    }
 
     private void New_Click(object? sender, RoutedEventArgs e)
         => OpenCustomerRequested?.Invoke(null);
@@ -43,7 +54,10 @@ public partial class CustomerListView : UserControl
     }
 
     private async void Refresh_Click(object? sender, RoutedEventArgs e)
-        => await ViewModel.LoadAsync();
+    {
+        await ViewModel.LoadAsync();
+        ApplySort();
+    }
 
     private void Filter_TextChanged(object? sender, TextChangedEventArgs e)
     {
@@ -51,7 +65,46 @@ public partial class CustomerListView : UserControl
             return;
 
         ViewModel.SetFilter(field, textBox.Text);
+        ApplySort();
     }
+
+    private void SortHeader_Tapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Border border || border.Tag is not string field)
+            return;
+
+        _sortState.Toggle(field);
+        ApplySort();
+        UpdateSortIndicators();
+    }
+
+    private void ApplySort()
+    {
+        if (_sortState.Field is { } field)
+            SelectLineGridSupport.SortInPlace(ViewModel.Customers, field, _sortState.Ascending);
+    }
+
+    private void UpdateSortIndicators()
+    {
+        NameSortArrow.Text = _sortState.Arrow("Name");
+        AddressSortArrow.Text = _sortState.Arrow("AddressLine1");
+        CitySortArrow.Text = _sortState.Arrow("City");
+        StateSortArrow.Text = _sortState.Arrow("State");
+        PostalSortArrow.Text = _sortState.Arrow("PostalCode");
+        CountrySortArrow.Text = _sortState.Arrow("Country");
+    }
+
+    private void TableLayout_SizeChanged(object? sender, SizeChangedEventArgs e)
+        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
+
+    private void ColumnSplitter_DragDelta(object? sender, VectorEventArgs e)
+        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
+
+    private void SyncDataGridColumnWidths()
+        => SelectLineGridSupport.SyncColumnWidths(CustomerTableLayout, CustomerGrid);
+
+    private void Grid_LoadingRow(object? sender, DataGridRowEventArgs e)
+        => SelectLineGridSupport.ApplyAlternateRow(e);
 
     private void CustomerGrid_DoubleTapped(object? sender, TappedEventArgs e)
     {
