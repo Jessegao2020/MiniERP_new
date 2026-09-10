@@ -33,6 +33,20 @@ public partial class QuotationListView : UserControl
         ApplySort();
     }
 
+    public async Task ReloadAndSelectAsync(int? quotationId)
+    {
+        await ReloadAsync();
+        if (quotationId is null || quotationId <= 0) return;
+        var selected = ViewModel.Quotations.FirstOrDefault(row => row.Id == quotationId.Value);
+        if (selected is null) return;
+        ViewModel.SelectedQuotation = selected;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (QuotationGrid.Columns.Count > 0)
+                QuotationGrid.ScrollIntoView(selected, QuotationGrid.Columns[0]);
+        }, DispatcherPriority.Loaded);
+    }
+
     private void New_Click(object? sender, RoutedEventArgs e) => OpenQuotationRequested?.Invoke(null);
 
     private async void Delete_Click(object? sender, RoutedEventArgs e)
