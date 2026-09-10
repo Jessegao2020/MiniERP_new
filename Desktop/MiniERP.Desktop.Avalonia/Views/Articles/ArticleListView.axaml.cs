@@ -13,11 +13,25 @@ public partial class ArticleListView : UserControl
     private ArticleListViewModel ViewModel => (ArticleListViewModel)DataContext!;
 
     public event Action<Article?>? OpenArticleRequested;
+    public event Action<Article>? DuplicateArticleRequested;
 
     public ArticleListView()
     {
         InitializeComponent();
         DataContext = new ArticleListViewModel();
+
+        // The XAML originally carried a placeholder IsEnabled=False on Duplicate.
+        // Promote it to the real SelectLine-style duplicate command.
+        if (Content is Grid root && root.Children.OfType<StackPanel>().FirstOrDefault() is { } toolbar)
+        {
+            var buttons = toolbar.Children.OfType<Button>().ToList();
+            if (buttons.Count > 1)
+            {
+                buttons[1].IsEnabled = true;
+                buttons[1].Click += Duplicate_Click;
+            }
+        }
+
         AttachedToVisualTree += async (_, _) =>
         {
             await ViewModel.LoadAsync();
@@ -48,6 +62,12 @@ public partial class ArticleListView : UserControl
 
     private void New_Click(object? sender, RoutedEventArgs e)
         => OpenArticleRequested?.Invoke(null);
+
+    private void Duplicate_Click(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel.SelectedArticle is not null)
+            DuplicateArticleRequested?.Invoke(ViewModel.SelectedArticle);
+    }
 
     private async void Delete_Click(object? sender, RoutedEventArgs e)
     {
