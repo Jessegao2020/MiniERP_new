@@ -3,89 +3,31 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
-    Title="Select Customer"
-    Width="980"
-    Height="620"
-    MinWidth="760"
-    MinHeight="420"
-    WindowStartupLocation="CenterOwner">
-
+    Title="Select Customer" Width="980" Height="620" MinWidth="760" MinHeight="420" WindowStartupLocation="CenterOwner">
+    <Window.Styles>
+        <Style Selector="Border.grid-header"><Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#C9C9C9" /><Setter Property="BorderThickness" Value="0,0,1,1" /></Style>
+        <Style Selector="Border.grid-header:pointerover"><Setter Property="Background" Value="#F3F3F3" /></Style>
+        <Style Selector="TextBox.grid-filter"><Setter Property="Height" Value="22" /><Setter Property="Margin" Value="0" /><Setter Property="Padding" Value="5,0,4,0" /><Setter Property="CornerRadius" Value="0" /><Setter Property="Background" Value="#FFFEEF" /><Setter Property="BorderBrush" Value="#DDDCCB" /><Setter Property="BorderThickness" Value="0,0,1,1" /><Setter Property="FontSize" Value="11" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+    </Window.Styles>
     <Grid RowDefinitions="*,Auto,Auto">
-        <dg:DataGrid
-            x:Name="CustomerGrid"
-            Grid.Row="0"
-            Margin="8"
-            AutoGenerateColumns="False"
-            CanUserResizeColumns="True"
-            CanUserSortColumns="True"
-            GridLinesVisibility="All"
-            IsReadOnly="True"
-            DoubleTapped="CustomerGrid_DoubleTapped">
-
-            <dg:DataGrid.Columns>
-                <dg:DataGridTextColumn Width="2.5*" Binding="{Binding Name}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Name" />
-                            <TextBox MinWidth="120" Height="24" Tag="Name" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="2*" Binding="{Binding AddressLine1}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Address" />
-                            <TextBox MinWidth="100" Height="24" Tag="AddressLine1" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="*" Binding="{Binding PostalCode}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Postal" />
-                            <TextBox MinWidth="65" Height="24" Tag="PostalCode" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding City}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="City" />
-                            <TextBox MinWidth="75" Height="24" Tag="City" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="1.2*" Binding="{Binding State}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="State" />
-                            <TextBox MinWidth="75" Height="24" Tag="State" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="*" Binding="{Binding Country}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Country" />
-                            <TextBox MinWidth="65" Height="24" Tag="Country" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-            </dg:DataGrid.Columns>
-        </dg:DataGrid>
-
-        <Border Grid.Row="1" Padding="8,4" Background="#F2F2F2" BorderBrush="LightGray" BorderThickness="1,1,1,0">
-            <TextBlock x:Name="StatusText" Foreground="#666666" />
-        </Border>
-
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" Spacing="8">
-            <Button Width="90" IsDefault="True" Click="Ok_Click" Content="OK" />
-            <Button Width="90" IsCancel="True" Click="Cancel_Click" Content="Cancel" />
-        </StackPanel>
+        <Grid x:Name="CustomerTableLayout" Grid.Row="0" Margin="8" RowDefinitions="24,22,*" SizeChanged="TableLayout_SizeChanged">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="2.5*" MinWidth="120" /><ColumnDefinition Width="2*" MinWidth="100" /><ColumnDefinition Width="*" MinWidth="65" /><ColumnDefinition Width="1.2*" MinWidth="75" /><ColumnDefinition Width="1.2*" MinWidth="75" /><ColumnDefinition Width="*" MinWidth="65" /></Grid.ColumnDefinitions>
+            <Border Grid.Row="0" Grid.ColumnSpan="6" BorderBrush="#C9C9C9" BorderThickness="1,1,0,0" IsHitTestVisible="False" />
+            <Border Grid.Row="0" Grid.Column="0" Classes="grid-header" Tag="Name" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Name" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="NameSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="1" Classes="grid-header" Tag="AddressLine1" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Address" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="AddressSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="2" Classes="grid-header" Tag="PostalCode" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Postal" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="PostalSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="3" Classes="grid-header" Tag="City" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="City" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="CitySortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="4" Classes="grid-header" Tag="State" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="State" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="StateSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="5" Classes="grid-header" Tag="Country" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Country" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="CountrySortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="1" Grid.ColumnSpan="6" Background="#FFFEEF" BorderBrush="#DDDCCB" BorderThickness="1,0,0,0" IsHitTestVisible="False" />
+            <TextBox Grid.Row="1" Grid.Column="0" Classes="grid-filter" Tag="Name" TextChanged="Filter_TextChanged" /><TextBox Grid.Row="1" Grid.Column="1" Classes="grid-filter" Tag="AddressLine1" TextChanged="Filter_TextChanged" /><TextBox Grid.Row="1" Grid.Column="2" Classes="grid-filter" Tag="PostalCode" TextChanged="Filter_TextChanged" /><TextBox Grid.Row="1" Grid.Column="3" Classes="grid-filter" Tag="City" TextChanged="Filter_TextChanged" /><TextBox Grid.Row="1" Grid.Column="4" Classes="grid-filter" Tag="State" TextChanged="Filter_TextChanged" /><TextBox Grid.Row="1" Grid.Column="5" Classes="grid-filter" Tag="Country" TextChanged="Filter_TextChanged" />
+            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" /><GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" /><GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" /><GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="3" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" /><GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="4" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
+            <dg:DataGrid x:Name="CustomerGrid" Grid.Row="2" Grid.ColumnSpan="6" AutoGenerateColumns="False" Background="White" BorderBrush="#D4D4D4" BorderThickness="1,0,1,1" CanUserResizeColumns="False" CanUserSortColumns="False" FontSize="12" GridLinesVisibility="All" HeadersVisibility="None" HorizontalGridLinesBrush="#E4E4E4" VerticalGridLinesBrush="#E4E4E4" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" DoubleTapped="CustomerGrid_DoubleTapped">
+                <dg:DataGrid.Styles><Style Selector="DataGridCell"><Setter Property="Padding" Value="5,2" /></Style><Style Selector="DataGridRow.alternate"><Setter Property="Background" Value="#F3F3F3" /></Style><Style Selector="DataGridRow:pointerover"><Setter Property="Background" Value="#EAF2F8" /></Style><Style Selector="DataGridRow:selected"><Setter Property="Background" Value="#3394D6" /><Setter Property="TextBlock.Foreground" Value="#111111" /></Style></dg:DataGrid.Styles>
+                <dg:DataGrid.Columns><dg:DataGridTextColumn Width="2.5*" Binding="{Binding Name}" /><dg:DataGridTextColumn Width="2*" Binding="{Binding AddressLine1}" /><dg:DataGridTextColumn Width="*" Binding="{Binding PostalCode}" /><dg:DataGridTextColumn Width="1.2*" Binding="{Binding City}" /><dg:DataGridTextColumn Width="1.2*" Binding="{Binding State}" /><dg:DataGridTextColumn Width="*" Binding="{Binding Country}" /></dg:DataGrid.Columns>
+            </dg:DataGrid>
+        </Grid>
+        <Border Grid.Row="1" Padding="8,4" Background="#F2F2F2" BorderBrush="LightGray" BorderThickness="1,1,1,0"><TextBlock x:Name="StatusText" Foreground="#666666" /></Border>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" Spacing="8"><Button Width="90" IsDefault="True" Click="Ok_Click" Content="OK" /><Button Width="90" IsCancel="True" Click="Cancel_Click" Content="Cancel" /></StackPanel>
     </Grid>
 </Window>
