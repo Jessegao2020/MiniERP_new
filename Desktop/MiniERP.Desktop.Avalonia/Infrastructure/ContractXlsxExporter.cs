@@ -55,24 +55,16 @@ public static class ContractXlsxExporter
 
             var row = itemsResult.EndRow + 1;
             if (page.IsLast)
-            {
                 row = BuildClosingSections(sheet, contract, row, pageAmountReferences);
-            }
             else
-            {
                 row = BuildContinuationNotice(sheet, row);
-            }
 
             row = BuildFooter(sheet, row, pageNumber, pages.Count);
 
-            // Each worksheet is one physical A4 page. This prevents the spreadsheet
-            // application from compressing a two-page contract into one tiny page.
             sheet.PageSetup.PageOrientation = XLPageOrientation.Portrait;
             sheet.PageSetup.PaperSize = XLPaperSize.A4Paper;
             sheet.PageSetup.FitToPages(1, 1);
 
-            // Apply only the font family globally after layout. Font sizes are set
-            // section-by-section and must not be overwritten here.
             var used = sheet.RangeUsed();
             if (used is not null)
                 used.Style.Font.FontName = "DejaVu Sans";
@@ -83,8 +75,6 @@ public static class ContractXlsxExporter
 
     private static void ConfigurePage(IXLWorksheet sheet)
     {
-        // A=Item, B:D=Product, E=Unit Price, F=Qty, G=Unit, H=Amount.
-        // The proportions mirror the PDF's 478 pt printable-width layout.
         sheet.Column(1).Width = 6;
         sheet.Column(2).Width = 12;
         sheet.Column(3).Width = 16;
@@ -102,7 +92,7 @@ public static class ContractXlsxExporter
         var title = sheet.Range("A4:H4").Merge();
         title.Value = "Sales Contract";
         title.Style.Font.Bold = true;
-        title.Style.Font.FontSize = 22;
+        title.Style.Font.FontSize = 24;
         title.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
         title.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         sheet.Row(4).Height = 30;
@@ -121,13 +111,14 @@ public static class ContractXlsxExporter
         sheet.Range("E7:H7").Merge().Value = contract.CustomerNameSnapshot ?? string.Empty;
         sheet.Range("E8:H8").Merge().Value = contract.CustomerContactSnapshot ?? string.Empty;
 
-        var buyerAddress = SplitLines(contract.CustomerAddressSnapshot).Take(4).ToList();
+        var printableAddress = CountryRegionNames.ExpandAddressCountry(contract.CustomerAddressSnapshot);
+        var buyerAddress = SplitLines(printableAddress).Take(4).ToList();
         for (var index = 0; index < 4; index++)
             sheet.Range(9 + index, 5, 9 + index, 8).Merge().Value =
                 index < buyerAddress.Count ? buyerAddress[index] : string.Empty;
 
         var parties = sheet.Range("A7:H12");
-        parties.Style.Font.FontSize = 8;
+        parties.Style.Font.FontSize = 8.4;
         parties.Style.Alignment.WrapText = true;
         parties.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
         for (var row = 7; row <= 12; row++)
@@ -146,7 +137,7 @@ public static class ContractXlsxExporter
             "Email", contract.SalesContactEmailSnapshot ?? string.Empty);
 
         var metadata = sheet.Range("A14:H18");
-        metadata.Style.Font.FontSize = 8;
+        metadata.Style.Font.FontSize = 8.3;
         metadata.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         metadata.Style.Alignment.WrapText = true;
         sheet.Range("A14:B18").Style.Font.Bold = true;
@@ -174,12 +165,10 @@ public static class ContractXlsxExporter
 
     private static void BuildBrandHeader(IXLWorksheet sheet, bool compact)
     {
-        var logo = sheet.Range("A1:C2").Merge();
-        logo.Value = "◀◀◀◀ FORLINX";
-        logo.Style.Font.Bold = true;
-        logo.Style.Font.FontSize = compact ? 14 : 17;
-        logo.Style.Font.FontColor = XLColor.Blue;
-        logo.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+        // The official raster logo is inserted by ContractXlsxPdfScaleExporter
+        // after final column-width normalization. Keep this merged range empty so
+        // the image is not competing with a text approximation.
+        sheet.Range("A1:C2").Merge().Clear(XLClearOptions.Contents);
 
         var company = sheet.Range("D1:H1").Merge();
         company.Value = "Baoding Forlinx Embedded Technology Co., Ltd";
@@ -191,7 +180,7 @@ public static class ContractXlsxExporter
         var tagline = sheet.Range("D2:H2").Merge();
         tagline.Value = "Trusted Designer & Manufacturer of System on Module";
         tagline.Style.Font.Italic = true;
-        tagline.Style.Font.FontSize = 7;
+        tagline.Style.Font.FontSize = 7.1;
         tagline.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
         tagline.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
 
@@ -226,7 +215,7 @@ public static class ContractXlsxExporter
 
         var header = sheet.Range(row, 1, row, 8);
         header.Style.Font.Bold = true;
-        header.Style.Font.FontSize = 8.5;
+        header.Style.Font.FontSize = 9;
         header.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         header.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
         sheet.Cell(row, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
@@ -271,11 +260,11 @@ public static class ContractXlsxExporter
             sheet.Cell(mainRow, 8).FormulaA1 = $"=ROUND(E{mainRow}*F{mainRow},2)";
 
             var body = sheet.Range(mainRow, 1, detailRow, 8);
-            body.Style.Font.FontSize = 8.2;
+            body.Style.Font.FontSize = 8.5;
             body.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
             sheet.Range(mainRow, 2, mainRow, 4).Style.Font.Bold = true;
-            sheet.Range(mainRow, 2, mainRow, 4).Style.Font.FontSize = 8.8;
-            sheet.Range(detailRow, 2, detailRow, 4).Style.Font.FontSize = 7.1;
+            sheet.Range(mainRow, 2, mainRow, 4).Style.Font.FontSize = 9;
+            sheet.Range(detailRow, 2, detailRow, 4).Style.Font.FontSize = 7.2;
             sheet.Range(detailRow, 2, detailRow, 4).Style.Alignment.WrapText = true;
 
             sheet.Range(mainRow, 1, detailRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -322,12 +311,12 @@ public static class ContractXlsxExporter
         var totalRow = row;
         sheet.Range(totalRow, 5, totalRow, 7).Merge().Value = "Total";
         sheet.Range(totalRow, 5, totalRow, 7).Style.Font.Bold = true;
-        sheet.Range(totalRow, 5, totalRow, 7).Style.Font.FontSize = 8.5;
+        sheet.Range(totalRow, 5, totalRow, 7).Style.Font.FontSize = 9;
         sheet.Range(totalRow, 5, totalRow, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
         sheet.Cell(totalRow, 8).FormulaA1 = $"=SUM({string.Join(",", amountReferences)})";
         sheet.Cell(totalRow, 8).Style.NumberFormat.Format = "#,##0.00";
         sheet.Cell(totalRow, 8).Style.Font.Bold = true;
-        sheet.Cell(totalRow, 8).Style.Font.FontSize = 8.5;
+        sheet.Cell(totalRow, 8).Style.Font.FontSize = 9;
         sheet.Cell(totalRow, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
         sheet.Range(totalRow, 5, totalRow, 8).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
         sheet.Row(totalRow).Height = 20;
@@ -360,8 +349,6 @@ public static class ContractXlsxExporter
 
         row = PadToHeight(sheet, row, SignatureTopHeight);
 
-        // Match the PDF signature geometry: two separate blocks with a visible
-        // center gap instead of one continuous line across the whole page.
         sheet.Range(row, 1, row, 3).Merge().Value = "For Seller";
         sheet.Range(row, 5, row, 8).Merge().Value = "For Buyer";
         sheet.Range(row, 1, row, 8).Style.Font.Bold = true;
@@ -369,7 +356,6 @@ public static class ContractXlsxExporter
         sheet.Row(row).Height = 18;
         row++;
 
-        // Same 35 pt signature/stamp space as the PDF before the signature rule.
         sheet.Row(row).Height = 34;
         row++;
 
@@ -435,7 +421,7 @@ public static class ContractXlsxExporter
         }
 
         var footer = sheet.Range(footerStart, 1, footerStart + 3, 8);
-        footer.Style.Font.FontSize = 6.4;
+        footer.Style.Font.FontSize = 6.5;
         footer.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         sheet.Range(footerStart, 1, footerStart, 3).Style.Font.Bold = true;
         row = footerStart + 4;
@@ -446,9 +432,6 @@ public static class ContractXlsxExporter
         page.Style.Font.FontColor = XLColor.Gray;
         page.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
         page.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-        // WPS was placing this final 20 pt row on a second physical page. The text
-        // itself needs far less height; 12 pt keeps the page number visible while
-        // giving the first physical page enough room to contain the whole worksheet.
         sheet.Row(row).Height = 12;
         return row;
     }
@@ -503,11 +486,11 @@ public static class ContractXlsxExporter
         using var detail = new SKPaint
         {
             Typeface = DetailTypeface,
-            TextSize = 7.1f,
+            TextSize = 7.2f,
             IsAntialias = true
         };
         var lines = WrapText(item.Description, 220f, detail);
-        return Math.Max(43f, 28f + lines.Count * 10f);
+        return Math.Max(45f, 30f + lines.Count * 10f);
     }
 
     private static List<string> WrapText(string? value, float width, SKPaint paint)
