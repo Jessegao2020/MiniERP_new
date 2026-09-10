@@ -42,7 +42,7 @@ public sealed class QuotationWorkspaceView : UserControl
     {
         if (sender is not QuotationEditorView editor) return;
         editor.RequestClose -= Editor_RequestClose;
-        var id = _deleted ? null : editor.QuotationId > 0 ? editor.QuotationId : null;
+        int? id = _deleted ? null : editor.QuotationId > 0 ? editor.QuotationId : null;
         editor.StopTracking();
         _editorView = null;
         Content = _listView;
