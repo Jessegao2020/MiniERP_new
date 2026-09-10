@@ -43,7 +43,7 @@ public sealed class InvoiceWorkspaceView : UserControl
     {
         if (sender is not InvoiceEditorView editor) return;
         editor.RequestClose -= Editor_RequestClose;
-        var id = _deleted ? null : editor.InvoiceId > 0 ? editor.InvoiceId : null;
+        int? id = _deleted ? null : editor.InvoiceId > 0 ? editor.InvoiceId : null;
         editor.StopTracking();
         _editorView = null;
         Content = _listView;
