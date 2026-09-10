@@ -3,53 +3,27 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
-    Title="Select Contact"
-    Width="620"
-    Height="480"
-    MinWidth="480"
-    MinHeight="340"
-    WindowStartupLocation="CenterOwner">
-
+    Title="Select Contact" Width="620" Height="480" MinWidth="480" MinHeight="340" WindowStartupLocation="CenterOwner">
+    <Window.Styles>
+        <Style Selector="Border.grid-header"><Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#C9C9C9" /><Setter Property="BorderThickness" Value="0,0,1,1" /></Style>
+        <Style Selector="Border.grid-header:pointerover"><Setter Property="Background" Value="#F3F3F3" /></Style>
+        <Style Selector="TextBox.grid-filter"><Setter Property="Height" Value="22" /><Setter Property="Margin" Value="0" /><Setter Property="Padding" Value="5,0,4,0" /><Setter Property="CornerRadius" Value="0" /><Setter Property="Background" Value="#FFFEEF" /><Setter Property="BorderBrush" Value="#DDDCCB" /><Setter Property="BorderThickness" Value="0,0,1,1" /><Setter Property="FontSize" Value="11" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+    </Window.Styles>
     <Grid RowDefinitions="*,Auto,Auto">
-        <dg:DataGrid
-            x:Name="ContactGrid"
-            Grid.Row="0"
-            Margin="8"
-            AutoGenerateColumns="False"
-            CanUserResizeColumns="True"
-            CanUserSortColumns="True"
-            GridLinesVisibility="All"
-            IsReadOnly="True"
-            DoubleTapped="ContactGrid_DoubleTapped">
-
-            <dg:DataGrid.Columns>
-                <dg:DataGridTextColumn Width="1.1*" Binding="{Binding Title}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Title" />
-                            <TextBox MinWidth="90" Height="24" Tag="Title" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-
-                <dg:DataGridTextColumn Width="2.5*" Binding="{Binding Name}">
-                    <dg:DataGridTextColumn.Header>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Name" />
-                            <TextBox MinWidth="180" Height="24" Tag="Name" Watermark="Filter" TextChanged="Filter_TextChanged" />
-                        </StackPanel>
-                    </dg:DataGridTextColumn.Header>
-                </dg:DataGridTextColumn>
-            </dg:DataGrid.Columns>
-        </dg:DataGrid>
-
-        <Border Grid.Row="1" Padding="8,4" Background="#F2F2F2" BorderBrush="LightGray" BorderThickness="1,1,1,0">
-            <TextBlock x:Name="StatusText" Foreground="#666666" />
-        </Border>
-
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" Spacing="8">
-            <Button Width="90" IsDefault="True" Click="Ok_Click" Content="OK" />
-            <Button Width="90" IsCancel="True" Click="Cancel_Click" Content="Cancel" />
-        </StackPanel>
+        <Grid x:Name="ContactTableLayout" Grid.Row="0" Margin="8" RowDefinitions="24,22,*" SizeChanged="TableLayout_SizeChanged">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="1.1*" MinWidth="90" /><ColumnDefinition Width="2.5*" MinWidth="180" /></Grid.ColumnDefinitions>
+            <Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="#C9C9C9" BorderThickness="1,1,0,0" IsHitTestVisible="False" />
+            <Border Grid.Row="0" Grid.Column="0" Classes="grid-header" Tag="Title" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Title" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="TitleSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="0" Grid.Column="1" Classes="grid-header" Tag="Name" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Name" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="NameSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+            <Border Grid.Row="1" Grid.ColumnSpan="2" Background="#FFFEEF" BorderBrush="#DDDCCB" BorderThickness="1,0,0,0" IsHitTestVisible="False" />
+            <TextBox Grid.Row="1" Grid.Column="0" Classes="grid-filter" Tag="Title" TextChanged="Filter_TextChanged" /><TextBox Grid.Row="1" Grid.Column="1" Classes="grid-filter" Tag="Name" TextChanged="Filter_TextChanged" />
+            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
+            <dg:DataGrid x:Name="ContactGrid" Grid.Row="2" Grid.ColumnSpan="2" AutoGenerateColumns="False" Background="White" BorderBrush="#D4D4D4" BorderThickness="1,0,1,1" CanUserResizeColumns="False" CanUserSortColumns="False" FontSize="12" GridLinesVisibility="All" HeadersVisibility="None" HorizontalGridLinesBrush="#E4E4E4" VerticalGridLinesBrush="#E4E4E4" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" DoubleTapped="ContactGrid_DoubleTapped">
+                <dg:DataGrid.Styles><Style Selector="DataGridCell"><Setter Property="Padding" Value="5,2" /></Style><Style Selector="DataGridRow.alternate"><Setter Property="Background" Value="#F3F3F3" /></Style><Style Selector="DataGridRow:pointerover"><Setter Property="Background" Value="#EAF2F8" /></Style><Style Selector="DataGridRow:selected"><Setter Property="Background" Value="#3394D6" /><Setter Property="TextBlock.Foreground" Value="#111111" /></Style></dg:DataGrid.Styles>
+                <dg:DataGrid.Columns><dg:DataGridTextColumn Width="1.1*" Binding="{Binding Title}" /><dg:DataGridTextColumn Width="2.5*" Binding="{Binding Name}" /></dg:DataGrid.Columns>
+            </dg:DataGrid>
+        </Grid>
+        <Border Grid.Row="1" Padding="8,4" Background="#F2F2F2" BorderBrush="LightGray" BorderThickness="1,1,1,0"><TextBlock x:Name="StatusText" Foreground="#666666" /></Border>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" Spacing="8"><Button Width="90" IsDefault="True" Click="Ok_Click" Content="OK" /><Button Width="90" IsCancel="True" Click="Cancel_Click" Content="Cancel" /></StackPanel>
     </Grid>
 </Window>
