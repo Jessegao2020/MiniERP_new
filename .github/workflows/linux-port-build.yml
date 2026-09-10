@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - linux-port
-      - feature/selectline-grid
   pull_request:
     branches:
       - master
