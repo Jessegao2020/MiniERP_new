@@ -67,11 +67,14 @@ public sealed class ArticleEditorViewModel : INotifyPropertyChanged
         }
     }
 
-    public ArticleEditorViewModel(Article? source, AppSettingsService settings)
+    public ArticleEditorViewModel(Article? source, AppSettingsService settings, bool forceNew = false)
     {
         _settings = settings;
-        IsNew = source is null;
+        IsNew = source is null || forceNew;
         Article = source is null ? new Article() : Clone(source);
+        if (forceNew)
+            Article.Id = 0;
+
         PriceText = Article.Price?.ToString("0.############################", CultureInfo.InvariantCulture) ?? string.Empty;
         IsDirty = false;
     }
