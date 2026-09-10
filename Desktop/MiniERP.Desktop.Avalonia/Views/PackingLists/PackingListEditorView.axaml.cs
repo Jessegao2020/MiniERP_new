@@ -10,18 +10,46 @@ namespace MiniERP.Desktop.Views.PackingLists;
 
 public partial class PackingListEditorView : UserControl
 {
+    private readonly EditorDirtyMonitor _dirtyMonitor;
     private PackingListEditorViewModel ViewModel => (PackingListEditorViewModel)DataContext!;
 
     public event EventHandler? Saved;
     public event EventHandler? Deleted;
     public event EventHandler? RequestClose;
 
+    public int PackingListId => ViewModel.PackingList.Id;
+
     public PackingListEditorView(PackingList? packingList)
     {
         InitializeComponent();
         DataContext = new PackingListEditorViewModel(packingList);
-        AttachedToVisualTree += async (_, _) => await ViewModel.LoadLookupsAsync();
+
+        var saveButton = EditorWorkflowSupport.AddGridViewToggle(this, GridView_Click);
+        _dirtyMonitor = new EditorDirtyMonitor(saveButton, CaptureEditState);
+        AttachedToVisualTree += async (_, _) =>
+        {
+            await ViewModel.LoadLookupsAsync();
+            _dirtyMonitor.Start();
+        };
     }
+
+    public void StopTracking() => _dirtyMonitor.Dispose();
+
+    private string CaptureEditState()
+        => EditorWorkflowSupport.Snapshot(new
+        {
+            ViewModel.PackingList,
+            CustomerId = ViewModel.SelectedCustomer?.Id,
+            ContactId = ViewModel.SelectedCustomerContact?.Id,
+            UserId = ViewModel.SelectedUser?.Id,
+            ViewModel.PackingDate,
+            ViewModel.CustomerPoDate,
+            Items = ViewModel.Items.ToArray(),
+            Packages = ViewModel.Packages.ToArray()
+        });
+
+    private void GridView_Click(object? sender, RoutedEventArgs e)
+        => RequestClose?.Invoke(this, EventArgs.Empty);
 
     private void AddItem_Click(object? sender, RoutedEventArgs e) => ViewModel.AddSelectedArticle();
     private void RemoveItem_Click(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedItem();
@@ -174,8 +202,8 @@ public partial class PackingListEditorView : UserControl
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
-        RequestClose?.Invoke(this, EventArgs.Empty);
     }
 
     private void Discard_Click(object? sender, RoutedEventArgs e) => RequestClose?.Invoke(this, EventArgs.Empty);
