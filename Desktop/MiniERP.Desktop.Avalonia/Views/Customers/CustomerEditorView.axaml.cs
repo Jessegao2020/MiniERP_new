@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Customers;
 using MiniERP.Domain;
@@ -9,24 +10,45 @@ namespace MiniERP.Desktop.Views.Customers;
 
 public partial class CustomerEditorView : UserControl
 {
+    private readonly EditorDirtyMonitor _dirtyMonitor;
     private CustomerEditorViewModel ViewModel => (CustomerEditorViewModel)DataContext!;
 
     public event EventHandler? Saved;
     public event EventHandler? Deleted;
     public event EventHandler? RequestClose;
 
+    public int CustomerId => ViewModel.Customer.Id;
+
     public CustomerEditorView(Customer? customer)
     {
         InitializeComponent();
         DataContext = new CustomerEditorViewModel(customer);
         ShowAddress();
+
+        var saveButton = EditorWorkflowSupport.AddGridViewToggle(this, GridView_Click);
+        _dirtyMonitor = new EditorDirtyMonitor(saveButton, CaptureEditState);
+        AttachedToVisualTree += (_, _) =>
+            Dispatcher.UIThread.Post(_dirtyMonitor.Start, DispatcherPriority.Loaded);
     }
+
+    public void StopTracking() => _dirtyMonitor.Dispose();
+
+    private string CaptureEditState()
+        => EditorWorkflowSupport.Snapshot(new
+        {
+            ViewModel.Customer,
+            ViewModel.CountryCode,
+            Contacts = ViewModel.Contacts.ToArray()
+        });
+
+    private void GridView_Click(object? sender, RoutedEventArgs e)
+        => RequestClose?.Invoke(this, EventArgs.Empty);
 
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
-        RequestClose?.Invoke(this, EventArgs.Empty);
     }
 
     private void Discard_Click(object? sender, RoutedEventArgs e)
