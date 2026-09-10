@@ -23,7 +23,6 @@ public static class QuotationPdfExporter
     private static readonly SKTypeface Regular = FindTypeface(SKFontStyle.Normal);
     private static readonly SKTypeface Bold = FindTypeface(SKFontStyle.Bold);
     private static readonly SKTypeface Italic = FindTypeface(SKFontStyle.Italic);
-    private static readonly SKTypeface BoldItalic = FindTypeface(new SKFontStyle(SKFontStyleWeight.Bold, SKFontStyleWidth.Normal, SKFontStyleSlant.Italic));
 
     public static void Export(Quotation quotation, Stream output)
     {
@@ -148,9 +147,10 @@ public static class QuotationPdfExporter
             customerY += 13f;
         }
 
-        if (!string.IsNullOrWhiteSpace(quotation.CustomerAddressSnapshot))
+        var printableAddress = CountryRegionNames.ExpandAddressCountry(quotation.CustomerAddressSnapshot);
+        if (!string.IsNullOrWhiteSpace(printableAddress))
         {
-            foreach (var line in SplitLines(quotation.CustomerAddressSnapshot).Take(4))
+            foreach (var line in SplitLines(printableAddress).Take(4))
             {
                 canvas.DrawText(line, Left + 3f, customerY, customerText);
                 customerY += 13f;
@@ -187,8 +187,7 @@ public static class QuotationPdfExporter
 
     private static void DrawBrandHeader(SKCanvas canvas, float logoBaseline, float lineY)
     {
-        var blue = new SKColor(0, 108, 181);
-        DrawVectorLogo(canvas, Left, logoBaseline - 16f, blue);
+        DrawOfficialLogo(canvas, Left, logoBaseline - 26f);
 
         using var company = Paint(10.2f, Bold);
         using var tagline = Paint(7.1f, Italic);
@@ -199,24 +198,19 @@ public static class QuotationPdfExporter
         canvas.DrawLine(Left, lineY, Right, lineY, rule);
     }
 
-    private static void DrawVectorLogo(SKCanvas canvas, float x, float y, SKColor blue)
+    private static void DrawOfficialLogo(SKCanvas canvas, float x, float y)
     {
-        using var fill = new SKPaint { IsAntialias = true, Color = blue, Style = SKPaintStyle.Fill };
-        for (var i = 0; i < 4; i++)
+        using var bitmap = SKBitmap.Decode(DocumentBrandAssets.ForlinxLogoPng)
+            ?? throw new InvalidOperationException("The official Forlinx logo asset could not be decoded.");
+        using var paint = new SKPaint
         {
-            var offset = i * 9f;
-            using var path = new SKPath();
-            path.MoveTo(x + offset, y + 9f);
-            path.LineTo(x + offset + 6f, y + 1f);
-            path.LineTo(x + offset + 6f, y + 17f);
-            path.Close();
-            canvas.DrawPath(path, fill);
-        }
+            IsAntialias = true,
+            FilterQuality = SKFilterQuality.High
+        };
 
-        using var word = Paint(17f, BoldItalic, blue);
-        canvas.DrawText("FORLINX", x + 41f, y + 14f, word);
-        using var embedded = Paint(5.8f, Bold);
-        canvas.DrawText("Embedded", x + 103f, y + 22f, embedded);
+        const float width = 132f;
+        var height = width * bitmap.Height / bitmap.Width;
+        canvas.DrawBitmap(bitmap, SKRect.Create(x, y, width, height), paint);
     }
 
     private static float DrawTableHeader(SKCanvas canvas, string currency, float y)
