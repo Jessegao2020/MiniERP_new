@@ -33,6 +33,22 @@ public partial class CustomerListView : UserControl
         ApplySort();
     }
 
+    public async Task ReloadAndSelectAsync(int? customerId)
+    {
+        await ReloadAsync();
+        if (customerId is null || customerId <= 0) return;
+
+        var selected = ViewModel.Customers.FirstOrDefault(row => row.Id == customerId.Value);
+        if (selected is null) return;
+
+        ViewModel.SelectedCustomer = selected;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (CustomerGrid.Columns.Count > 0)
+                CustomerGrid.ScrollIntoView(selected, CustomerGrid.Columns[0]);
+        }, DispatcherPriority.Loaded);
+    }
+
     private void New_Click(object? sender, RoutedEventArgs e)
         => OpenCustomerRequested?.Invoke(null);
 
