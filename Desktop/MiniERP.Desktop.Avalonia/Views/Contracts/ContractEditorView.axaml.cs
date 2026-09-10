@@ -11,6 +11,7 @@ namespace MiniERP.Desktop.Views.Contracts;
 
 public partial class ContractEditorView : UserControl
 {
+    private readonly EditorDirtyMonitor _dirtyMonitor;
     private ContractEditorViewModel ViewModel => (ContractEditorViewModel)DataContext!;
 
     public event EventHandler? Saved;
@@ -19,15 +20,42 @@ public partial class ContractEditorView : UserControl
     public event Action<Contract, InvoiceType>? CreateInvoiceRequested;
     public event Action<Contract>? CreatePackingListRequested;
 
+    public int ContractId => ViewModel.Contract.Id;
+
     public ContractEditorView(Contract? contract)
     {
         InitializeComponent();
         var settings = App.Services.GetRequiredService<AppSettingsService>();
         DataContext = new ContractEditorViewModel(contract, settings);
-        AttachedToVisualTree += async (_, _) => await ViewModel.LoadLookupsAsync();
+
+        var saveButton = EditorWorkflowSupport.AddGridViewToggle(this, GridView_Click);
+        _dirtyMonitor = new EditorDirtyMonitor(saveButton, CaptureEditState);
+        AttachedToVisualTree += async (_, _) =>
+        {
+            await ViewModel.LoadLookupsAsync();
+            _dirtyMonitor.Start();
+        };
     }
 
+    public void StopTracking() => _dirtyMonitor.Dispose();
     public void RefreshExchangeRate() => ViewModel.RefreshExchangeRateFromSettings();
+
+    private string CaptureEditState()
+        => EditorWorkflowSupport.Snapshot(new
+        {
+            ViewModel.Contract,
+            CustomerId = ViewModel.SelectedCustomer?.Id,
+            ContactId = ViewModel.SelectedCustomerContact?.Id,
+            UserId = ViewModel.SelectedUser?.Id,
+            ViewModel.ContractDate,
+            ViewModel.CustomerPoDate,
+            ViewModel.Currency,
+            ViewModel.ExchangeRateSnapshot,
+            Items = ViewModel.Items.ToArray()
+        });
+
+    private void GridView_Click(object? sender, RoutedEventArgs e)
+        => RequestClose?.Invoke(this, EventArgs.Empty);
 
     private void AddItem_Click(object? sender, RoutedEventArgs e) => ViewModel.AddSelectedArticle();
     private void RemoveItem_Click(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedItem();
@@ -161,6 +189,7 @@ public partial class ContractEditorView : UserControl
     private async void CreateProforma_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
         CreateInvoiceRequested?.Invoke(ViewModel.Contract, InvoiceType.Proforma);
     }
@@ -168,6 +197,7 @@ public partial class ContractEditorView : UserControl
     private async void CreateInvoice_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
         CreateInvoiceRequested?.Invoke(ViewModel.Contract, InvoiceType.Commercial);
     }
@@ -175,6 +205,7 @@ public partial class ContractEditorView : UserControl
     private async void CreatePackingList_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
         CreatePackingListRequested?.Invoke(ViewModel.Contract);
     }
@@ -182,8 +213,8 @@ public partial class ContractEditorView : UserControl
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
-        RequestClose?.Invoke(this, EventArgs.Empty);
     }
 
     private void Discard_Click(object? sender, RoutedEventArgs e) => RequestClose?.Invoke(this, EventArgs.Empty);
