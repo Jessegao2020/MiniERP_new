@@ -33,6 +33,20 @@ public partial class ContractListView : UserControl
         ApplySort();
     }
 
+    public async Task ReloadAndSelectAsync(int? contractId)
+    {
+        await ReloadAsync();
+        if (contractId is null || contractId <= 0) return;
+        var selected = ViewModel.Contracts.FirstOrDefault(row => row.Id == contractId.Value);
+        if (selected is null) return;
+        ViewModel.SelectedContract = selected;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (ContractGrid.Columns.Count > 0)
+                ContractGrid.ScrollIntoView(selected, ContractGrid.Columns[0]);
+        }, DispatcherPriority.Loaded);
+    }
+
     private void New_Click(object? sender, RoutedEventArgs e) => OpenContractRequested?.Invoke(null);
 
     private async void Delete_Click(object? sender, RoutedEventArgs e)
