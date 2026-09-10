@@ -24,7 +24,6 @@ public sealed class CustomerWorkspaceView : UserControl
         _deleted = false;
 
         var editor = new CustomerEditorView(customer);
-        editor.Saved += (_, _) => { };
         editor.Deleted += (_, _) => _deleted = true;
         editor.RequestClose += Editor_RequestClose;
         _editorView = editor;
@@ -35,7 +34,7 @@ public sealed class CustomerWorkspaceView : UserControl
     {
         if (sender is not CustomerEditorView editor) return;
         editor.RequestClose -= Editor_RequestClose;
-        var id = _deleted ? null : editor.CustomerId > 0 ? editor.CustomerId : null;
+        int? id = _deleted ? null : editor.CustomerId > 0 ? editor.CustomerId : null;
         editor.StopTracking();
         _editorView = null;
         Content = _listView;
