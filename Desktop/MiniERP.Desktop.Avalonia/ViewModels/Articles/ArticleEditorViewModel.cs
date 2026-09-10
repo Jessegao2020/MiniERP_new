@@ -13,9 +13,21 @@ public sealed class ArticleEditorViewModel : INotifyPropertyChanged
     private readonly AppSettingsService _settings;
     private string _status = string.Empty;
     private string _priceText = string.Empty;
+    private bool _isDirty;
 
     public Article Article { get; }
     public bool IsNew { get; private set; }
+
+    public bool IsDirty
+    {
+        get => _isDirty;
+        private set
+        {
+            if (_isDirty == value) return;
+            _isDirty = value;
+            OnPropertyChanged();
+        }
+    }
 
     public string PriceText
     {
@@ -61,7 +73,11 @@ public sealed class ArticleEditorViewModel : INotifyPropertyChanged
         IsNew = source is null;
         Article = source is null ? new Article() : Clone(source);
         PriceText = Article.Price?.ToString("0.############################", CultureInfo.InvariantCulture) ?? string.Empty;
+        IsDirty = false;
     }
+
+    public void MarkDirty() => IsDirty = true;
+    public void MarkClean() => IsDirty = false;
 
     public void RefreshExchangeRate()
         => OnPropertyChanged(nameof(UsdPriceText));
@@ -103,6 +119,7 @@ public sealed class ArticleEditorViewModel : INotifyPropertyChanged
                 await service.UpdateArticleAsync(Article);
             }
 
+            MarkClean();
             Status = "Saved.";
             return true;
         }
