@@ -27,7 +27,13 @@ public static class EditorWorkflowSupport
         if (owner.Content is not Grid root)
             throw new InvalidOperationException("Editor root must be a Grid.");
 
-        var toolbar = root.Children.OfType<StackPanel>().FirstOrDefault();
+        // Toolbars used to be StackPanel-only. Some responsive editors now use
+        // WrapPanel so their actions wrap instead of overflowing at narrow widths.
+        // Both derive from Panel, so locate the direct child panel that actually
+        // contains the editor action buttons rather than depending on one layout type.
+        var toolbar = root.Children
+            .OfType<Panel>()
+            .FirstOrDefault(panel => panel.Children.OfType<Button>().Any());
         if (toolbar is null)
             throw new InvalidOperationException("Editor toolbar was not found.");
 
