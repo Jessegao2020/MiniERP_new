@@ -34,6 +34,13 @@
         <Style Selector="DataGrid DataGridCell">
             <Setter Property="Padding" Value="5,2" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+            <!-- DataGridTextColumn content is not clipped by default. Long text can render across the cell edge and visually cover the vertical grid line. -->
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="DataGrid DataGridCell TextBlock">
+            <!-- Keep one-line ERP list cells inside their column and show explicitly when the value is truncated. -->
+            <Setter Property="TextWrapping" Value="NoWrap" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
         <Style Selector="DataGrid DataGridRow.alternate">
             <Setter Property="Background" Value="#F3F3F3" />
