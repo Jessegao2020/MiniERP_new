@@ -4,7 +4,38 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <UserControl.Styles>
+        <!-- Compact SelectLine-like section navigator. -->
+        <Style Selector="TabControl.document-sections TabItem">
+            <Setter Property="Width" Value="150" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TabControl.document-sections TabItem:pointerover">
+            <Setter Property="Background" Value="#F3F3F3" />
+        </Style>
+        <Style Selector="TabControl.document-sections TabItem:selected">
+            <Setter Property="Background" Value="#E7E7E7" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Border.section-surface">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D2D2D2" />
+            <Setter Property="BorderThickness" Value="1,0,0,0" />
+        </Style>
+        <Style Selector="TextBlock.field-label">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Document actions stay fixed at the top. -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0" Spacing="3">
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="✓" /><TextBlock Text="Save" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Discard_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↶" /><TextBlock Text="Discard" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
@@ -17,57 +48,92 @@
             <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreateContract_Click" Content="Create Contract" />
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1">
-            <StackPanel Margin="24,18" Spacing="18" MaxWidth="1200" HorizontalAlignment="Left">
-                <TextBlock FontSize="24" FontWeight="SemiBold" Text="Quotation" />
+        <!-- Fixed document identity header. These fields stay visible regardless of the selected section. -->
+        <Border Grid.Row="1" Margin="0,4,0,0" Padding="12,9" Background="#FAFAFA" BorderBrush="#D0D0D0" BorderThickness="0,1,0,1">
+            <Grid ColumnDefinitions="Auto,230,Auto,300,Auto,145,Auto,150,*" ColumnSpacing="8">
+                <TextBlock Grid.Column="0" Classes="field-label" Text="Quotation No." />
+                <TextBox Grid.Column="1" Text="{Binding Quotation.QuotationNumber, Mode=TwoWay}" />
 
-                <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
-                    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Quotation No." />
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Quotation.QuotationNumber, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="User" />
-                    <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
-
-                    <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Customer" />
-                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,34">
-                        <AutoCompleteBox x:Name="CustomerAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type customer name">
-                            <AutoCompleteBox.ItemTemplate><DataTemplate><Grid ColumnDefinitions="2*,*,Auto" ColumnSpacing="8" MinWidth="250"><TextBlock Grid.Column="0" Text="{Binding Name}" /><TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding City}" /><TextBlock Grid.Column="2" Opacity="0.6" Text="{Binding Country}" /></Grid></DataTemplate></AutoCompleteBox.ItemTemplate>
-                        </AutoCompleteBox>
-                        <Button Grid.Column="1" Padding="0" Click="PickCustomer_Click" Content="..." ToolTip.Tip="Open customer list" />
-                    </Grid>
-                    <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Quotation Date" />
-                    <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding QuotationDate, Mode=TwoWay}" />
-
-                    <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Customer Contact" />
-                    <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,34">
-                        <AutoCompleteBox x:Name="ContactAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name">
-                            <AutoCompleteBox.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal" Spacing="5"><TextBlock Opacity="0.6" Text="{Binding Title}" /><TextBlock Text="{Binding Name}" /></StackPanel></DataTemplate></AutoCompleteBox.ItemTemplate>
-                        </AutoCompleteBox>
-                        <Button Grid.Column="1" Padding="0" Click="PickContact_Click" Content="..." ToolTip.Tip="Open contact list" />
-                    </Grid>
-                    <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="Valid Until" />
-                    <DatePicker Grid.Row="2" Grid.Column="3" SelectedDate="{Binding ValidUntil, Mode=TwoWay}" />
-
-                    <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Delivery Term" />
-                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Quotation.DeliveryTerm, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" Text="Payment Term" />
-                    <TextBox Grid.Row="3" Grid.Column="3" Text="{Binding Quotation.PaymentTerm, Mode=TwoWay}" />
-
-                    <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="Lead Time" />
-                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Quotation.LeadTime, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" Text="Currency" />
-                    <ComboBox Grid.Row="4" Grid.Column="3" Width="120" HorizontalAlignment="Left" ItemsSource="{Binding Currencies}" SelectedItem="{Binding Currency, Mode=TwoWay}" />
-
-                    <TextBlock Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" Text="Rate Snapshot" />
-                    <TextBox Grid.Row="5" Grid.Column="1" IsReadOnly="True" Text="{Binding ExchangeRateDisplay}" />
+                <TextBlock Grid.Column="2" Classes="field-label" Margin="10,0,0,0" Text="Customer" />
+                <Grid Grid.Column="3" ColumnDefinitions="*,34">
+                    <AutoCompleteBox x:Name="CustomerAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type customer name">
+                        <AutoCompleteBox.ItemTemplate><DataTemplate><Grid ColumnDefinitions="2*,*,Auto" ColumnSpacing="8" MinWidth="250"><TextBlock Grid.Column="0" Text="{Binding Name}" /><TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding City}" /><TextBlock Grid.Column="2" Opacity="0.6" Text="{Binding Country}" /></Grid></DataTemplate></AutoCompleteBox.ItemTemplate>
+                    </AutoCompleteBox>
+                    <Button Grid.Column="1" Padding="0" Click="PickCustomer_Click" Content="..." ToolTip.Tip="Open customer list" />
                 </Grid>
 
-                <StackPanel Spacing="5"><TextBlock Text="Remarks" /><TextBox MinHeight="75" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Quotation.Remarks, Mode=TwoWay}" /></StackPanel>
+                <TextBlock Grid.Column="4" Classes="field-label" Margin="10,0,0,0" Text="Date" />
+                <DatePicker Grid.Column="5" SelectedDate="{Binding QuotationDate, Mode=TwoWay}" />
 
-                <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
-                    <Grid RowDefinitions="Auto,Auto,280,Auto" RowSpacing="8">
-                        <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Quotation Items" />
-                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto,Auto,Auto" ColumnSpacing="6">
-                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Article" />
+                <TextBlock Grid.Column="6" Classes="field-label" Margin="10,0,0,0" Text="User" />
+                <ComboBox Grid.Column="7" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+            </Grid>
+        </Border>
+
+        <!-- Sectioned document editor: compact fixed-width navigation on the left, work area on the right. -->
+        <TabControl Grid.Row="2" Classes="document-sections" TabStripPlacement="Left" SelectedIndex="3">
+            <TabItem Header="General">
+                <Border Classes="section-surface">
+                    <ScrollViewer>
+                        <StackPanel Margin="22,20" Spacing="14" MaxWidth="760" HorizontalAlignment="Left">
+                            <TextBlock FontSize="17" FontWeight="SemiBold" Text="General" />
+                            <Grid ColumnDefinitions="150,360" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Customer Contact" />
+                                <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,34">
+                                    <AutoCompleteBox x:Name="ContactAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name">
+                                        <AutoCompleteBox.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal" Spacing="5"><TextBlock Opacity="0.6" Text="{Binding Title}" /><TextBlock Text="{Binding Name}" /></StackPanel></DataTemplate></AutoCompleteBox.ItemTemplate>
+                                    </AutoCompleteBox>
+                                    <Button Grid.Column="1" Padding="0" Click="PickContact_Click" Content="..." ToolTip.Tip="Open contact list" />
+                                </Grid>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Valid Until" />
+                                <DatePicker Grid.Row="1" Grid.Column="1" Width="180" HorizontalAlignment="Left" SelectedDate="{Binding ValidUntil, Mode=TwoWay}" />
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Price / Terms">
+                <Border Classes="section-surface">
+                    <ScrollViewer>
+                        <StackPanel Margin="22,20" Spacing="14" MaxWidth="850" HorizontalAlignment="Left">
+                            <TextBlock FontSize="17" FontWeight="SemiBold" Text="Price / Terms" />
+                            <Grid ColumnDefinitions="150,320,150,320" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Delivery Term" />
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Quotation.DeliveryTerm, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Classes="field-label" Text="Payment Term" />
+                                <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding Quotation.PaymentTerm, Mode=TwoWay}" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Lead Time" />
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Quotation.LeadTime, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" Classes="field-label" Text="Currency" />
+                                <ComboBox Grid.Row="1" Grid.Column="3" Width="130" HorizontalAlignment="Left" ItemsSource="{Binding Currencies}" SelectedItem="{Binding Currency, Mode=TwoWay}" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="Rate Snapshot" />
+                                <TextBox Grid.Row="2" Grid.Column="1" IsReadOnly="True" Text="{Binding ExchangeRateDisplay}" />
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Text">
+                <Border Classes="section-surface">
+                    <Grid Margin="22,20" RowDefinitions="Auto,*" RowSpacing="10">
+                        <TextBlock Grid.Row="0" FontSize="17" FontWeight="SemiBold" Text="Remarks" />
+                        <TextBox Grid.Row="1" MinHeight="180" MaxWidth="950" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Quotation.Remarks, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Positions">
+                <Border Classes="section-surface">
+                    <Grid Margin="14,12" RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,380,Auto,Auto,Auto,Auto,*" ColumnSpacing="6">
+                            <TextBlock Grid.Column="0" Classes="field-label" Text="Article" />
                             <Grid Grid.Column="1" ColumnDefinitions="*,34">
                                 <AutoCompleteBox x:Name="ArticleAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type article name">
                                     <AutoCompleteBox.ItemTemplate><DataTemplate><Grid ColumnDefinitions="2*,Auto" ColumnSpacing="12" MinWidth="280"><TextBlock Grid.Column="0" Text="{Binding Name}" /><TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding Price, StringFormat='CNY {0:N2}'}" /></Grid></DataTemplate></AutoCompleteBox.ItemTemplate>
@@ -80,7 +146,7 @@
                             <Button Grid.Column="5" Width="34" Padding="0" Click="MoveItemDown_Click" Content="↓" ToolTip.Tip="Move selected item down" />
                         </Grid>
 
-                        <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" LoadingRow="SelectLineGrid_LoadingRow" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                        <dg:DataGrid Grid.Row="1" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" LoadingRow="SelectLineGrid_LoadingRow" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
                             <dg:DataGrid.Columns>
                                 <dg:DataGridTextColumn Width="1.7*" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
                                 <dg:DataGridTextColumn Width="2.6*" Header="Description EN" Binding="{Binding Description, Mode=TwoWay}" />
@@ -92,12 +158,27 @@
                             </dg:DataGrid.Columns>
                         </dg:DataGrid>
 
-                        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,4,0,0"><TextBlock Opacity="0.55" VerticalAlignment="Center" Text="PDF product detail uses the snapshotted Article.Description_EN beneath the bold product name." /><StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><TextBlock FontSize="16" FontWeight="SemiBold" Text="Total" /><TextBlock FontSize="16" FontWeight="Bold" Text="{Binding TotalText}" /></StackPanel></Grid>
+                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,2,0,0">
+                            <TextBlock Opacity="0.55" VerticalAlignment="Center" Text="PDF product detail uses the snapshotted Article.Description_EN beneath the bold product name." />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><TextBlock FontSize="15" FontWeight="SemiBold" Text="Total" /><TextBlock FontSize="15" FontWeight="Bold" Text="{Binding TotalText}" /></StackPanel>
+                        </Grid>
                     </Grid>
                 </Border>
-            </StackPanel>
-        </ScrollViewer>
+            </TabItem>
 
-        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1"><TextBlock Foreground="#CB004A" Text="{Binding Status}" /></Border>
+            <TabItem Header="Journal">
+                <Border Classes="section-surface"><StackPanel Margin="22,20" Spacing="8"><TextBlock FontSize="17" FontWeight="SemiBold" Text="Journal" /><TextBlock Opacity="0.6" Text="Document history and activity will appear here." /></StackPanel></Border>
+            </TabItem>
+
+            <TabItem Header="Extra Fields">
+                <Border Classes="section-surface"><StackPanel Margin="22,20" Spacing="8"><TextBlock FontSize="17" FontWeight="SemiBold" Text="Extra Fields" /><TextBlock Opacity="0.6" Text="Custom document fields can be added here later." /></StackPanel></Border>
+            </TabItem>
+
+            <TabItem Header="Archive">
+                <Border Classes="section-surface"><StackPanel Margin="22,20" Spacing="8"><TextBlock FontSize="17" FontWeight="SemiBold" Text="Archive" /><TextBlock Opacity="0.6" Text="Generated files and archived document versions can be shown here later." /></StackPanel></Border>
+            </TabItem>
+        </TabControl>
+
+        <Border Grid.Row="3" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1"><TextBlock Foreground="#CB004A" Text="{Binding Status}" /></Border>
     </Grid>
 </UserControl>
