@@ -48,9 +48,9 @@
             <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreateContract_Click" Content="Create Contract" />
         </StackPanel>
 
-        <!-- Fixed document identity header. These fields stay visible regardless of the selected section. -->
+        <!-- Fixed document identity header. -->
         <Border Grid.Row="1" Margin="0,4,0,0" Padding="12,9" Background="#FAFAFA" BorderBrush="#D0D0D0" BorderThickness="0,1,0,1">
-            <Grid ColumnDefinitions="Auto,230,Auto,300,Auto,145,Auto,150,*" ColumnSpacing="8">
+            <Grid ColumnDefinitions="Auto,230,Auto,300,Auto,118,Auto,150,*" ColumnSpacing="8">
                 <TextBlock Grid.Column="0" Classes="field-label" Text="Quotation No." />
                 <TextBox Grid.Column="1" Text="{Binding Quotation.QuotationNumber, Mode=TwoWay}" />
 
@@ -63,7 +63,7 @@
                 </Grid>
 
                 <TextBlock Grid.Column="4" Classes="field-label" Margin="10,0,0,0" Text="Date" />
-                <DatePicker Grid.Column="5" SelectedDate="{Binding QuotationDate, Mode=TwoWay}" />
+                <CalendarDatePicker Grid.Column="5" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding QuotationDate, Mode=TwoWay}" />
 
                 <TextBlock Grid.Column="6" Classes="field-label" Margin="10,0,0,0" Text="User" />
                 <ComboBox Grid.Column="7" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
@@ -72,7 +72,7 @@
             </Grid>
         </Border>
 
-        <!-- Sectioned document editor: compact fixed-width navigation on the left, work area on the right. -->
+        <!-- Sectioned document editor. -->
         <TabControl Grid.Row="2" Classes="document-sections" TabStripPlacement="Left" SelectedIndex="3">
             <TabItem Header="General">
                 <Border Classes="section-surface">
@@ -89,7 +89,7 @@
                                 </Grid>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Valid Until" />
-                                <DatePicker Grid.Row="1" Grid.Column="1" Width="180" HorizontalAlignment="Left" SelectedDate="{Binding ValidUntil, Mode=TwoWay}" />
+                                <CalendarDatePicker Grid.Row="1" Grid.Column="1" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding ValidUntil, Mode=TwoWay}" />
                             </Grid>
                         </StackPanel>
                     </ScrollViewer>
@@ -131,7 +131,8 @@
 
             <TabItem Header="Positions">
                 <Border Classes="section-surface">
-                    <Grid Margin="14,12" RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                    <Grid Margin="12,10" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="6">
+                        <!-- Add / remove commands are separate from the selected-position editor. -->
                         <Grid Grid.Row="0" ColumnDefinitions="Auto,380,Auto,Auto,Auto,Auto,*" ColumnSpacing="6">
                             <TextBlock Grid.Column="0" Classes="field-label" Text="Article" />
                             <Grid Grid.Column="1" ColumnDefinitions="*,34">
@@ -146,20 +147,62 @@
                             <Button Grid.Column="5" Width="34" Padding="0" Click="MoveItemDown_Click" Content="↓" ToolTip.Tip="Move selected item down" />
                         </Grid>
 
-                        <dg:DataGrid Grid.Row="1" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" LoadingRow="SelectLineGrid_LoadingRow" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                        <!-- SelectLine-style fixed editor: only the selected row is edited here. -->
+                        <Border Grid.Row="1" Padding="8,7" Background="#FAFAFA" BorderBrush="#CCCCCC" BorderThickness="1">
+                            <Grid RowDefinitions="Auto,64" RowSpacing="6">
+                                <Grid Grid.Row="0" ColumnDefinitions="90,Auto,260,Auto,64,Auto,68,Auto,90,Auto,72,Auto,90,*" ColumnSpacing="6">
+                                    <TextBlock Grid.Column="0" VerticalAlignment="Center" FontWeight="SemiBold" Text="Selected Position" />
+                                    <TextBlock Grid.Column="1" Classes="field-label" Text="Article" />
+                                    <TextBox Grid.Column="2" Text="{Binding SelectedItem.ArticleName, Mode=TwoWay}" />
+                                    <TextBlock Grid.Column="3" Classes="field-label" Text="Qty" />
+                                    <TextBox Grid.Column="4" Text="{Binding SelectedItem.QuantityText, Mode=TwoWay}" />
+                                    <TextBlock Grid.Column="5" Classes="field-label" Text="Unit" />
+                                    <TextBox Grid.Column="6" Text="{Binding SelectedItem.Unit, Mode=TwoWay}" />
+                                    <TextBlock Grid.Column="7" Classes="field-label" Text="Unit Price" />
+                                    <TextBox Grid.Column="8" Text="{Binding SelectedItem.UnitPriceText, Mode=TwoWay}" />
+                                    <TextBlock Grid.Column="9" Classes="field-label" Text="Disc. %" />
+                                    <TextBox Grid.Column="10" Text="{Binding SelectedItem.DiscountText, Mode=TwoWay}" />
+                                    <TextBlock Grid.Column="11" Classes="field-label" Text="Amount" />
+                                    <Border Grid.Column="12" Padding="6,0" Background="White" BorderBrush="#B8B8B8" BorderThickness="1">
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding SelectedItem.LineTotal, StringFormat='{}{0:N2}'}" />
+                                    </Border>
+                                </Grid>
+
+                                <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
+                                    <TextBlock Grid.Column="0" Classes="field-label" Text="Description EN" />
+                                    <TextBox Grid.Column="1" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Text="{Binding SelectedItem.Description, Mode=TwoWay}" />
+                                    <TextBlock Grid.Column="2" Classes="field-label" Margin="8,0,0,0" Text="Specification" />
+                                    <TextBox Grid.Column="3" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Text="{Binding SelectedItem.Specification, Mode=TwoWay}" />
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <!-- Compact read-only overview. Selection here drives the fixed editor above. -->
+                        <dg:DataGrid Grid.Row="2"
+                                     MinHeight="150"
+                                     AutoGenerateColumns="False"
+                                     CanUserResizeColumns="True"
+                                     CanUserSortColumns="False"
+                                     GridLinesVisibility="All"
+                                     IsReadOnly="True"
+                                     RowHeight="26"
+                                     LoadingRow="SelectLineGrid_LoadingRow"
+                                     ItemsSource="{Binding Items}"
+                                     SelectedIndex="0"
+                                     SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
                             <dg:DataGrid.Columns>
-                                <dg:DataGridTextColumn Width="1.7*" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
-                                <dg:DataGridTextColumn Width="2.6*" Header="Description EN" Binding="{Binding Description, Mode=TwoWay}" />
-                                <dg:DataGridTemplateColumn Width="80" Header="Qty"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding QuantityText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="70" Header="Unit"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding Unit, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="105" Header="Unit Price"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding UnitPriceText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="85" Header="Disc. %"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding DiscountText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTextColumn Width="115" Header="Amount" IsReadOnly="True" Binding="{Binding LineTotal, StringFormat='{}{0:N2}'}" />
+                                <dg:DataGridTextColumn Width="2*" Header="Article" Binding="{Binding ArticleName}" />
+                                <dg:DataGridTextColumn Width="3*" Header="Description EN" Binding="{Binding Description}" />
+                                <dg:DataGridTextColumn Width="70" Header="Qty" Binding="{Binding QuantityText}" />
+                                <dg:DataGridTextColumn Width="70" Header="Unit" Binding="{Binding Unit}" />
+                                <dg:DataGridTextColumn Width="95" Header="Unit Price" Binding="{Binding UnitPriceText}" />
+                                <dg:DataGridTextColumn Width="75" Header="Disc. %" Binding="{Binding DiscountText}" />
+                                <dg:DataGridTextColumn Width="105" Header="Amount" Binding="{Binding LineTotal, StringFormat='{}{0:N2}'}" />
                             </dg:DataGrid.Columns>
                         </dg:DataGrid>
 
-                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,2,0,0">
-                            <TextBlock Opacity="0.55" VerticalAlignment="Center" Text="PDF product detail uses the snapshotted Article.Description_EN beneath the bold product name." />
+                        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,2,0,0">
+                            <TextBlock Opacity="0.55" VerticalAlignment="Center" Text="Select a row in the overview to edit that position above." />
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><TextBlock FontSize="15" FontWeight="SemiBold" Text="Total" /><TextBlock FontSize="15" FontWeight="Bold" Text="{Binding TotalText}" /></StackPanel>
                         </Grid>
                     </Grid>
