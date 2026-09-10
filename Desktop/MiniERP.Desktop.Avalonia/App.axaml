@@ -6,5 +6,46 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+
+        <!-- Reusable SelectLine-style DataGrid skin for grids that do not need a separate filter row. -->
+        <Style Selector="DataGrid.selectline-grid">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D4D4D4" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CanUserResizeColumns" Value="True" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="GridLinesVisibility" Value="All" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#E4E4E4" />
+            <Setter Property="VerticalGridLinesBrush" Value="#E4E4E4" />
+            <Setter Property="RowBackground" Value="White" />
+            <Setter Property="RowHeight" Value="24" />
+        </Style>
+        <Style Selector="DataGrid.selectline-grid DataGridColumnHeader">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#202020" />
+            <Setter Property="BorderBrush" Value="#C9C9C9" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="Padding" Value="5,0,4,0" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinHeight" Value="24" />
+            <Setter Property="Height" Value="24" />
+        </Style>
+        <Style Selector="DataGrid.selectline-grid DataGridColumnHeader:pointerover">
+            <Setter Property="Background" Value="#F3F3F3" />
+        </Style>
+        <Style Selector="DataGrid.selectline-grid DataGridCell">
+            <Setter Property="Padding" Value="5,2" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="DataGrid.selectline-grid DataGridRow.alternate">
+            <Setter Property="Background" Value="#F3F3F3" />
+        </Style>
+        <Style Selector="DataGrid.selectline-grid DataGridRow:pointerover">
+            <Setter Property="Background" Value="#EAF2F8" />
+        </Style>
+        <Style Selector="DataGrid.selectline-grid DataGridRow:selected">
+            <Setter Property="Background" Value="#3394D6" />
+            <Setter Property="TextBlock.Foreground" Value="#111111" />
+        </Style>
     </Application.Styles>
 </Application>
