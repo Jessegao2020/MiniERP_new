@@ -27,6 +27,25 @@ public partial class ArticleListView : UserControl
 
     public Task ReloadAsync() => ViewModel.LoadAsync();
 
+    public async Task ReloadAndSelectAsync(int? articleId)
+    {
+        await ViewModel.LoadAsync();
+
+        if (articleId is null || articleId <= 0)
+            return;
+
+        var selected = ViewModel.Articles.FirstOrDefault(article => article.Id == articleId.Value);
+        if (selected is null)
+            return;
+
+        ViewModel.SelectedArticle = selected;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (ArticleGrid.Columns.Count > 0)
+                ArticleGrid.ScrollIntoView(selected, ArticleGrid.Columns[0]);
+        }, DispatcherPriority.Loaded);
+    }
+
     private void New_Click(object? sender, RoutedEventArgs e)
         => OpenArticleRequested?.Invoke(null);
 
