@@ -34,7 +34,7 @@ public sealed class PackingListWorkspaceView : UserControl
     {
         if (sender is not PackingListEditorView editor) return;
         editor.RequestClose -= Editor_RequestClose;
-        var id = _deleted ? null : editor.PackingListId > 0 ? editor.PackingListId : null;
+        int? id = _deleted ? null : editor.PackingListId > 0 ? editor.PackingListId : null;
         editor.StopTracking();
         _editorView = null;
         Content = _listView;
