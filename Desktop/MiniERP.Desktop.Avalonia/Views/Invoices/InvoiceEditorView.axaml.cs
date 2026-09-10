@@ -103,6 +103,9 @@ public partial class InvoiceEditorView : UserControl
         if (selected is not null) { ViewModel.SelectedArticle = selected; ViewModel.SetStatusMessage($"Article selected: {selected.Name}"); }
     }
 
+    private void SelectLineGrid_LoadingRow(object? sender, DataGridRowEventArgs e)
+        => SelectLineGridSupport.ApplyAlternateRow(e);
+
     private async void ExportPdf_Click(object? sender, RoutedEventArgs e)
     {
         if (!ViewModel.TryPrepareForExport()) return;
