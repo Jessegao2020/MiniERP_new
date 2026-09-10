@@ -50,7 +50,7 @@
                             <Button Grid.Column="4" Width="34" Padding="0" Click="MoveItemUp_Click" Content="↑" ToolTip.Tip="Move selected item up" />
                             <Button Grid.Column="5" Width="34" Padding="0" Click="MoveItemDown_Click" Content="↓" ToolTip.Tip="Move selected item down" />
                         </Grid>
-                        <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                        <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" LoadingRow="SelectLineGrid_LoadingRow" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
                             <dg:DataGrid.Columns>
                                 <dg:DataGridTextColumn Width="1.7*" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
                                 <dg:DataGridTextColumn Width="3*" Header="Description EN" Binding="{Binding Description, Mode=TwoWay}" />
@@ -71,7 +71,7 @@
                             <Button Width="34" Padding="0" Click="MovePackageUp_Click" Content="↑" ToolTip.Tip="Move selected package up" />
                             <Button Width="34" Padding="0" Click="MovePackageDown_Click" Content="↓" ToolTip.Tip="Move selected package down" />
                         </StackPanel>
-                        <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" ItemsSource="{Binding Packages}" SelectedItem="{Binding SelectedPackage, Mode=TwoWay}">
+                        <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" LoadingRow="SelectLineGrid_LoadingRow" ItemsSource="{Binding Packages}" SelectedItem="{Binding SelectedPackage, Mode=TwoWay}">
                             <dg:DataGrid.Columns>
                                 <dg:DataGridTextColumn Width="110" Header="Carton No./Range" Binding="{Binding CartonNumber, Mode=TwoWay}" />
                                 <dg:DataGridTemplateColumn Width="65" Header="Count"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding PackageCountText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
