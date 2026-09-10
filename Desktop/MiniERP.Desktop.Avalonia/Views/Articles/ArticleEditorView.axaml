@@ -11,7 +11,7 @@
 
             <Border Width="1" Margin="3,3" Background="#D0D0D0" />
 
-            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click">
+            <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click" IsEnabled="{Binding IsDirty}">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <TextBlock Text="✓" />
                     <TextBlock Text="Save" FontSize="10" VerticalAlignment="Center" />
@@ -50,28 +50,29 @@
                 <TextBlock Grid.Row="7" Grid.Column="0" Margin="5,5" HorizontalAlignment="Right" Text="Note" />
                 <TextBlock Grid.Row="8" Grid.Column="0" Margin="5,5" HorizontalAlignment="Right" Text="Category" />
 
-                <TextBox Grid.Row="1" Grid.Column="1" Margin="5,2" Text="{Binding Article.Name, Mode=TwoWay}" />
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="5,2" Text="{Binding Article.Name, Mode=TwoWay}" TextChanged="EditorField_TextChanged" />
                 <TextBox
                     x:Name="PriceTextBox"
                     Grid.Row="2"
                     Grid.Column="1"
                     Margin="5,2"
-                    Text="{Binding PriceText, Mode=TwoWay}" />
+                    Text="{Binding PriceText, Mode=TwoWay}"
+                    TextChanged="EditorField_TextChanged" />
                 <TextBox
                     Grid.Row="3"
                     Grid.Column="1"
                     Margin="5,2"
                     IsReadOnly="True"
                     Text="{Binding UsdPriceText}" />
-                <TextBox Grid.Row="4" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Specification, Mode=TwoWay}" />
-                <TextBox Grid.Row="5" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Description, Mode=TwoWay}" />
-                <TextBox Grid.Row="6" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Discount, Mode=TwoWay}" />
-                <TextBox Grid.Row="7" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Note, Mode=TwoWay}" />
-                <TextBox Grid.Row="8" Grid.Column="1" Margin="5,2" Text="{Binding Article.Category, Mode=TwoWay}" />
+                <TextBox Grid.Row="4" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Specification, Mode=TwoWay}" TextChanged="EditorField_TextChanged" />
+                <TextBox Grid.Row="5" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Description, Mode=TwoWay}" TextChanged="EditorField_TextChanged" />
+                <TextBox Grid.Row="6" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Discount, Mode=TwoWay}" TextChanged="EditorField_TextChanged" />
+                <TextBox Grid.Row="7" Grid.Column="1" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Note, Mode=TwoWay}" TextChanged="EditorField_TextChanged" />
+                <TextBox Grid.Row="8" Grid.Column="1" Margin="5,2" Text="{Binding Article.Category, Mode=TwoWay}" TextChanged="EditorField_TextChanged" />
 
-                <TextBox Grid.Row="1" Grid.Column="2" Margin="5,2" Text="{Binding Article.Name_EN, Mode=TwoWay}" />
-                <TextBox Grid.Row="4" Grid.Column="2" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Specs_EN, Mode=TwoWay}" />
-                <TextBox Grid.Row="5" Grid.Column="2" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Description_EN, Mode=TwoWay}" />
+                <TextBox Grid.Row="1" Grid.Column="2" Margin="5,2" Text="{Binding Article.Name_EN, Mode=TwoWay}" TextChanged="EditorField_TextChanged" />
+                <TextBox Grid.Row="4" Grid.Column="2" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Specs_EN, Mode=TwoWay}" TextChanged="EditorField_TextChanged" />
+                <TextBox Grid.Row="5" Grid.Column="2" Margin="5,2" MinHeight="80" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Article.Description_EN, Mode=TwoWay}" TextChanged="EditorField_TextChanged" />
             </Grid>
         </ScrollViewer>
 
