@@ -32,6 +32,20 @@ public partial class PackingListListView : UserControl
         ApplySort();
     }
 
+    public async Task ReloadAndSelectAsync(int? packingListId)
+    {
+        await ReloadAsync();
+        if (packingListId is null || packingListId <= 0) return;
+        var selected = ViewModel.PackingLists.FirstOrDefault(row => row.Id == packingListId.Value);
+        if (selected is null) return;
+        ViewModel.SelectedPackingList = selected;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (PackingListGrid.Columns.Count > 0)
+                PackingListGrid.ScrollIntoView(selected, PackingListGrid.Columns[0]);
+        }, DispatcherPriority.Loaded);
+    }
+
     private void New_Click(object? sender, RoutedEventArgs e) => OpenPackingListRequested?.Invoke(null);
 
     private async void Delete_Click(object? sender, RoutedEventArgs e)
