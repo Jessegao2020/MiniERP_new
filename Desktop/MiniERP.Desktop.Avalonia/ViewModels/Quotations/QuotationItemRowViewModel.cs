@@ -8,6 +8,7 @@ namespace MiniERP.Desktop.ViewModels.Quotations;
 
 public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
 {
+    private int _positionNumber;
     private string _articleName;
     private string? _description;
     private string? _specification;
@@ -20,6 +21,14 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
     public int? SourceArticleId { get; private set; }
     public string Currency { get; }
     public decimal ExchangeRateSnapshot { get; }
+
+    // UI-only sequence number. It is recalculated from the current collection order,
+    // so moving a position changes 1/2/3 rather than carrying the old number with the item.
+    public int PositionNumber
+    {
+        get => _positionNumber;
+        internal set => SetField(ref _positionNumber, value);
+    }
 
     public string ArticleName
     {
