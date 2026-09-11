@@ -20,9 +20,9 @@ public static class QuotationPdfExporter
     private const float UnitCenterX = 440f;
     private const float AmountRightX = 536f;
 
-    private static readonly SKTypeface Regular = FindTypeface(SKFontStyle.Normal);
-    private static readonly SKTypeface Bold = FindTypeface(SKFontStyle.Bold);
-    private static readonly SKTypeface Italic = FindTypeface(SKFontStyle.Italic);
+    private static readonly SKTypeface Regular = DocumentPdfStyle.Regular;
+    private static readonly SKTypeface Bold = DocumentPdfStyle.Bold;
+    private static readonly SKTypeface Italic = DocumentPdfStyle.Italic;
 
     public static void Export(Quotation quotation, Stream output)
     {
