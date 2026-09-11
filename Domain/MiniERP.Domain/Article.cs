@@ -1,4 +1,6 @@
-﻿namespace MiniERP.Domain
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiniERP.Domain
 {
     public class Article : AuditableEntity
     {
@@ -14,5 +16,11 @@
         public string? Category { get; set; }
         public string? Name_EN { get; set; }
         public string? Description_EN { get; set; }
+
+        [NotMapped]
+        public string QuotationName
+            => !string.IsNullOrWhiteSpace(Name_EN)
+                ? Name_EN.Trim()
+                : (Name?.Trim() ?? string.Empty);
     }
 }
