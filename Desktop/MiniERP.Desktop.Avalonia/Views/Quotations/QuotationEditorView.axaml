@@ -216,7 +216,14 @@
 
                                     <StackPanel Width="82" Margin="0,0,10,4" Spacing="3">
                                         <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Qty" />
-                                        <TextBox x:Name="PositionQtyTextBox" TextChanged="PositionEditor_TextChanged" />
+                                        <NumericUpDown x:Name="PositionQtyTextBox"
+                                                       Minimum="1"
+                                                       Increment="1"
+                                                       FormatString="0"
+                                                       ClipValueToMinMax="True"
+                                                       AllowSpin="True"
+                                                       ShowButtonSpinner="True"
+                                                       ValueChanged="PositionQty_ValueChanged" />
                                     </StackPanel>
                                     <StackPanel Width="100" Margin="0,0,10,4" Spacing="3">
                                         <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Unit" />
