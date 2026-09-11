@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
@@ -37,7 +38,7 @@ public partial class QuotationEditorView
             button.MinWidth = 18;
             button.Height = 15;
             button.MinHeight = 0;
-            button.Padding = new Avalonia.Thickness(0);
+            button.Padding = new Thickness(0);
             button.HorizontalContentAlignment = HorizontalAlignment.Center;
             button.VerticalContentAlignment = VerticalAlignment.Center;
 
