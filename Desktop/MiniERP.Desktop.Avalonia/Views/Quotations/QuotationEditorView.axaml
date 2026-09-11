@@ -178,16 +178,17 @@
 
             <TabItem Header="Positions">
                 <Border Classes="section-surface">
-                    <Grid Margin="12,10" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="6">
+                    <Grid Margin="12,10" RowDefinitions="Auto,Auto,*,Auto">
                         <!-- One SelectLine-style editor handles both new and existing positions. -->
                         <Border x:Name="PositionEditorPanel" Grid.Row="0" Padding="8,7" Background="#FAFAFA" BorderBrush="#CCCCCC" BorderThickness="1">
-                            <Grid RowDefinitions="Auto,Auto,128" RowSpacing="7">
+                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="7">
                                 <TextBlock Grid.Row="0" FontWeight="SemiBold" Text="Selected Position" />
 
+                                <!-- Field captions stay above their inputs so wrapping at narrow widths remains clean. -->
                                 <WrapPanel Grid.Row="1" Orientation="Horizontal">
-                                    <Grid Width="500" Margin="0,0,10,4" ColumnDefinitions="52,*" ColumnSpacing="6">
-                                        <TextBlock Grid.Column="0" Classes="field-label" Text="Article" />
-                                        <Border Grid.Column="1" Classes="lookup-field">
+                                    <StackPanel Width="500" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Article" />
+                                        <Border Classes="lookup-field">
                                             <Grid ColumnDefinitions="*,26">
                                                 <AutoCompleteBox x:Name="ArticleAutoComplete"
                                                                  Grid.Column="0"
@@ -211,39 +212,39 @@
                                                 <Button Grid.Column="1" Classes="lookup-button" Click="PickArticle_Click" Content="..." ToolTip.Tip="Open article list" />
                                             </Grid>
                                         </Border>
-                                    </Grid>
+                                    </StackPanel>
 
-                                    <Grid Width="110" Margin="0,0,10,4" ColumnDefinitions="30,*" ColumnSpacing="6">
-                                        <TextBlock Grid.Column="0" Classes="field-label" Text="Qty" />
-                                        <TextBox x:Name="PositionQtyTextBox" Grid.Column="1" TextChanged="PositionEditor_TextChanged" />
-                                    </Grid>
-                                    <Grid Width="130" Margin="0,0,10,4" ColumnDefinitions="34,*" ColumnSpacing="6">
-                                        <TextBlock Grid.Column="0" Classes="field-label" Text="Unit" />
-                                        <TextBox x:Name="PositionUnitTextBox" Grid.Column="1" TextChanged="PositionEditor_TextChanged" />
-                                    </Grid>
-                                    <Grid Width="175" Margin="0,0,10,4" ColumnDefinitions="64,*" ColumnSpacing="6">
-                                        <TextBlock Grid.Column="0" Classes="field-label" Text="Unit Price" />
-                                        <TextBox x:Name="PositionUnitPriceTextBox" Grid.Column="1" TextChanged="PositionEditor_TextChanged" />
-                                    </Grid>
-                                    <Grid Width="145" Margin="0,0,10,4" ColumnDefinitions="50,*" ColumnSpacing="6">
-                                        <TextBlock Grid.Column="0" Classes="field-label" Text="Disc. %" />
-                                        <TextBox x:Name="PositionDiscountTextBox" Grid.Column="1" TextChanged="PositionEditor_TextChanged" />
-                                    </Grid>
-                                    <Grid Width="155" Margin="0,0,10,4" ColumnDefinitions="52,*" ColumnSpacing="6">
-                                        <TextBlock Grid.Column="0" Classes="field-label" Text="Amount" />
-                                        <TextBox x:Name="PositionAmountText" Grid.Column="1" IsReadOnly="True" IsTabStop="False" />
-                                    </Grid>
+                                    <StackPanel Width="82" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Qty" />
+                                        <TextBox x:Name="PositionQtyTextBox" TextChanged="PositionEditor_TextChanged" />
+                                    </StackPanel>
+                                    <StackPanel Width="100" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Unit" />
+                                        <TextBox x:Name="PositionUnitTextBox" TextChanged="PositionEditor_TextChanged" />
+                                    </StackPanel>
+                                    <StackPanel Width="116" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Unit Price" />
+                                        <TextBox x:Name="PositionUnitPriceTextBox" TextChanged="PositionEditor_TextChanged" />
+                                    </StackPanel>
+                                    <StackPanel Width="100" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Disc. %" />
+                                        <TextBox x:Name="PositionDiscountTextBox" TextChanged="PositionEditor_TextChanged" />
+                                    </StackPanel>
+                                    <StackPanel Width="110" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Amount" />
+                                        <TextBox x:Name="PositionAmountText" IsReadOnly="True" IsTabStop="False" />
+                                    </StackPanel>
                                 </WrapPanel>
 
-                                <Grid Grid.Row="2" ColumnDefinitions="92,*" ColumnSpacing="6">
-                                    <TextBlock Grid.Column="0" Classes="field-label" VerticalAlignment="Top" Margin="0,5,0,0" Text="Description EN" />
-                                    <TextBox x:Name="PositionDescriptionTextBox" Grid.Column="1" MinHeight="128" AcceptsReturn="True" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" TextChanged="PositionEditor_TextChanged" />
-                                </Grid>
+                                <StackPanel Grid.Row="2" Spacing="3">
+                                    <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Description EN" />
+                                    <TextBox x:Name="PositionDescriptionTextBox" MinHeight="128" AcceptsReturn="True" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" TextChanged="PositionEditor_TextChanged" />
+                                </StackPanel>
                             </Grid>
                         </Border>
 
-                        <!-- SelectLine order: New, Save, move up, move down, delete. -->
-                        <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,2">
+                        <!-- SelectLine order: New, Save, move up, move down, delete, discard. -->
+                        <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,0">
                             <Button Classes="position-command" Click="NewPosition_Click" Content="New" />
                             <Button x:Name="PositionSaveButton" Classes="position-command" IsEnabled="False" Click="SavePositionEdit_Click" Content="Save" ToolTip.Tip="Apply this position to the overview" />
                             <Button Classes="position-command" Click="MoveItemUp_Click" ToolTip.Tip="Move selected item up">
@@ -253,11 +254,14 @@
                                 <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Text="↓" />
                             </Button>
                             <Button Classes="position-command" Click="DeletePosition_Click" Content="Delete" />
+                            <Button Classes="position-command" Click="DiscardPosition_Click" Content="Discard" ToolTip.Tip="Discard the current position edit and clear the editor" />
                         </WrapPanel>
 
+                        <!-- Explicit top margin is kept even when the window height is tight. -->
                         <dg:DataGrid x:Name="PositionsGrid"
                                      Grid.Row="2"
-                                     MinHeight="150"
+                                     Margin="0,6,0,0"
+                                     MinHeight="80"
                                      AutoGenerateColumns="False"
                                      CanUserResizeColumns="True"
                                      CanUserSortColumns="False"
@@ -280,7 +284,7 @@
                         </dg:DataGrid>
 
                         <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,2,0,0">
-                            <TextBlock Opacity="0.55" VerticalAlignment="Center" Text="New clears the editor. Double-click an existing row to edit it. Save adds a new position or updates the loaded one." />
+                            <TextBlock Opacity="0.55" VerticalAlignment="Center" Text="New starts a blank position. Double-click a row to edit it. Save applies changes; Discard clears the editor." />
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><TextBlock FontSize="15" FontWeight="SemiBold" Text="Total" /><TextBlock FontSize="15" FontWeight="Bold" Text="{Binding TotalText}" /></StackPanel>
                         </Grid>
                     </Grid>
