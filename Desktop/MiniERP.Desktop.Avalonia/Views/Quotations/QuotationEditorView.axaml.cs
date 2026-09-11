@@ -600,7 +600,7 @@ public partial class QuotationEditorView : UserControl
             Title = "Export Quotation PDF",
             SuggestedFileName = $"{SanitizeFileName(ViewModel.Quotation.QuotationNumber)}.pdf",
             DefaultExtension = "pdf",
-            FileTypeChoices = new[] { new FilePickerFileType("PDF document") { Patterns = new[] { "*.pdf" } }
+            FileTypeChoices = new[] { new FilePickerFileType("PDF document") { Patterns = new[] { "*.pdf" } } }
         });
         if (file is null) return;
         try
