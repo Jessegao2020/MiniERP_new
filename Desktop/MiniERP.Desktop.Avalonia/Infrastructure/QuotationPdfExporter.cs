@@ -138,12 +138,12 @@ public static class QuotationPdfExporter
         using var customerText = Paint(8.4f, Regular);
 
         var customerY = 178f;
-        canvas.DrawText(quotation.CustomerNameSnapshot ?? string.Empty, Left + 3f, customerY, customerName);
+        DocumentPdfStyle.DrawText(canvas, quotation.CustomerNameSnapshot ?? string.Empty, Left + 3f, customerY, customerName);
         customerY += 13f;
 
         if (!string.IsNullOrWhiteSpace(quotation.CustomerContactSnapshot))
         {
-            canvas.DrawText(quotation.CustomerContactSnapshot, Left + 3f, customerY, customerText);
+            DocumentPdfStyle.DrawText(canvas, quotation.CustomerContactSnapshot, Left + 3f, customerY, customerText);
             customerY += 13f;
         }
 
@@ -152,7 +152,7 @@ public static class QuotationPdfExporter
         {
             foreach (var line in SplitLines(printableAddress).Take(4))
             {
-                canvas.DrawText(line, Left + 3f, customerY, customerText);
+                DocumentPdfStyle.DrawText(canvas, line, Left + 3f, customerY, customerText);
                 customerY += 13f;
             }
         }
@@ -181,7 +181,7 @@ public static class QuotationPdfExporter
     {
         DrawBrandHeader(canvas, 55f, 88f);
         using var smallTitle = Paint(10f, Bold);
-        canvas.DrawText($"Quotation {quotation.QuotationNumber} — continued", Left, 108f, smallTitle);
+        DocumentPdfStyle.DrawText(canvas, $"Quotation {quotation.QuotationNumber} — continued", Left, 108f, smallTitle);
         return 116f;
     }
 
@@ -224,7 +224,7 @@ public static class QuotationPdfExporter
         CenterText(canvas, $"({currency})", 337f, y + 3f, currencyPaint);
         var baseline = y + 17f;
         CenterText(canvas, "Item", ItemCenterX, baseline, header);
-        canvas.DrawText("Product", ProductX, baseline, header);
+        DocumentPdfStyle.DrawText(canvas, "Product", ProductX, baseline, header);
         RightText(canvas, "Unit Price", UnitPriceRightX, baseline, header);
         RightText(canvas, "Quantity", QuantityRightX, baseline, header);
         CenterText(canvas, "Unit", UnitCenterX, baseline, header);
@@ -248,7 +248,7 @@ public static class QuotationPdfExporter
 
         var baseline = y + 12f;
         CenterText(canvas, itemNumber.ToString(), ItemCenterX, baseline, normal);
-        canvas.DrawText(item.ArticleName, ProductX, baseline, name);
+        DocumentPdfStyle.DrawText(canvas, item.ArticleName, ProductX, baseline, name);
 
         var netUnitPrice = decimal.Round(
             item.UnitPrice * (1m - item.DiscountPercent / 100m),
@@ -263,7 +263,7 @@ public static class QuotationPdfExporter
         var detailY = baseline + 14f;
         foreach (var line in WrapText(item.Description, ProductWidth, detail))
         {
-            canvas.DrawText(line, ProductX, detailY, detail);
+            DocumentPdfStyle.DrawText(canvas, line, ProductX, detailY, detail);
             detailY += 10f;
         }
     }
@@ -304,10 +304,10 @@ public static class QuotationPdfExporter
         // the printable bottom area is used instead of leaving a large blank band.
         const float y = 770f;
         const float lineStep = 10.5f;
-        canvas.DrawText("Baoding Forlinx Embedded Technology Co., Ltd", Left + 2f, y, company);
-        canvas.DrawText("2699 Xiangyang North Street", Left + 2f, y + lineStep, text);
-        canvas.DrawText("071000 Baoding", Left + 2f, y + lineStep * 2f, text);
-        canvas.DrawText("China", Left + 2f, y + lineStep * 3f, text);
+        DocumentPdfStyle.DrawText(canvas, "Baoding Forlinx Embedded Technology Co., Ltd", Left + 2f, y, company);
+        DocumentPdfStyle.DrawText(canvas, "2699 Xiangyang North Street", Left + 2f, y + lineStep, text);
+        DocumentPdfStyle.DrawText(canvas, "071000 Baoding", Left + 2f, y + lineStep * 2f, text);
+        DocumentPdfStyle.DrawText(canvas, "China", Left + 2f, y + lineStep * 3f, text);
 
         const float bankLabelX = 286f;
         const float bankValueX = 359f;
@@ -321,8 +321,8 @@ public static class QuotationPdfExporter
 
     private static void DrawMeta(SKCanvas canvas, string label, string value, float labelX, float valueX, float y, SKPaint labelPaint, SKPaint valuePaint)
     {
-        canvas.DrawText(label, labelX, y, labelPaint);
-        canvas.DrawText(value ?? string.Empty, valueX, y, valuePaint);
+        DocumentPdfStyle.DrawText(canvas, label, labelX, y, labelPaint);
+        DocumentPdfStyle.DrawText(canvas, value ?? string.Empty, valueX, y, valuePaint);
     }
 
     private static string FormatValidity(Quotation quotation)
@@ -360,7 +360,7 @@ public static class QuotationPdfExporter
             for (var i = 1; i < words.Length; i++)
             {
                 var candidate = current + " " + words[i];
-                if (paint.MeasureText(candidate) <= maxWidth)
+                if (DocumentPdfStyle.MeasureText(candidate, paint) <= maxWidth)
                 {
                     current = candidate;
                 }
@@ -377,38 +377,16 @@ public static class QuotationPdfExporter
     }
 
     private static SKPaint Paint(float size, SKTypeface typeface, SKColor? color = null)
-        => new()
-        {
-            IsAntialias = true,
-            TextSize = size,
-            Typeface = typeface,
-            Color = color ?? SKColors.Black
-        };
+        => DocumentPdfStyle.Paint(size, typeface, color);
 
     private static SKPaint Stroke(float width, SKColor color)
-        => new()
-        {
-            IsAntialias = true,
-            StrokeWidth = width,
-            Color = color,
-            Style = SKPaintStyle.Stroke
-        };
+        => DocumentPdfStyle.Stroke(width, color);
 
     private static void CenterText(SKCanvas canvas, string text, float centerX, float baseline, SKPaint paint)
-        => canvas.DrawText(text, centerX - paint.MeasureText(text) / 2f, baseline, paint);
+        => DocumentPdfStyle.CenterText(canvas, text, centerX, baseline, paint);
 
     private static void RightText(SKCanvas canvas, string text, float rightX, float baseline, SKPaint paint)
-        => canvas.DrawText(text, rightX - paint.MeasureText(text), baseline, paint);
-
-    private static SKTypeface FindTypeface(SKFontStyle style)
-    {
-        foreach (var family in new[] { "Arial", "Liberation Sans", "DejaVu Sans" })
-        {
-            var typeface = SKTypeface.FromFamilyName(family, style);
-            if (typeface is not null) return typeface;
-        }
-        return SKTypeface.Default;
-    }
+        => DocumentPdfStyle.RightText(canvas, text, rightX, baseline, paint);
 
     private sealed record PagePlan(bool IsFirstPage, int StartItemNumber, List<QuotationItem> Items, bool DrawTotal);
 }
