@@ -55,19 +55,11 @@ public partial class QuotationEditorView : UserControl
         DataContext = new QuotationEditorViewModel(quotation, settings);
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
-        // Keep the overview sequence as presentation state rather than persisted item data.
-        // It is recalculated after every reorder, so the visible rows always remain 1, 2, 3...
-        // instead of a moved item carrying its previous number with it.
-        PositionsGrid.Columns.Insert(0, new DataGridTextColumn
-        {
-            Header = "No.",
-            Width = new DataGridLength(42),
-            MinWidth = 38,
-            MaxWidth = 48,
-            CanUserResize = false,
-            CanUserSort = false,
-            Binding = new Binding(nameof(QuotationItemRowViewModel.PositionNumber))
-        });
+        // Use the DataGrid's narrow row-header area as the sequence-number column.
+        // Each header binds to PositionNumber, so reordering keeps the visible numbers
+        // attached to the current row positions rather than to the moved item.
+        PositionsGrid.HeadersVisibility = DataGridHeadersVisibility.All;
+        PositionsGrid.RowHeaderWidth = 42;
         RenumberPositions();
         ClearPositionEditor();
 
@@ -452,7 +444,7 @@ public partial class QuotationEditorView : UserControl
 
         RenumberPositions();
         ViewModel.SelectedItem = target;
-        LoadPositionEditor(target);
+        ClearPositionEditor();
         ViewModel.SetStatusMessage(isNewPosition
             ? $"Position '{target.ArticleName}' added to the overview. Save the document to persist it."
             : $"Position '{target.ArticleName}' updated in the overview. Save the document to persist it.");
@@ -578,7 +570,24 @@ public partial class QuotationEditorView : UserControl
     }
 
     private void SelectLineGrid_LoadingRow(object? sender, DataGridRowEventArgs e)
-        => SelectLineGridSupport.ApplyAlternateRow(e);
+    {
+        SelectLineGridSupport.ApplyAlternateRow(e);
+
+        if (!ReferenceEquals(sender, PositionsGrid) || e.Row.DataContext is not QuotationItemRowViewModel item)
+            return;
+
+        var numberText = new TextBlock
+        {
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            TextAlignment = Avalonia.Media.TextAlignment.Center
+        };
+        numberText.Bind(TextBlock.TextProperty, new Binding(nameof(QuotationItemRowViewModel.PositionNumber))
+        {
+            Source = item
+        });
+        e.Row.Header = numberText;
+    }
 
     private async void ExportPdf_Click(object? sender, RoutedEventArgs e)
     {
@@ -591,7 +600,7 @@ public partial class QuotationEditorView : UserControl
             Title = "Export Quotation PDF",
             SuggestedFileName = $"{SanitizeFileName(ViewModel.Quotation.QuotationNumber)}.pdf",
             DefaultExtension = "pdf",
-            FileTypeChoices = new[] { new FilePickerFileType("PDF document") { Patterns = new[] { "*.pdf" } } }
+            FileTypeChoices = new[] { new FilePickerFileType("PDF document") { Patterns = new[] { "*.pdf" } }
         });
         if (file is null) return;
         try
