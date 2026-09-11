@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -11,6 +12,7 @@ namespace MiniERP.Desktop.Views.Quotations;
 public partial class QuotationEditorView
 {
     private bool _articleEnglishDisplayHooked;
+    private bool _articleLookupConfigured;
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -19,11 +21,12 @@ public partial class QuotationEditorView
         // These tweaks depend on Fluent control templates having created their visual parts.
         // Keep a single OnAttachedToVisualTree override for this partial class and initialize
         // the compact quantity spinner, SelectLine-like navigation frame, and article lookup
-        // display behavior together.
+        // behavior together.
         Dispatcher.UIThread.Post(() =>
         {
             ApplyCompactQuantitySpinner();
             InstallSectionNavigationFrame();
+            ConfigureArticleLookup();
             HookArticleEnglishDisplay();
         });
     }
@@ -59,6 +62,33 @@ public partial class QuotationEditorView
         }
     }
 
+    private void ConfigureArticleLookup()
+    {
+        if (_articleLookupConfigured)
+            return;
+
+        _articleLookupConfigured = true;
+
+        // The text portion of the lookup must use the quotation-facing English name.
+        // The ItemTemplate still renders Article.Name, so the popup remains the familiar
+        // Chinese/internal product list used by the sales team.
+        ArticleAutoComplete.ValueMemberBinding = new Binding(nameof(Article.QuotationName));
+
+        // Do not sacrifice the convenient lookup behavior just because the visible selected
+        // value is English. Search both the internal/Chinese name and the English name.
+        ArticleAutoComplete.ItemFilter = (search, item) =>
+        {
+            if (item is not Article article)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(search))
+                return true;
+
+            return (article.Name?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (article.Name_EN?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
+        };
+    }
+
     private void HookArticleEnglishDisplay()
     {
         if (_articleEnglishDisplayHooked)
@@ -79,16 +109,16 @@ public partial class QuotationEditorView
 
     private void QueueEnglishArticleName(Article article)
     {
-        // The dropdown deliberately keeps Article.Name (the Chinese/internal name) so the
-        // sales team can identify products quickly. Once an item is chosen, replace only
-        // the editor's visible text with the quotation-facing English name. Posting this
-        // until after the selection event lets AutoCompleteBox finish its own text sync first.
+        // ApplySelectedArticleToEditor still fills the editor fields when selection changes.
+        // AutoCompleteBox then finishes its own text synchronization asynchronously. Post one
+        // final assignment using the SAME value exposed through ValueMemberBinding. Because
+        // those values now match, the control no longer clears SelectedItem/SelectedArticle.
         Dispatcher.UIThread.Post(() =>
         {
             if (!ReferenceEquals(ArticleAutoComplete.SelectedItem, article))
                 return;
 
-            var displayName = PreferredArticleName(article);
+            var displayName = article.QuotationName;
 
             _loadingPositionEditor = true;
             try
