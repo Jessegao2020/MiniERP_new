@@ -127,6 +127,53 @@ internal static class DocumentPdfStyle
 
     private static SKTypeface FindTypeface(SKFontStyle style)
     {
+        // A single Skia typeface does not automatically fall back per glyph when
+        // text is drawn into a PDF. Arial/Liberation/DejaVu therefore render CJK
+        // characters and symbols such as U+2103 (℃) as tofu boxes. Prefer a font
+        // family that actually contains the glyphs we need so Skia embeds them in
+        // the generated PDF instead of relying on the PDF viewer's local fonts.
+        foreach (var family in new[]
+                 {
+                     "Noto Sans CJK SC",
+                     "Noto Sans CJK",
+                     "Noto Sans SC",
+                     "Source Han Sans SC",
+                     "WenQuanYi Micro Hei",
+                     "WenQuanYi Zen Hei",
+                     "Microsoft YaHei",
+                     "SimSun",
+                     "Arial Unicode MS"
+                 })
+        {
+            var typeface = SKTypeface.FromFamilyName(family, style);
+            if (typeface is not null && SupportsPdfUnicode(typeface))
+                return typeface;
+
+            typeface?.Dispose();
+        }
+
+        // Let the operating system choose a Chinese-capable fallback if none of
+        // the common family names above exists. This works well on Linux through
+        // fontconfig and on Windows through the native font manager.
+        var fallback = SKFontManager.Default.MatchCharacter('中');
+        if (fallback is not null)
+        {
+            var styledFallback = SKTypeface.FromFamilyName(fallback.FamilyName, style);
+            if (styledFallback is not null && SupportsPdfUnicode(styledFallback))
+            {
+                fallback.Dispose();
+                return styledFallback;
+            }
+
+            styledFallback?.Dispose();
+            if (SupportsPdfUnicode(fallback))
+                return fallback;
+
+            fallback.Dispose();
+        }
+
+        // Last-resort Latin fallback. This keeps export functional on systems with
+        // no CJK font installed, although such a system still cannot render Chinese.
         foreach (var family in new[] { "Arial", "Liberation Sans", "DejaVu Sans" })
         {
             var typeface = SKTypeface.FromFamilyName(family, style);
@@ -136,4 +183,7 @@ internal static class DocumentPdfStyle
 
         return SKTypeface.Default;
     }
+
+    private static bool SupportsPdfUnicode(SKTypeface typeface)
+        => typeface.ContainsGlyphs("A中℃");
 }
