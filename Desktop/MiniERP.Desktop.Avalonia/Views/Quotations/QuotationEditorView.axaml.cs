@@ -179,18 +179,37 @@ public partial class QuotationEditorView : UserControl
         ViewModel.SetStatusMessage("Quotation item moved down. Save the document to persist the new order.");
     }
 
-    private void PositionsGrid_DoubleTapped(object? sender, TappedEventArgs e)
+    private async void PositionsGrid_DoubleTapped(object? sender, TappedEventArgs e)
     {
         var item = ViewModel.SelectedItem;
         if (item is null)
             return;
 
-        if (HasUnappliedPositionChanges() && !ReferenceEquals(_editingPosition, item))
+        if (HasUnappliedPositionChanges())
         {
-            if (_editingPosition is not null)
-                ViewModel.SelectedItem = _editingPosition;
-            ViewModel.SetStatusMessage("Save or discard the current position changes before opening another position.");
-            return;
+            // Double-clicking the position that is already being edited should not silently
+            // reload it and wipe the user's unsaved changes.
+            if (ReferenceEquals(_editingPosition, item))
+                return;
+
+            var previousSelection = _editingPosition;
+            var discard = await ConfirmationDialog.ShowAsync(
+                this,
+                "Discard Position Changes",
+                "The current position has unsaved changes. Ignore them and edit the selected position?",
+                "Yes",
+                "No");
+
+            if (!discard)
+            {
+                // The grid selects the newly double-clicked row before this handler runs.
+                // Restore the previous selection so the highlighted row still matches the editor.
+                ViewModel.SelectedItem = previousSelection;
+                return;
+            }
+
+            ClearPositionEditor();
+            ViewModel.SelectedItem = item;
         }
 
         LoadPositionEditor(item);
@@ -556,7 +575,7 @@ public partial class QuotationEditorView : UserControl
         if (TopLevel.GetTopLevel(this) is not Window owner) return;
         if (ViewModel.SelectedCustomer is null) { ViewModel.SetStatusMessage("Select a customer before choosing a contact."); return; }
         var picker = new ContactPickerWindow(ViewModel.CustomerContacts, ViewModel.SelectedCustomerContact?.Id);
-        var selected = await picker.ShowDialog<CustomerContact?>(owner);
+        var selected = await picker.ShowDialog<Customer?>(owner);
         if (selected is not null) { ViewModel.SelectedCustomerContact = selected; ViewModel.SetStatusMessage($"Contact selected: {selected.Name}"); }
     }
 
