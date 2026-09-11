@@ -575,7 +575,7 @@ public partial class QuotationEditorView : UserControl
         if (TopLevel.GetTopLevel(this) is not Window owner) return;
         if (ViewModel.SelectedCustomer is null) { ViewModel.SetStatusMessage("Select a customer before choosing a contact."); return; }
         var picker = new ContactPickerWindow(ViewModel.CustomerContacts, ViewModel.SelectedCustomerContact?.Id);
-        var selected = await picker.ShowDialog<Customer?>(owner);
+        var selected = await picker.ShowDialog<CustomerContact?>(owner);
         if (selected is not null) { ViewModel.SelectedCustomerContact = selected; ViewModel.SetStatusMessage($"Contact selected: {selected.Name}"); }
     }
 
