@@ -1,3 +1,4 @@
+using System.Text;
 using SkiaSharp;
 
 namespace MiniERP.Desktop.Infrastructure;
@@ -18,6 +19,13 @@ internal static class DocumentPdfStyle
     public static readonly SKTypeface Regular = FindTypeface(SKFontStyle.Normal);
     public static readonly SKTypeface Bold = FindTypeface(SKFontStyle.Bold);
     public static readonly SKTypeface Italic = FindTypeface(SKFontStyle.Italic);
+
+    // CJK fonts commonly omit a few Latin-Extended glyphs such as Turkish dotted
+    // and dotless I. Keep a Latin companion family and switch per glyph when the
+    // primary PDF typeface cannot render a character.
+    private static readonly SKTypeface LatinRegular = FindLatinTypeface(SKFontStyle.Normal);
+    private static readonly SKTypeface LatinBold = FindLatinTypeface(SKFontStyle.Bold);
+    private static readonly SKTypeface LatinItalic = FindLatinTypeface(SKFontStyle.Italic);
 
     public static void DrawBrandHeader(SKCanvas canvas, float logoBaseline, float lineY)
     {
@@ -47,10 +55,10 @@ internal static class DocumentPdfStyle
 
         const float y = 770f;
         const float lineStep = 10.5f;
-        canvas.DrawText("Baoding Forlinx Embedded Technology Co., Ltd", Left + 2f, y, company);
-        canvas.DrawText("2699 Xiangyang North Street", Left + 2f, y + lineStep, text);
-        canvas.DrawText("071000 Baoding", Left + 2f, y + lineStep * 2f, text);
-        canvas.DrawText("China", Left + 2f, y + lineStep * 3f, text);
+        DrawText(canvas, "Baoding Forlinx Embedded Technology Co., Ltd", Left + 2f, y, company);
+        DrawText(canvas, "2699 Xiangyang North Street", Left + 2f, y + lineStep, text);
+        DrawText(canvas, "071000 Baoding", Left + 2f, y + lineStep * 2f, text);
+        DrawText(canvas, "China", Left + 2f, y + lineStep * 3f, text);
 
         DrawMeta(canvas, "Bank Name:", "China Construction Bank", 286f, 359f, y, label, text);
         DrawMeta(canvas, "Bank Address:", "345 Longxing West Rd, Baoding, China", 286f, 359f, y + lineStep, label, text);
@@ -84,16 +92,47 @@ internal static class DocumentPdfStyle
             Style = SKPaintStyle.Stroke
         };
 
+    /// <summary>
+    /// Draw text with per-glyph fallback. Skia's PDF canvas does not automatically
+    /// fall back to another font when the selected typeface lacks a glyph.
+    /// </summary>
+    public static void DrawText(SKCanvas canvas, string? text, float x, float baseline, SKPaint paint)
+    {
+        var value = text ?? string.Empty;
+        if (value.Length == 0)
+            return;
+
+        var currentX = x;
+        foreach (var run in BuildFontRuns(value, paint))
+        {
+            using var runPaint = CopyPaint(paint, run.Typeface);
+            canvas.DrawText(run.Text, currentX, baseline, runPaint);
+            currentX += runPaint.MeasureText(run.Text);
+        }
+    }
+
+    public static float MeasureText(string? text, SKPaint paint)
+    {
+        var value = text ?? string.Empty;
+        var width = 0f;
+        foreach (var run in BuildFontRuns(value, paint))
+        {
+            using var runPaint = CopyPaint(paint, run.Typeface);
+            width += runPaint.MeasureText(run.Text);
+        }
+        return width;
+    }
+
     public static void RightText(SKCanvas canvas, string? text, float rightX, float baseline, SKPaint paint)
     {
         var value = text ?? string.Empty;
-        canvas.DrawText(value, rightX - paint.MeasureText(value), baseline, paint);
+        DrawText(canvas, value, rightX - MeasureText(value, paint), baseline, paint);
     }
 
     public static void CenterText(SKCanvas canvas, string? text, float centerX, float baseline, SKPaint paint)
     {
         var value = text ?? string.Empty;
-        canvas.DrawText(value, centerX - paint.MeasureText(value) / 2f, baseline, paint);
+        DrawText(canvas, value, centerX - MeasureText(value, paint) / 2f, baseline, paint);
     }
 
     private static void DrawOfficialLogo(SKCanvas canvas, float x, float y)
@@ -121,17 +160,14 @@ internal static class DocumentPdfStyle
         SKPaint labelPaint,
         SKPaint valuePaint)
     {
-        canvas.DrawText(label, labelX, y, labelPaint);
-        canvas.DrawText(value, valueX, y, valuePaint);
+        DrawText(canvas, label, labelX, y, labelPaint);
+        DrawText(canvas, value, valueX, y, valuePaint);
     }
 
     private static SKTypeface FindTypeface(SKFontStyle style)
     {
-        // A single Skia typeface does not automatically fall back per glyph when
-        // text is drawn into a PDF. Arial/Liberation/DejaVu therefore render CJK
-        // characters and symbols such as U+2103 (℃) as tofu boxes. Prefer a font
-        // family that actually contains the glyphs we need so Skia embeds them in
-        // the generated PDF instead of relying on the PDF viewer's local fonts.
+        // Pick a CJK-capable primary font. Latin-Extended characters which are not
+        // present in that font are handled by DrawText's per-glyph fallback.
         foreach (var family in new[]
                  {
                      "Noto Sans CJK SC",
@@ -146,44 +182,107 @@ internal static class DocumentPdfStyle
                  })
         {
             var typeface = SKTypeface.FromFamilyName(family, style);
-            if (typeface is not null && SupportsPdfUnicode(typeface))
+            if (typeface is not null && SupportsCjkPdf(typeface))
                 return typeface;
 
             typeface?.Dispose();
         }
 
-        // Let the operating system choose a Chinese-capable fallback if none of
-        // the common family names above exists. This works well on Linux through
-        // fontconfig and on Windows through the native font manager.
         var fallback = SKFontManager.Default.MatchCharacter('中');
         if (fallback is not null)
         {
             var styledFallback = SKTypeface.FromFamilyName(fallback.FamilyName, style);
-            if (styledFallback is not null && SupportsPdfUnicode(styledFallback))
+            if (styledFallback is not null && SupportsCjkPdf(styledFallback))
             {
                 fallback.Dispose();
                 return styledFallback;
             }
 
             styledFallback?.Dispose();
-            if (SupportsPdfUnicode(fallback))
+            if (SupportsCjkPdf(fallback))
                 return fallback;
 
             fallback.Dispose();
         }
 
-        // Last-resort Latin fallback. This keeps export functional on systems with
-        // no CJK font installed, although such a system still cannot render Chinese.
-        foreach (var family in new[] { "Arial", "Liberation Sans", "DejaVu Sans" })
+        return FindLatinTypeface(style);
+    }
+
+    private static SKTypeface FindLatinTypeface(SKFontStyle style)
+    {
+        foreach (var family in new[]
+                 {
+                     "Arial",
+                     "Liberation Sans",
+                     "DejaVu Sans",
+                     "Noto Sans",
+                     "FreeSans"
+                 })
         {
             var typeface = SKTypeface.FromFamilyName(family, style);
-            if (typeface is not null)
+            if (typeface is not null && SupportsLatinExtended(typeface))
                 return typeface;
+
+            typeface?.Dispose();
         }
 
         return SKTypeface.Default;
     }
 
-    private static bool SupportsPdfUnicode(SKTypeface typeface)
+    private static IEnumerable<FontRun> BuildFontRuns(string text, SKPaint paint)
+    {
+        var primary = paint.Typeface ?? Regular;
+        var latin = LatinTypefaceFor(paint);
+        var builder = new StringBuilder();
+        SKTypeface? currentTypeface = null;
+
+        foreach (var ch in text)
+        {
+            var typeface = primary.ContainsGlyphs(ch.ToString())
+                ? primary
+                : latin.ContainsGlyphs(ch.ToString())
+                    ? latin
+                    : primary;
+
+            if (currentTypeface is not null && !ReferenceEquals(typeface, currentTypeface))
+            {
+                yield return new FontRun(builder.ToString(), currentTypeface);
+                builder.Clear();
+            }
+
+            currentTypeface = typeface;
+            builder.Append(ch);
+        }
+
+        if (builder.Length > 0 && currentTypeface is not null)
+            yield return new FontRun(builder.ToString(), currentTypeface);
+    }
+
+    private static SKTypeface LatinTypefaceFor(SKPaint paint)
+    {
+        var style = paint.Typeface?.FontStyle ?? SKFontStyle.Normal;
+        if (style.Slant != SKFontStyleSlant.Upright)
+            return LatinItalic;
+        if (style.Weight >= 600)
+            return LatinBold;
+        return LatinRegular;
+    }
+
+    private static SKPaint CopyPaint(SKPaint source, SKTypeface typeface)
+        => new()
+        {
+            IsAntialias = source.IsAntialias,
+            TextSize = source.TextSize,
+            Typeface = typeface,
+            Color = source.Color,
+            Style = source.Style
+        };
+
+    private static bool SupportsCjkPdf(SKTypeface typeface)
         => typeface.ContainsGlyphs("A中℃");
+
+    private static bool SupportsLatinExtended(SKTypeface typeface)
+        => typeface.ContainsGlyphs("AÇçĞğİıÖöŞşÜü");
+
+    private sealed record FontRun(string Text, SKTypeface Typeface);
 }
