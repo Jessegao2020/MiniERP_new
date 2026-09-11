@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -45,17 +46,13 @@ public partial class QuotationEditorView : UserControl
             lookupButton.MinHeight = 0;
         }
 
-        // Keep the empty staged editor visually consistent with the rest of the ERP.
-        // There is no editing target until a position is double-clicked, but disabling
-        // the whole panel makes Fluent render every input with a heavy gray fill.
         PositionEditorPanel.IsEnabled = true;
-
-        // Amount is a read-only TextBox. Keep its minimum height aligned with the other
-        // position inputs even when it wraps onto a line by itself.
         PositionAmountText.MinHeight = 32;
 
         var settings = App.Services.GetRequiredService<AppSettingsService>();
         DataContext = new QuotationEditorViewModel(quotation, settings);
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        ClearPositionEditor();
 
         var saveButton = EditorWorkflowSupport.AddGridViewToggle(this, GridView_Click);
         _dirtyMonitor = new EditorDirtyMonitor(saveButton, CaptureEditState);
@@ -66,7 +63,12 @@ public partial class QuotationEditorView : UserControl
         };
     }
 
-    public void StopTracking() => _dirtyMonitor.Dispose();
+    public void StopTracking()
+    {
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        _dirtyMonitor.Dispose();
+    }
+
     public void RefreshExchangeRate() => ViewModel.RefreshExchangeRateFromSettings();
 
     private string CaptureEditState()
@@ -86,11 +88,27 @@ public partial class QuotationEditorView : UserControl
     private void GridView_Click(object? sender, RoutedEventArgs e)
         => RequestClose?.Invoke(this, EventArgs.Empty);
 
-    private void AddItem_Click(object? sender, RoutedEventArgs e)
-        => ViewModel.AddSelectedArticle();
-
-    private void RemoveItem_Click(object? sender, RoutedEventArgs e)
+    private void NewPosition_Click(object? sender, RoutedEventArgs e)
     {
+        if (PositionSaveButton.IsEnabled)
+        {
+            ViewModel.SetStatusMessage("Save the current position changes before starting a new position.");
+            return;
+        }
+
+        ViewModel.SelectedItem = null;
+        ClearPositionEditor();
+        ViewModel.SetStatusMessage("New position. Select an Article, adjust the details, then click Save.");
+    }
+
+    private void DeletePosition_Click(object? sender, RoutedEventArgs e)
+    {
+        if (PositionSaveButton.IsEnabled)
+        {
+            ViewModel.SetStatusMessage("Save the current position changes before deleting a position.");
+            return;
+        }
+
         var item = ViewModel.SelectedItem;
         ViewModel.RemoveSelectedItem();
         if (item is not null && ReferenceEquals(item, _editingPosition))
@@ -99,6 +117,12 @@ public partial class QuotationEditorView : UserControl
 
     private void MoveItemUp_Click(object? sender, RoutedEventArgs e)
     {
+        if (PositionSaveButton.IsEnabled)
+        {
+            ViewModel.SetStatusMessage("Save the current position changes before moving positions.");
+            return;
+        }
+
         var item = ViewModel.SelectedItem;
         if (item is null) { ViewModel.SetStatusMessage("Select a quotation item first."); return; }
         var index = ViewModel.Items.IndexOf(item);
@@ -112,6 +136,12 @@ public partial class QuotationEditorView : UserControl
 
     private void MoveItemDown_Click(object? sender, RoutedEventArgs e)
     {
+        if (PositionSaveButton.IsEnabled)
+        {
+            ViewModel.SetStatusMessage("Save the current position changes before moving positions.");
+            return;
+        }
+
         var item = ViewModel.SelectedItem;
         if (item is null) { ViewModel.SetStatusMessage("Select a quotation item first."); return; }
         var index = ViewModel.Items.IndexOf(item);
@@ -129,11 +159,10 @@ public partial class QuotationEditorView : UserControl
         if (item is null)
             return;
 
-        if (_editingPosition is not null &&
-            !ReferenceEquals(_editingPosition, item) &&
-            PositionSaveButton.IsEnabled)
+        if (PositionSaveButton.IsEnabled && !ReferenceEquals(_editingPosition, item))
         {
-            ViewModel.SelectedItem = _editingPosition;
+            if (_editingPosition is not null)
+                ViewModel.SelectedItem = _editingPosition;
             ViewModel.SetStatusMessage("Save the current position changes before opening another position.");
             return;
         }
@@ -142,13 +171,85 @@ public partial class QuotationEditorView : UserControl
         ViewModel.SetStatusMessage($"Editing position: {item.ArticleName}");
     }
 
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_loadingPositionEditor || e.PropertyName != nameof(QuotationEditorViewModel.SelectedArticle))
+            return;
+
+        if (ViewModel.SelectedArticle is not null)
+            ApplySelectedArticleToEditor(ViewModel.SelectedArticle);
+        else
+            UpdatePositionSaveState();
+    }
+
+    private void ApplySelectedArticleToEditor(Article article)
+    {
+        _loadingPositionEditor = true;
+        try
+        {
+            ArticleAutoComplete.Text = article.Name;
+            PositionQtyTextBox.Text = "1";
+            PositionUnitTextBox.Text = "PCS";
+            PositionDiscountTextBox.Text = "0";
+            PositionDescriptionTextBox.Text = article.Description_EN ?? string.Empty;
+
+            if (!TryGetArticleUnitPrice(article, out var unitPrice))
+            {
+                PositionUnitPriceTextBox.Text = string.Empty;
+                PositionAmountText.Text = string.Empty;
+                PositionSaveButton.IsEnabled = false;
+                return;
+            }
+
+            PositionUnitPriceTextBox.Text = unitPrice.ToString("0.####", CultureInfo.InvariantCulture);
+            UpdatePositionAmountPreview();
+        }
+        finally
+        {
+            _loadingPositionEditor = false;
+        }
+
+        UpdatePositionSaveState();
+        ViewModel.SetStatusMessage($"Article selected: {article.Name}. Adjust the position details and click Save.");
+    }
+
+    private bool TryGetArticleUnitPrice(Article article, out decimal unitPrice)
+    {
+        unitPrice = 0m;
+        if (article.Price is null)
+        {
+            ViewModel.SetStatusMessage($"Article '{article.Name}' does not have a CNY price.");
+            return false;
+        }
+
+        if (ViewModel.Currency == "USD")
+        {
+            if (ViewModel.ExchangeRateSnapshot <= 0)
+            {
+                ViewModel.SetStatusMessage("Set the USD exchange rate in Settings > System before adding USD items.");
+                return false;
+            }
+
+            unitPrice = decimal.Round(article.Price.Value / ViewModel.ExchangeRateSnapshot, 2, MidpointRounding.AwayFromZero);
+        }
+        else
+        {
+            unitPrice = article.Price.Value;
+        }
+
+        return true;
+    }
+
     private void LoadPositionEditor(QuotationItemRowViewModel item)
     {
         _loadingPositionEditor = true;
         try
         {
             _editingPosition = item;
-            PositionArticleTextBox.Text = item.ArticleName;
+            ViewModel.SelectedArticle = item.SourceArticleId is null
+                ? null
+                : ViewModel.Articles.FirstOrDefault(article => article.Id == item.SourceArticleId.Value);
+            ArticleAutoComplete.Text = ViewModel.SelectedArticle?.Name ?? item.ArticleName;
             PositionQtyTextBox.Text = item.QuantityText;
             PositionUnitTextBox.Text = item.Unit;
             PositionUnitPriceTextBox.Text = item.UnitPriceText;
@@ -170,16 +271,14 @@ public partial class QuotationEditorView : UserControl
         try
         {
             _editingPosition = null;
-            PositionArticleTextBox.Text = string.Empty;
+            ViewModel.SelectedArticle = null;
+            ArticleAutoComplete.Text = string.Empty;
             PositionQtyTextBox.Text = string.Empty;
             PositionUnitTextBox.Text = string.Empty;
             PositionUnitPriceTextBox.Text = string.Empty;
             PositionDiscountTextBox.Text = string.Empty;
             PositionDescriptionTextBox.Text = string.Empty;
             PositionAmountText.Text = string.Empty;
-
-            // Keep the empty editor enabled so it retains the normal white ERP input
-            // appearance. Without an editing target TextChanged is ignored below.
             PositionEditorPanel.IsEnabled = true;
             PositionSaveButton.IsEnabled = false;
         }
@@ -191,22 +290,44 @@ public partial class QuotationEditorView : UserControl
 
     private void PositionEditor_TextChanged(object? sender, TextChangedEventArgs e)
     {
-        if (_loadingPositionEditor || _editingPosition is null)
+        if (_loadingPositionEditor)
             return;
 
         UpdatePositionAmountPreview();
+        UpdatePositionSaveState();
+    }
+
+    private void UpdatePositionSaveState()
+    {
+        if (_loadingPositionEditor)
+            return;
+
+        if (_editingPosition is null)
+        {
+            PositionSaveButton.IsEnabled = ViewModel.SelectedArticle is not null
+                && !string.IsNullOrWhiteSpace(PositionQtyTextBox.Text)
+                && !string.IsNullOrWhiteSpace(PositionUnitTextBox.Text)
+                && !string.IsNullOrWhiteSpace(PositionUnitPriceTextBox.Text);
+            return;
+        }
+
         PositionSaveButton.IsEnabled = !PositionEditorMatchesCurrentItem();
     }
 
     private void SavePositionEdit_Click(object? sender, RoutedEventArgs e)
     {
-        if (_editingPosition is null)
+        var selectedArticle = ViewModel.SelectedArticle;
+        var isNewPosition = _editingPosition is null;
+
+        if (isNewPosition && selectedArticle is null)
         {
-            ViewModel.SetStatusMessage("Double-click a position before editing it.");
+            ViewModel.SetStatusMessage("Select an Article before saving a new position.");
             return;
         }
 
-        var articleName = (PositionArticleTextBox.Text ?? string.Empty).Trim();
+        var articleName = selectedArticle is not null
+            ? PreferredArticleName(selectedArticle)
+            : (ArticleAutoComplete.Text ?? string.Empty).Trim();
         var quantityText = NormalizeDecimalInput(PositionQtyTextBox.Text);
         var unit = (PositionUnitTextBox.Text ?? string.Empty).Trim();
         var unitPriceText = NormalizeDecimalInput(PositionUnitPriceTextBox.Text);
@@ -242,17 +363,34 @@ public partial class QuotationEditorView : UserControl
             return;
         }
 
-        _editingPosition.ArticleName = articleName;
-        _editingPosition.QuantityText = quantityText;
-        _editingPosition.Unit = unit;
-        _editingPosition.UnitPriceText = unitPriceText;
-        _editingPosition.DiscountText = discountText;
-        _editingPosition.Description = PositionDescriptionTextBox.Text;
+        QuotationItemRowViewModel target;
+        if (isNewPosition)
+        {
+            var countBefore = ViewModel.Items.Count;
+            ViewModel.AddSelectedArticle();
+            if (ViewModel.Items.Count == countBefore)
+                return;
 
-        ViewModel.SelectedItem = _editingPosition;
-        var savedName = _editingPosition.ArticleName;
-        LoadPositionEditor(_editingPosition);
-        ViewModel.SetStatusMessage($"Position '{savedName}' updated in the overview. Save the document to persist it.");
+            target = ViewModel.Items[^1];
+        }
+        else
+        {
+            target = _editingPosition!;
+        }
+
+        target.SetSourceArticle(selectedArticle?.Id);
+        target.ArticleName = articleName;
+        target.QuantityText = quantityText;
+        target.Unit = unit;
+        target.UnitPriceText = unitPriceText;
+        target.DiscountText = discountText;
+        target.Description = PositionDescriptionTextBox.Text;
+
+        ViewModel.SelectedItem = target;
+        LoadPositionEditor(target);
+        ViewModel.SetStatusMessage(isNewPosition
+            ? $"Position '{target.ArticleName}' added to the overview. Save the document to persist it."
+            : $"Position '{target.ArticleName}' updated in the overview. Save the document to persist it.");
     }
 
     private void UpdatePositionAmountPreview()
@@ -267,9 +405,14 @@ public partial class QuotationEditorView : UserControl
     private bool PositionEditorMatchesCurrentItem()
     {
         if (_editingPosition is null)
-            return true;
+            return false;
 
-        return string.Equals(PositionArticleTextBox.Text ?? string.Empty, _editingPosition.ArticleName, StringComparison.Ordinal)
+        var articleMatches = ViewModel.SelectedArticle is not null
+            ? _editingPosition.SourceArticleId == ViewModel.SelectedArticle.Id
+            : _editingPosition.SourceArticleId is null
+              && string.Equals((ArticleAutoComplete.Text ?? string.Empty).Trim(), _editingPosition.ArticleName, StringComparison.Ordinal);
+
+        return articleMatches
             && string.Equals(NormalizeDecimalInput(PositionQtyTextBox.Text), _editingPosition.QuantityText, StringComparison.Ordinal)
             && string.Equals(PositionUnitTextBox.Text ?? string.Empty, _editingPosition.Unit, StringComparison.Ordinal)
             && string.Equals(NormalizeDecimalInput(PositionUnitPriceTextBox.Text), _editingPosition.UnitPriceText, StringComparison.Ordinal)
@@ -279,12 +422,15 @@ public partial class QuotationEditorView : UserControl
 
     private bool EnsurePositionEditApplied()
     {
-        if (_editingPosition is null || !PositionSaveButton.IsEnabled)
+        if (!PositionSaveButton.IsEnabled)
             return true;
 
-        ViewModel.SetStatusMessage("The selected position has unapplied changes. Click the Position Save button first.");
+        ViewModel.SetStatusMessage("The position editor has unapplied changes. Click the Position Save button first.");
         return false;
     }
+
+    private static string PreferredArticleName(Article article)
+        => !string.IsNullOrWhiteSpace(article.Name_EN) ? article.Name_EN.Trim() : article.Name.Trim();
 
     private static string NormalizeDecimalInput(string? value)
     {
@@ -342,7 +488,8 @@ public partial class QuotationEditorView : UserControl
         if (TopLevel.GetTopLevel(this) is not Window owner) return;
         var picker = new ArticlePickerWindow(ViewModel.Articles, ViewModel.SelectedArticle?.Id);
         var selected = await picker.ShowDialog<Article?>(owner);
-        if (selected is not null) { ViewModel.SelectedArticle = selected; ViewModel.SetStatusMessage($"Article selected: {selected.Name}"); }
+        if (selected is not null)
+            ViewModel.SelectedArticle = selected;
     }
 
     private void SelectLineGrid_LoadingRow(object? sender, DataGridRowEventArgs e)
