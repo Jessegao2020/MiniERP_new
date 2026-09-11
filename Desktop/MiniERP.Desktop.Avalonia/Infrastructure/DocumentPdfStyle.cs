@@ -20,9 +20,8 @@ internal static class DocumentPdfStyle
     public static readonly SKTypeface Bold = FindTypeface(SKFontStyle.Bold);
     public static readonly SKTypeface Italic = FindTypeface(SKFontStyle.Italic);
 
-    // CJK fonts commonly omit a few Latin-Extended glyphs such as Turkish dotted
-    // and dotless I. Keep a Latin companion family and switch per glyph when the
-    // primary PDF typeface cannot render a character.
+    // Keep the normal Latin family for Western-language text (including Turkish),
+    // and use the CJK typeface only for glyphs the Latin family cannot render.
     private static readonly SKTypeface LatinRegular = FindLatinTypeface(SKFontStyle.Normal);
     private static readonly SKTypeface LatinBold = FindLatinTypeface(SKFontStyle.Bold);
     private static readonly SKTypeface LatinItalic = FindLatinTypeface(SKFontStyle.Italic);
@@ -166,8 +165,8 @@ internal static class DocumentPdfStyle
 
     private static SKTypeface FindTypeface(SKFontStyle style)
     {
-        // Pick a CJK-capable primary font. Latin-Extended characters which are not
-        // present in that font are handled by DrawText's per-glyph fallback.
+        // Pick a CJK-capable primary font. Western-language runs are deliberately
+        // drawn with the Latin companion font so Turkish glyphs keep working.
         foreach (var family in new[]
                  {
                      "Noto Sans CJK SC",
@@ -238,10 +237,13 @@ internal static class DocumentPdfStyle
 
         foreach (var ch in text)
         {
-            var typeface = primary.ContainsGlyphs(ch.ToString())
-                ? primary
-                : latin.ContainsGlyphs(ch.ToString())
-                    ? latin
+            // Prefer the Latin family whenever possible so Western-language text
+            // remains visually consistent. Fall back to CJK for Chinese and symbols
+            // not present in the Latin font.
+            var typeface = latin.ContainsGlyphs(ch.ToString())
+                ? latin
+                : primary.ContainsGlyphs(ch.ToString())
+                    ? primary
                     : primary;
 
             if (currentTypeface is not null && !ReferenceEquals(typeface, currentTypeface))
