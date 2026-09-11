@@ -1,17 +1,20 @@
+using System.ComponentModel;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using MiniERP.Desktop.ViewModels.Quotations;
 using MiniERP.Domain;
 
 namespace MiniERP.Desktop.Views.Quotations;
 
 public partial class QuotationEditorView
 {
-    private bool _articleEnglishDisplayHooked;
     private bool _articleLookupConfigured;
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -19,15 +22,11 @@ public partial class QuotationEditorView
         base.OnAttachedToVisualTree(e);
 
         // These tweaks depend on Fluent control templates having created their visual parts.
-        // Keep a single OnAttachedToVisualTree override for this partial class and initialize
-        // the compact quantity spinner, SelectLine-like navigation frame, and article lookup
-        // behavior together.
         Dispatcher.UIThread.Post(() =>
         {
             ApplyCompactQuantitySpinner();
             InstallSectionNavigationFrame();
             ConfigureArticleLookup();
-            HookArticleEnglishDisplay();
         });
     }
 
@@ -69,13 +68,11 @@ public partial class QuotationEditorView
 
         _articleLookupConfigured = true;
 
-        // The text portion of the lookup must use the quotation-facing English name.
-        // The ItemTemplate still renders Article.Name, so the popup remains the familiar
-        // Chinese/internal product list used by the sales team.
+        // Keep the popup ItemTemplate in Chinese/internal naming, but let the text portion
+        // of AutoCompleteBox use the quotation-facing English name. This is native
+        // AutoCompleteBox behavior and, unlike manually rewriting Text after selection,
+        // does not break SelectedItem/SelectedArticle.
         ArticleAutoComplete.ValueMemberBinding = new Binding(nameof(Article.QuotationName));
-
-        // Do not sacrifice the convenient lookup behavior just because the visible selected
-        // value is English. Search both the internal/Chinese name and the English name.
         ArticleAutoComplete.ItemFilter = (search, item) =>
         {
             if (item is not Article article)
@@ -87,44 +84,77 @@ public partial class QuotationEditorView
             return (article.Name?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
                 || (article.Name_EN?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
         };
+
+        // The original handler writes Article.Name (the internal/Chinese name) into the
+        // AutoCompleteBox. With an English ValueMemberBinding that text no longer matches
+        // the selected item, so AutoCompleteBox clears its selection: Save stays disabled
+        // and the old SelectionChanged workaround can recurse during Discard. Replace that
+        // handler with an English-aware version instead of mutating Text after selection.
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ViewModel.PropertyChanged += ViewModel_PropertyChangedEnglishArticle;
+
+        // LoadPositionEditor deliberately suppresses PropertyChanged while it fills an
+        // existing row, so normalize the visible article name after its double-click handler.
+        PositionsGrid.DoubleTapped += PositionsGrid_DoubleTappedEnglishArticle;
     }
 
-    private void HookArticleEnglishDisplay()
+    private void ViewModel_PropertyChangedEnglishArticle(object? sender, PropertyChangedEventArgs e)
     {
-        if (_articleEnglishDisplayHooked)
+        if (_loadingPositionEditor || e.PropertyName != nameof(QuotationEditorViewModel.SelectedArticle))
             return;
 
-        _articleEnglishDisplayHooked = true;
-        ArticleAutoComplete.SelectionChanged += ArticleAutoComplete_SelectionChanged;
-
-        if (ArticleAutoComplete.SelectedItem is Article article)
-            QueueEnglishArticleName(article);
+        if (ViewModel.SelectedArticle is not null)
+            ApplySelectedArticleToEditorEnglish(ViewModel.SelectedArticle);
+        else
+            UpdatePositionSaveState();
     }
 
-    private void ArticleAutoComplete_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void ApplySelectedArticleToEditorEnglish(Article article)
     {
-        if (ArticleAutoComplete.SelectedItem is Article article)
-            QueueEnglishArticleName(article);
+        _loadingPositionEditor = true;
+        try
+        {
+            ArticleAutoComplete.Text = article.QuotationName;
+            PositionQtyTextBox.Text = "1";
+            PositionUnitTextBox.Text = "PCS";
+            PositionDiscountTextBox.Text = "0";
+            PositionDescriptionTextBox.Text = article.Description_EN ?? string.Empty;
+
+            if (!TryGetArticleUnitPrice(article, out var unitPrice))
+            {
+                PositionUnitPriceTextBox.Text = string.Empty;
+                PositionAmountText.Text = string.Empty;
+                PositionSaveButton.IsEnabled = false;
+                return;
+            }
+
+            PositionUnitPriceTextBox.Text = unitPrice.ToString("0.####", CultureInfo.InvariantCulture);
+            UpdatePositionAmountPreview();
+        }
+        finally
+        {
+            _loadingPositionEditor = false;
+        }
+
+        UpdatePositionSaveState();
+        ViewModel.SetStatusMessage($"Article selected: {article.QuotationName}. Adjust the position details and click Save.");
     }
 
-    private void QueueEnglishArticleName(Article article)
+    private void PositionsGrid_DoubleTappedEnglishArticle(object? sender, TappedEventArgs e)
     {
-        // ApplySelectedArticleToEditor still fills the editor fields when selection changes.
-        // AutoCompleteBox then finishes its own text synchronization asynchronously. Post one
-        // final assignment using the SAME value exposed through ValueMemberBinding. Because
-        // those values now match, the control no longer clears SelectedItem/SelectedArticle.
+        if (_editingPosition is null || ViewModel.SelectedArticle is not Article article)
+            return;
+
         Dispatcher.UIThread.Post(() =>
         {
-            if (!ReferenceEquals(ArticleAutoComplete.SelectedItem, article))
+            if (_editingPosition is null || !ReferenceEquals(ViewModel.SelectedArticle, article))
                 return;
-
-            var displayName = article.QuotationName;
 
             _loadingPositionEditor = true;
             try
             {
-                ArticleAutoComplete.Text = displayName;
-                ArticleAutoComplete.CaretIndex = displayName.Length;
+                ArticleAutoComplete.Text = article.QuotationName;
+                ArticleAutoComplete.CaretIndex = article.QuotationName.Length;
             }
             finally
             {
