@@ -6,7 +6,15 @@ namespace MiniERP.Desktop.Infrastructure;
 
 internal static class ConfirmationDialog
 {
-    public static async Task<bool> ShowAsync(Control owner, string title, string message)
+    public static Task<bool> ShowAsync(Control owner, string title, string message)
+        => ShowAsync(owner, title, message, "Delete", "Cancel");
+
+    public static async Task<bool> ShowAsync(
+        Control owner,
+        string title,
+        string message,
+        string confirmText,
+        string cancelText)
     {
         var ownerWindow = TopLevel.GetTopLevel(owner) as Window;
         if (ownerWindow is null)
@@ -23,14 +31,14 @@ internal static class ConfirmationDialog
 
         var yesButton = new Button
         {
-            Content = "Delete",
+            Content = confirmText,
             Width = 90,
             HorizontalContentAlignment = HorizontalAlignment.Center
         };
 
         var cancelButton = new Button
         {
-            Content = "Cancel",
+            Content = cancelText,
             Width = 90,
             HorizontalContentAlignment = HorizontalAlignment.Center
         };
