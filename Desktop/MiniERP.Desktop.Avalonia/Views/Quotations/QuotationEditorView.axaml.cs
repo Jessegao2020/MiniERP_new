@@ -88,12 +88,19 @@ public partial class QuotationEditorView : UserControl
     private void GridView_Click(object? sender, RoutedEventArgs e)
         => RequestClose?.Invoke(this, EventArgs.Empty);
 
-    private void NewPosition_Click(object? sender, RoutedEventArgs e)
+    private async void NewPosition_Click(object? sender, RoutedEventArgs e)
     {
-        if (PositionSaveButton.IsEnabled)
+        if (HasUnappliedPositionChanges())
         {
-            ViewModel.SetStatusMessage("Save the current position changes before starting a new position.");
-            return;
+            var discard = await ConfirmationDialog.ShowAsync(
+                this,
+                "Discard Position Changes",
+                "The current position has unsaved changes. Ignore them and start a new position?",
+                "Yes",
+                "No");
+
+            if (!discard)
+                return;
         }
 
         ViewModel.SelectedItem = null;
@@ -101,11 +108,18 @@ public partial class QuotationEditorView : UserControl
         ViewModel.SetStatusMessage("New position. Select an Article, adjust the details, then click Save.");
     }
 
+    private void DiscardPosition_Click(object? sender, RoutedEventArgs e)
+    {
+        ViewModel.SelectedItem = null;
+        ClearPositionEditor();
+        ViewModel.SetStatusMessage("Position edit discarded.");
+    }
+
     private void DeletePosition_Click(object? sender, RoutedEventArgs e)
     {
-        if (PositionSaveButton.IsEnabled)
+        if (HasUnappliedPositionChanges())
         {
-            ViewModel.SetStatusMessage("Save the current position changes before deleting a position.");
+            ViewModel.SetStatusMessage("Save or discard the current position changes before deleting a position.");
             return;
         }
 
@@ -117,9 +131,9 @@ public partial class QuotationEditorView : UserControl
 
     private void MoveItemUp_Click(object? sender, RoutedEventArgs e)
     {
-        if (PositionSaveButton.IsEnabled)
+        if (HasUnappliedPositionChanges())
         {
-            ViewModel.SetStatusMessage("Save the current position changes before moving positions.");
+            ViewModel.SetStatusMessage("Save or discard the current position changes before moving positions.");
             return;
         }
 
@@ -136,9 +150,9 @@ public partial class QuotationEditorView : UserControl
 
     private void MoveItemDown_Click(object? sender, RoutedEventArgs e)
     {
-        if (PositionSaveButton.IsEnabled)
+        if (HasUnappliedPositionChanges())
         {
-            ViewModel.SetStatusMessage("Save the current position changes before moving positions.");
+            ViewModel.SetStatusMessage("Save or discard the current position changes before moving positions.");
             return;
         }
 
@@ -159,11 +173,11 @@ public partial class QuotationEditorView : UserControl
         if (item is null)
             return;
 
-        if (PositionSaveButton.IsEnabled && !ReferenceEquals(_editingPosition, item))
+        if (HasUnappliedPositionChanges() && !ReferenceEquals(_editingPosition, item))
         {
             if (_editingPosition is not null)
                 ViewModel.SelectedItem = _editingPosition;
-            ViewModel.SetStatusMessage("Save the current position changes before opening another position.");
+            ViewModel.SetStatusMessage("Save or discard the current position changes before opening another position.");
             return;
         }
 
@@ -402,6 +416,20 @@ public partial class QuotationEditorView : UserControl
         PositionAmountText.Text = amount.ToString("N2", CultureInfo.InvariantCulture);
     }
 
+    private bool HasUnappliedPositionChanges()
+    {
+        if (_editingPosition is not null)
+            return !PositionEditorMatchesCurrentItem();
+
+        return ViewModel.SelectedArticle is not null
+            || !string.IsNullOrWhiteSpace(ArticleAutoComplete.Text)
+            || !string.IsNullOrWhiteSpace(PositionQtyTextBox.Text)
+            || !string.IsNullOrWhiteSpace(PositionUnitTextBox.Text)
+            || !string.IsNullOrWhiteSpace(PositionUnitPriceTextBox.Text)
+            || !string.IsNullOrWhiteSpace(PositionDiscountTextBox.Text)
+            || !string.IsNullOrWhiteSpace(PositionDescriptionTextBox.Text);
+    }
+
     private bool PositionEditorMatchesCurrentItem()
     {
         if (_editingPosition is null)
@@ -422,10 +450,10 @@ public partial class QuotationEditorView : UserControl
 
     private bool EnsurePositionEditApplied()
     {
-        if (!PositionSaveButton.IsEnabled)
+        if (!HasUnappliedPositionChanges())
             return true;
 
-        ViewModel.SetStatusMessage("The position editor has unapplied changes. Click the Position Save button first.");
+        ViewModel.SetStatusMessage("The position editor has unapplied changes. Click Position Save or Discard first.");
         return false;
     }
 
