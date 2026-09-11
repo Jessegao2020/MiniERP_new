@@ -17,7 +17,7 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
     private string _discountText;
 
     public int Id { get; }
-    public int? SourceArticleId { get; }
+    public int? SourceArticleId { get; private set; }
     public string Currency { get; }
     public decimal ExchangeRateSnapshot { get; }
 
@@ -100,6 +100,13 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
         _unit = "PCS";
         _unitPriceText = ToText(unitPrice);
         _discountText = "0";
+    }
+
+    public void SetSourceArticle(int? sourceArticleId)
+    {
+        if (SourceArticleId == sourceArticleId) return;
+        SourceArticleId = sourceArticleId;
+        OnPropertyChanged(nameof(SourceArticleId));
     }
 
     public bool TryValidate(out string error)
