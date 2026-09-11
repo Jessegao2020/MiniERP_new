@@ -36,6 +36,41 @@
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="FontSize" Value="12" />
         </Style>
+
+        <!-- SelectLine-like lookup field: one outside border, with the picker button visually inside the input. -->
+        <Style Selector="Border.lookup-field">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#8A8A8A" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="Border.lookup-field AutoCompleteBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Border.lookup-field Button.lookup-button">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="MinWidth" Value="26" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Background" Value="#EEEEEE" />
+            <Setter Property="BorderBrush" Value="#B5B5B5" />
+            <Setter Property="BorderThickness" Value="1,0,0,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <!-- Keep the five position commands on one visual rhythm. -->
+        <Style Selector="Button.position-command">
+            <Setter Property="Width" Value="64" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MinWidth" Value="64" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,4,2" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
@@ -62,12 +97,14 @@
 
                 <Grid Width="405" Margin="0,2,12,2" ColumnDefinitions="64,*" ColumnSpacing="6">
                     <TextBlock Grid.Column="0" Classes="field-label" Text="Customer" />
-                    <Grid Grid.Column="1" ColumnDefinitions="*,34">
-                        <AutoCompleteBox x:Name="CustomerAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type customer name">
-                            <AutoCompleteBox.ItemTemplate><DataTemplate><Grid ColumnDefinitions="2*,*,Auto" ColumnSpacing="8" MinWidth="250"><TextBlock Grid.Column="0" Text="{Binding Name}" /><TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding City}" /><TextBlock Grid.Column="2" Opacity="0.6" Text="{Binding Country}" /></Grid></DataTemplate></AutoCompleteBox.ItemTemplate>
-                        </AutoCompleteBox>
-                        <Button Grid.Column="1" Padding="0" Click="PickCustomer_Click" Content="..." ToolTip.Tip="Open customer list" />
-                    </Grid>
+                    <Border Grid.Column="1" Classes="lookup-field">
+                        <Grid ColumnDefinitions="*,26">
+                            <AutoCompleteBox x:Name="CustomerAutoComplete" Grid.Column="0" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type customer name">
+                                <AutoCompleteBox.ItemTemplate><DataTemplate><Grid ColumnDefinitions="2*,*,Auto" ColumnSpacing="8" MinWidth="250"><TextBlock Grid.Column="0" Text="{Binding Name}" /><TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding City}" /><TextBlock Grid.Column="2" Opacity="0.6" Text="{Binding Country}" /></Grid></DataTemplate></AutoCompleteBox.ItemTemplate>
+                            </AutoCompleteBox>
+                            <Button Grid.Column="1" Classes="lookup-button" Click="PickCustomer_Click" Content="..." ToolTip.Tip="Open customer list" />
+                        </Grid>
+                    </Border>
                 </Grid>
 
                 <Grid Width="190" Margin="0,2,12,2" ColumnDefinitions="40,118" ColumnSpacing="6">
@@ -92,12 +129,14 @@
                             <TextBlock FontSize="17" FontWeight="SemiBold" Text="General" />
                             <Grid ColumnDefinitions="150,360" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Customer Contact" />
-                                <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,34">
-                                    <AutoCompleteBox x:Name="ContactAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name">
-                                        <AutoCompleteBox.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal" Spacing="5"><TextBlock Opacity="0.6" Text="{Binding Title}" /><TextBlock Text="{Binding Name}" /></StackPanel></DataTemplate></AutoCompleteBox.ItemTemplate>
-                                    </AutoCompleteBox>
-                                    <Button Grid.Column="1" Padding="0" Click="PickContact_Click" Content="..." ToolTip.Tip="Open contact list" />
-                                </Grid>
+                                <Border Grid.Row="0" Grid.Column="1" Classes="lookup-field">
+                                    <Grid ColumnDefinitions="*,26">
+                                        <AutoCompleteBox x:Name="ContactAutoComplete" Grid.Column="0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name">
+                                            <AutoCompleteBox.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal" Spacing="5"><TextBlock Opacity="0.6" Text="{Binding Title}" /><TextBlock Text="{Binding Name}" /></StackPanel></DataTemplate></AutoCompleteBox.ItemTemplate>
+                                        </AutoCompleteBox>
+                                        <Button Grid.Column="1" Classes="lookup-button" Click="PickContact_Click" Content="..." ToolTip.Tip="Open contact list" />
+                                    </Grid>
+                                </Border>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Valid Until" />
                                 <CalendarDatePicker Grid.Row="1" Grid.Column="1" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding ValidUntil, Mode=TwoWay, Converter={StaticResource DateValueConverter}}" />
@@ -146,17 +185,23 @@
                         <!-- Commands wrap instead of escaping the section when the window is narrow. -->
                         <WrapPanel Grid.Row="0" Orientation="Horizontal">
                             <TextBlock Classes="field-label" Margin="0,0,6,0" Text="Article" />
-                            <Grid Width="390" Margin="0,0,6,2" ColumnDefinitions="*,34">
-                                <AutoCompleteBox x:Name="ArticleAutoComplete" Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type article name">
-                                    <AutoCompleteBox.ItemTemplate><DataTemplate><Grid ColumnDefinitions="2*,Auto" ColumnSpacing="12" MinWidth="280"><TextBlock Grid.Column="0" Text="{Binding Name}" /><TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding Price, StringFormat='CNY {0:N2}'}" /></Grid></DataTemplate></AutoCompleteBox.ItemTemplate>
-                                </AutoCompleteBox>
-                                <Button Grid.Column="1" Padding="0" Click="PickArticle_Click" Content="..." ToolTip.Tip="Open article list" />
-                            </Grid>
-                            <Button Margin="0,0,4,2" Padding="10,2" Click="AddItem_Click" Content="Add" />
-                            <Button Margin="0,0,4,2" Padding="10,2" Click="RemoveItem_Click" Content="Remove" />
-                            <Button Margin="0,0,4,2" Width="34" Padding="0" Click="MoveItemUp_Click" Content="↑" ToolTip.Tip="Move selected item up" />
-                            <Button Margin="0,0,4,2" Width="34" Padding="0" Click="MoveItemDown_Click" Content="↓" ToolTip.Tip="Move selected item down" />
-                            <Button x:Name="PositionSaveButton" Margin="0,0,4,2" Padding="12,2" IsEnabled="False" Click="SavePositionEdit_Click" Content="Save" ToolTip.Tip="Apply the current position edits to the overview" />
+                            <Border Width="390" Margin="0,0,6,2" Classes="lookup-field">
+                                <Grid ColumnDefinitions="*,26">
+                                    <AutoCompleteBox x:Name="ArticleAutoComplete" Grid.Column="0" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type article name">
+                                        <AutoCompleteBox.ItemTemplate><DataTemplate><Grid ColumnDefinitions="2*,Auto" ColumnSpacing="12" MinWidth="280"><TextBlock Grid.Column="0" Text="{Binding Name}" /><TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding Price, StringFormat='CNY {0:N2}'}" /></Grid></DataTemplate></AutoCompleteBox.ItemTemplate>
+                                    </AutoCompleteBox>
+                                    <Button Grid.Column="1" Classes="lookup-button" Click="PickArticle_Click" Content="..." ToolTip.Tip="Open article list" />
+                                </Grid>
+                            </Border>
+                            <Button Classes="position-command" Click="AddItem_Click" Content="Add" />
+                            <Button Classes="position-command" Click="RemoveItem_Click" Content="Remove" />
+                            <Button Classes="position-command" Click="MoveItemUp_Click" ToolTip.Tip="Move selected item up">
+                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Text="↑" />
+                            </Button>
+                            <Button Classes="position-command" Click="MoveItemDown_Click" ToolTip.Tip="Move selected item down">
+                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Text="↓" />
+                            </Button>
+                            <Button x:Name="PositionSaveButton" Classes="position-command" IsEnabled="False" Click="SavePositionEdit_Click" Content="Save" ToolTip.Tip="Apply the current position edits to the overview" />
                         </WrapPanel>
 
                         <!-- Staged position editor. Nothing here writes to the overview until the local Save button is pressed. -->
