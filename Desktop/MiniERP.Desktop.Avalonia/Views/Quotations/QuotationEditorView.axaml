@@ -61,7 +61,6 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
 
-        <!-- Keep the five position commands on one visual rhythm. -->
         <Style Selector="Button.position-command">
             <Setter Property="Width" Value="64" />
             <Setter Property="Height" Value="28" />
@@ -74,7 +73,6 @@
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
-        <!-- Wrap instead of overflowing when the window is narrow. -->
         <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0">
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="✓" /><TextBlock Text="Save" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Discard_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↶" /><TextBlock Text="Discard" FontSize="10" VerticalAlignment="Center" /></StackPanel></Button>
@@ -87,7 +85,6 @@
             <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreateContract_Click" Content="Create Contract" />
         </WrapPanel>
 
-        <!-- Fixed document identity header. Each field group wraps as a whole at narrow widths. -->
         <Border Grid.Row="1" Margin="0,4,0,0" Padding="8,7" Background="#FAFAFA" BorderBrush="#D0D0D0" BorderThickness="0,1,0,1">
             <WrapPanel Orientation="Horizontal">
                 <Grid Width="355" Margin="0,2,12,2" ColumnDefinitions="92,*" ColumnSpacing="6">
@@ -182,38 +179,40 @@
             <TabItem Header="Positions">
                 <Border Classes="section-surface">
                     <Grid Margin="12,10" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="6">
-                        <!-- Commands wrap instead of escaping the section when the window is narrow. -->
-                        <WrapPanel Grid.Row="0" Orientation="Horizontal">
-                            <TextBlock Classes="field-label" Margin="0,0,6,0" Text="Article" />
-                            <Border Width="390" Margin="0,0,6,2" Classes="lookup-field">
-                                <Grid ColumnDefinitions="*,26">
-                                    <AutoCompleteBox x:Name="ArticleAutoComplete" Grid.Column="0" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type article name">
-                                        <AutoCompleteBox.ItemTemplate><DataTemplate><Grid ColumnDefinitions="2*,Auto" ColumnSpacing="12" MinWidth="280"><TextBlock Grid.Column="0" Text="{Binding Name}" /><TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding Price, StringFormat='CNY {0:N2}'}" /></Grid></DataTemplate></AutoCompleteBox.ItemTemplate>
-                                    </AutoCompleteBox>
-                                    <Button Grid.Column="1" Classes="lookup-button" Click="PickArticle_Click" Content="..." ToolTip.Tip="Open article list" />
-                                </Grid>
-                            </Border>
-                            <Button Classes="position-command" Click="AddItem_Click" Content="Add" />
-                            <Button Classes="position-command" Click="RemoveItem_Click" Content="Remove" />
-                            <Button Classes="position-command" Click="MoveItemUp_Click" ToolTip.Tip="Move selected item up">
-                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Text="↑" />
-                            </Button>
-                            <Button Classes="position-command" Click="MoveItemDown_Click" ToolTip.Tip="Move selected item down">
-                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Text="↓" />
-                            </Button>
-                            <Button x:Name="PositionSaveButton" Classes="position-command" IsEnabled="False" Click="SavePositionEdit_Click" Content="Save" ToolTip.Tip="Apply the current position edits to the overview" />
-                        </WrapPanel>
-
-                        <!-- Staged position editor. Nothing here writes to the overview until the local Save button is pressed. -->
-                        <Border x:Name="PositionEditorPanel" Grid.Row="1" Padding="8,7" Background="#FAFAFA" BorderBrush="#CCCCCC" BorderThickness="1">
+                        <!-- One SelectLine-style editor handles both new and existing positions. -->
+                        <Border x:Name="PositionEditorPanel" Grid.Row="0" Padding="8,7" Background="#FAFAFA" BorderBrush="#CCCCCC" BorderThickness="1">
                             <Grid RowDefinitions="Auto,Auto,128" RowSpacing="7">
                                 <TextBlock Grid.Row="0" FontWeight="SemiBold" Text="Selected Position" />
 
                                 <WrapPanel Grid.Row="1" Orientation="Horizontal">
-                                    <Grid Width="430" Margin="0,0,10,4" ColumnDefinitions="52,*" ColumnSpacing="6">
+                                    <Grid Width="500" Margin="0,0,10,4" ColumnDefinitions="52,*" ColumnSpacing="6">
                                         <TextBlock Grid.Column="0" Classes="field-label" Text="Article" />
-                                        <TextBox x:Name="PositionArticleTextBox" Grid.Column="1" TextChanged="PositionEditor_TextChanged" />
+                                        <Border Grid.Column="1" Classes="lookup-field">
+                                            <Grid ColumnDefinitions="*,26">
+                                                <AutoCompleteBox x:Name="ArticleAutoComplete"
+                                                                 Grid.Column="0"
+                                                                 ItemsSource="{Binding Articles}"
+                                                                 SelectedItem="{Binding SelectedArticle, Mode=TwoWay}"
+                                                                 ValueMemberBinding="{Binding Name}"
+                                                                 FilterMode="ContainsOrdinal"
+                                                                 MinimumPrefixLength="0"
+                                                                 MaxDropDownHeight="260"
+                                                                 Watermark="Type article name"
+                                                                 TextChanged="PositionEditor_TextChanged">
+                                                    <AutoCompleteBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid ColumnDefinitions="2*,Auto" ColumnSpacing="12" MinWidth="280">
+                                                                <TextBlock Grid.Column="0" Text="{Binding Name}" />
+                                                                <TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding Price, StringFormat='CNY {0:N2}'}" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </AutoCompleteBox.ItemTemplate>
+                                                </AutoCompleteBox>
+                                                <Button Grid.Column="1" Classes="lookup-button" Click="PickArticle_Click" Content="..." ToolTip.Tip="Open article list" />
+                                            </Grid>
+                                        </Border>
                                     </Grid>
+
                                     <Grid Width="110" Margin="0,0,10,4" ColumnDefinitions="30,*" ColumnSpacing="6">
                                         <TextBlock Grid.Column="0" Classes="field-label" Text="Qty" />
                                         <TextBox x:Name="PositionQtyTextBox" Grid.Column="1" TextChanged="PositionEditor_TextChanged" />
@@ -243,7 +242,19 @@
                             </Grid>
                         </Border>
 
-                        <!-- Overview remains compact; a double-click explicitly loads one row into the staged editor. -->
+                        <!-- SelectLine order: New, Save, move up, move down, delete. -->
+                        <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,2">
+                            <Button Classes="position-command" Click="NewPosition_Click" Content="New" />
+                            <Button x:Name="PositionSaveButton" Classes="position-command" IsEnabled="False" Click="SavePositionEdit_Click" Content="Save" ToolTip.Tip="Apply this position to the overview" />
+                            <Button Classes="position-command" Click="MoveItemUp_Click" ToolTip.Tip="Move selected item up">
+                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Text="↑" />
+                            </Button>
+                            <Button Classes="position-command" Click="MoveItemDown_Click" ToolTip.Tip="Move selected item down">
+                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Text="↓" />
+                            </Button>
+                            <Button Classes="position-command" Click="DeletePosition_Click" Content="Delete" />
+                        </WrapPanel>
+
                         <dg:DataGrid x:Name="PositionsGrid"
                                      Grid.Row="2"
                                      MinHeight="150"
@@ -269,7 +280,7 @@
                         </dg:DataGrid>
 
                         <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,2,0,0">
-                            <TextBlock Opacity="0.55" VerticalAlignment="Center" Text="Double-click a position to load it into the editor. Changes appear in the overview only after Position Save." />
+                            <TextBlock Opacity="0.55" VerticalAlignment="Center" Text="New clears the editor. Double-click an existing row to edit it. Save adds a new position or updates the loaded one." />
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><TextBlock FontSize="15" FontWeight="SemiBold" Text="Total" /><TextBlock FontSize="15" FontWeight="Bold" Text="{Binding TotalText}" /></StackPanel>
                         </Grid>
                     </Grid>
