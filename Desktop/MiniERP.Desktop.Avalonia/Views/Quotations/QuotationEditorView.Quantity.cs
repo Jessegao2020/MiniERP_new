@@ -13,10 +13,14 @@ public partial class QuotationEditorView
     {
         base.OnAttachedToVisualTree(e);
 
-        // Avalonia Fluent deliberately uses two 34 px spinner buttons side-by-side.
-        // For this ERP editor we want the classic compact desktop spinner: two tiny
-        // arrow buttons stacked vertically at the right edge of the quantity field.
-        Dispatcher.UIThread.Post(ApplyCompactQuantitySpinner);
+        // Both tweaks depend on Fluent control templates having created their visual parts.
+        // Keep a single OnAttachedToVisualTree override for this partial class and initialize
+        // the compact quantity spinner and the SelectLine-like navigation frame together.
+        Dispatcher.UIThread.Post(() =>
+        {
+            ApplyCompactQuantitySpinner();
+            InstallSectionNavigationFrame();
+        });
     }
 
     private void ApplyCompactQuantitySpinner()
