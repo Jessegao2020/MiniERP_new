@@ -1,10 +1,12 @@
 using System.ComponentModel;
 using System.Globalization;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Quotations;
@@ -52,6 +54,21 @@ public partial class QuotationEditorView : UserControl
         var settings = App.Services.GetRequiredService<AppSettingsService>();
         DataContext = new QuotationEditorViewModel(quotation, settings);
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+
+        // Keep the overview sequence as presentation state rather than persisted item data.
+        // It is recalculated after every reorder, so the visible rows always remain 1, 2, 3...
+        // instead of a moved item carrying its previous number with it.
+        PositionsGrid.Columns.Insert(0, new DataGridTextColumn
+        {
+            Header = "No.",
+            Width = new DataGridLength(42),
+            MinWidth = 38,
+            MaxWidth = 48,
+            CanUserResize = false,
+            CanUserSort = false,
+            Binding = new Binding(nameof(QuotationItemRowViewModel.PositionNumber))
+        });
+        RenumberPositions();
         ClearPositionEditor();
 
         var saveButton = EditorWorkflowSupport.AddGridViewToggle(this, GridView_Click);
@@ -125,6 +142,7 @@ public partial class QuotationEditorView : UserControl
 
         var item = ViewModel.SelectedItem;
         ViewModel.RemoveSelectedItem();
+        RenumberPositions();
         if (item is not null && ReferenceEquals(item, _editingPosition))
             ClearPositionEditor();
     }
@@ -144,6 +162,7 @@ public partial class QuotationEditorView : UserControl
         ViewModel.SelectedItem = null;
         ViewModel.Items.RemoveAt(index);
         ViewModel.Items.Insert(index - 1, item);
+        RenumberPositions();
         ViewModel.SelectedItem = item;
         ViewModel.SetStatusMessage("Quotation item moved up. Save the document to persist the new order.");
     }
@@ -163,6 +182,7 @@ public partial class QuotationEditorView : UserControl
         ViewModel.SelectedItem = null;
         ViewModel.Items.RemoveAt(index);
         ViewModel.Items.Insert(index + 1, item);
+        RenumberPositions();
         ViewModel.SelectedItem = item;
         ViewModel.SetStatusMessage("Quotation item moved down. Save the document to persist the new order.");
     }
@@ -285,8 +305,16 @@ public partial class QuotationEditorView : UserControl
         try
         {
             _editingPosition = null;
+
+            // AutoCompleteBox remembers its last SearchText separately from Text. After a
+            // selection is cleared it can briefly restore the old typed query (for example
+            // "9352"). Clear the selection, visible text and drop-down together.
+            ArticleAutoComplete.IsDropDownOpen = false;
+            ArticleAutoComplete.SelectedItem = null;
             ViewModel.SelectedArticle = null;
             ArticleAutoComplete.Text = string.Empty;
+            ArticleAutoComplete.CaretIndex = 0;
+
             PositionQtyTextBox.Text = string.Empty;
             PositionUnitTextBox.Text = string.Empty;
             PositionUnitPriceTextBox.Text = string.Empty;
@@ -300,6 +328,28 @@ public partial class QuotationEditorView : UserControl
         {
             _loadingPositionEditor = false;
         }
+
+        // Selection synchronization inside AutoCompleteBox is deferred. One final clear on
+        // the next UI turn prevents the previously typed search query from being restored.
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_editingPosition is not null || ViewModel.SelectedArticle is not null)
+                return;
+
+            _loadingPositionEditor = true;
+            try
+            {
+                ArticleAutoComplete.IsDropDownOpen = false;
+                ArticleAutoComplete.SelectedItem = null;
+                ArticleAutoComplete.Text = string.Empty;
+                ArticleAutoComplete.CaretIndex = 0;
+                PositionSaveButton.IsEnabled = false;
+            }
+            finally
+            {
+                _loadingPositionEditor = false;
+            }
+        });
     }
 
     private void PositionEditor_TextChanged(object? sender, TextChangedEventArgs e)
@@ -400,6 +450,7 @@ public partial class QuotationEditorView : UserControl
         target.DiscountText = discountText;
         target.Description = PositionDescriptionTextBox.Text;
 
+        RenumberPositions();
         ViewModel.SelectedItem = target;
         LoadPositionEditor(target);
         ViewModel.SetStatusMessage(isNewPosition
@@ -414,6 +465,12 @@ public partial class QuotationEditorView : UserControl
         var discount = ParseDecimalOrZero(PositionDiscountTextBox.Text);
         var amount = decimal.Round(quantity * unitPrice * (1m - discount / 100m), 2, MidpointRounding.AwayFromZero);
         PositionAmountText.Text = amount.ToString("N2", CultureInfo.InvariantCulture);
+    }
+
+    private void RenumberPositions()
+    {
+        for (var index = 0; index < ViewModel.Items.Count; index++)
+            ViewModel.Items[index].PositionNumber = index + 1;
     }
 
     private bool HasUnappliedPositionChanges()
