@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using MiniERP.Desktop.Infrastructure;
 using MiniERP.Domain;
 
 namespace MiniERP.Desktop.Views.Quotations;
@@ -97,10 +98,17 @@ public partial class QuotationEditorView
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ArticleAutoComplete.SelectionChanged += ArticleAutoComplete_SelectionChangedStable;
 
-        // LoadPositionEditor in the original editor still assigns the internal Name to Text.
-        // Normalize it after the normal double-click handler has loaded the row so an existing
-        // position also keeps a valid SelectedItem and displays the English quotation name.
-        PositionsGrid.DoubleTapped += PositionsGrid_DoubleTappedNormalizeArticle;
+        // Replace the original row double-tap handler. NumericUpDown and AutoCompleteBox can
+        // retain transient internal values after the editor is visually cleared. A row switch
+        // warning should be based on meaningful, visible user edits instead of those internal
+        // control values.
+        PositionsGrid.DoubleTapped -= PositionsGrid_DoubleTapped;
+        PositionsGrid.DoubleTapped += PositionsGrid_DoubleTappedStable;
+
+        // AutoCompleteBox can finish synchronizing its text one dispatcher turn after a
+        // selection is cleared. Run a final visual normalization after that text event too,
+        // so the derived Amount cannot reappear as 0.00 in an otherwise blank editor.
+        ArticleAutoComplete.TextChanged += ArticleAutoComplete_TextChangedNormalizeBlank;
 
         if (ArticleAutoComplete.SelectedItem is Article selected)
             ViewModel.SelectedArticle = selected;
@@ -113,9 +121,6 @@ public partial class QuotationEditorView
 
         if (_loadingPositionEditor)
         {
-            // ClearPositionEditor runs with _loadingPositionEditor=true. NumericUpDown keeps
-            // Value separately from its visible Text, so reset the internal value here while
-            // the editor is being cleared.
             if (article is null && _editingPosition is null)
             {
                 PositionQtyTextBox.Value = null;
@@ -136,6 +141,101 @@ public partial class QuotationEditorView
         ApplySelectedArticleToEditorStable(article);
     }
 
+    private void ArticleAutoComplete_TextChangedNormalizeBlank(object? sender, TextChangedEventArgs e)
+    {
+        if (_editingPosition is not null)
+            return;
+
+        if (IsVisuallyBlankNewPositionEditor())
+        {
+            PositionAmountText.Text = string.Empty;
+            PositionSaveButton.IsEnabled = false;
+        }
+    }
+
+    private bool IsVisuallyBlankNewPositionEditor()
+        => _editingPosition is null
+           && string.IsNullOrWhiteSpace(ArticleAutoComplete.Text)
+           && string.IsNullOrWhiteSpace(PositionUnitTextBox.Text)
+           && string.IsNullOrWhiteSpace(PositionUnitPriceTextBox.Text)
+           && string.IsNullOrWhiteSpace(PositionDiscountTextBox.Text)
+           && string.IsNullOrWhiteSpace(PositionDescriptionTextBox.Text);
+
+    private bool HasMeaningfulPositionEditorChanges()
+    {
+        if (_editingPosition is not null)
+            return !PositionEditorMatchesCurrentItem();
+
+        // Qty and Amount are intentionally excluded for a new blank editor. NumericUpDown can
+        // keep a hidden Value even when its text box is visually empty, and Amount is derived.
+        // With no article/name or other editable position data there is nothing meaningful to
+        // lose, so switching rows must not show a discard warning.
+        return !string.IsNullOrWhiteSpace(ArticleAutoComplete.Text)
+            || !string.IsNullOrWhiteSpace(PositionUnitTextBox.Text)
+            || !string.IsNullOrWhiteSpace(PositionUnitPriceTextBox.Text)
+            || !string.IsNullOrWhiteSpace(PositionDiscountTextBox.Text)
+            || !string.IsNullOrWhiteSpace(PositionDescriptionTextBox.Text);
+    }
+
+    private async void PositionsGrid_DoubleTappedStable(object? sender, TappedEventArgs e)
+    {
+        var item = ViewModel.SelectedItem;
+        if (item is null)
+            return;
+
+        if (HasMeaningfulPositionEditorChanges())
+        {
+            if (ReferenceEquals(_editingPosition, item))
+                return;
+
+            var previousSelection = _editingPosition;
+            var discard = await ConfirmationDialog.ShowAsync(
+                this,
+                "Discard Position Changes",
+                "The current position has unsaved changes. Ignore them and edit the selected position?",
+                "Yes",
+                "No");
+
+            if (!discard)
+            {
+                ViewModel.SelectedItem = previousSelection;
+                return;
+            }
+
+            ClearPositionEditor();
+            ViewModel.SelectedItem = item;
+        }
+
+        LoadPositionEditor(item);
+        NormalizeLoadedArticleDisplay(item);
+        ViewModel.SetStatusMessage($"Editing position: {item.ArticleName}");
+    }
+
+    private void NormalizeLoadedArticleDisplay(MiniERP.Desktop.ViewModels.Quotations.QuotationItemRowViewModel item)
+    {
+        if (item.SourceArticleId is not int articleId)
+            return;
+
+        var article = ViewModel.Articles.FirstOrDefault(candidate => candidate.Id == articleId);
+        if (article is null)
+            return;
+
+        _loadingPositionEditor = true;
+        try
+        {
+            ViewModel.SelectedArticle = article;
+            ArticleAutoComplete.SelectedItem = article;
+            ArticleAutoComplete.Text = article.QuotationName;
+            ArticleAutoComplete.CaretIndex = article.QuotationName.Length;
+        }
+        finally
+        {
+            _loadingPositionEditor = false;
+        }
+
+        PositionSaveButton.IsEnabled = false;
+    }
+
     private void ScheduleBlankPositionNormalization()
     {
         if (_blankPositionNormalizationScheduled)
@@ -146,8 +246,6 @@ public partial class QuotationEditorView
         {
             _blankPositionNormalizationScheduled = false;
 
-            // Do not interfere if the user has already started another position or loaded an
-            // existing one before this deferred cleanup runs.
             if (_editingPosition is not null
                 || ArticleAutoComplete.SelectedItem is not null
                 || !string.IsNullOrWhiteSpace(ArticleAutoComplete.Text))
@@ -158,10 +256,6 @@ public partial class QuotationEditorView
             _loadingPositionEditor = true;
             try
             {
-                // AutoCompleteBox and NumericUpDown both have internal state that can settle
-                // one dispatcher turn after their visible text was cleared. Normalize those
-                // hidden values after Save/Discard so a visually blank editor is also blank
-                // to HasUnappliedPositionChanges().
                 ViewModel.SelectedArticle = null;
                 ArticleAutoComplete.IsDropDownOpen = false;
                 ArticleAutoComplete.SelectedItem = null;
@@ -193,8 +287,6 @@ public partial class QuotationEditorView
         _loadingPositionEditor = true;
         try
         {
-            // This value matches ValueMemberBinding, so assigning it does not invalidate the
-            // current AutoCompleteBox selection.
             ArticleAutoComplete.Text = article.QuotationName;
             PositionQtyTextBox.Value = 1m;
             PositionQtyTextBox.Text = "1";
@@ -222,39 +314,11 @@ public partial class QuotationEditorView
         ViewModel.SetStatusMessage($"Article selected: {article.QuotationName}. Adjust the position details and click Save.");
     }
 
-    private void PositionsGrid_DoubleTappedNormalizeArticle(object? sender, TappedEventArgs e)
-    {
-        if (_editingPosition?.SourceArticleId is not int articleId)
-            return;
-
-        var article = ViewModel.Articles.FirstOrDefault(candidate => candidate.Id == articleId);
-        if (article is null)
-            return;
-
-        _loadingPositionEditor = true;
-        try
-        {
-            ViewModel.SelectedArticle = article;
-            ArticleAutoComplete.SelectedItem = article;
-            ArticleAutoComplete.Text = article.QuotationName;
-            ArticleAutoComplete.CaretIndex = article.QuotationName.Length;
-        }
-        finally
-        {
-            _loadingPositionEditor = false;
-        }
-
-        PositionSaveButton.IsEnabled = false;
-    }
-
     private void PositionQty_ValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)
     {
         if (_loadingPositionEditor)
             return;
 
-        // A blank quantity means there is no line to total. Avoid turning the derived Amount
-        // back into 0.00 after Save/Discard just because NumericUpDown finishes clearing its
-        // internal Value on a later dispatcher turn.
         if (PositionQtyTextBox.Value is null || string.IsNullOrWhiteSpace(PositionQtyTextBox.Text))
         {
             PositionAmountText.Text = string.Empty;
