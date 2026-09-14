@@ -4,10 +4,12 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using MiniERP.Desktop.Infrastructure;
+using MiniERP.Desktop.ViewModels.Quotations;
 using MiniERP.Domain;
 
 namespace MiniERP.Desktop.Views.Quotations;
@@ -16,6 +18,7 @@ public partial class QuotationEditorView
 {
     private bool _articleLookupConfigured;
     private bool _blankPositionNormalizationScheduled;
+    private Article? _positionSourceArticle;
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -89,14 +92,30 @@ public partial class QuotationEditorView
                 || (article.Name_EN?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
         };
 
-        // SelectedItem is the authoritative state for the Article lookup. The previous
-        // implementation tried to rewrite AutoCompleteBox.Text asynchronously after a
-        // selection. That allowed Text, SelectedItem and ViewModel.SelectedArticle to drift
-        // apart: Save could remain disabled, and a visually empty editor could still look
-        // dirty to HasUnappliedPositionChanges(). Keep the three states synchronized from
-        // one event instead.
+        // SelectedItem is only used to seed the editor from the Article database. Once the
+        // fields are populated, the visible editor values are authoritative and may be
+        // changed freely before Position Save.
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ArticleAutoComplete.SelectionChanged += ArticleAutoComplete_SelectionChangedStable;
+
+        // Article text editing intentionally breaks AutoCompleteBox.SelectedItem. Do not use
+        // the old TextChanged handler for this field because it treated SelectedArticle as a
+        // prerequisite for Save. The editor itself is now the source of truth.
+        ArticleAutoComplete.TextChanged -= PositionEditor_TextChanged;
+        ArticleAutoComplete.TextChanged += ArticleAutoComplete_TextChangedStable;
+
+        // The other fields still use their existing calculation handler. Add a second handler
+        // afterwards so the final Save state is based on the visible editor values rather than
+        // AutoCompleteBox selection state.
+        PositionUnitTextBox.TextChanged += PositionEditor_VisibleFieldChangedStable;
+        PositionUnitPriceTextBox.TextChanged += PositionEditor_VisibleFieldChangedStable;
+        PositionDiscountTextBox.TextChanged += PositionEditor_VisibleFieldChangedStable;
+        PositionDescriptionTextBox.TextChanged += PositionEditor_VisibleFieldChangedStable;
+
+        // Replace the original Position Save handler for the same reason: saving must persist
+        // exactly what is currently in the editor, including a manually adjusted Article name.
+        PositionSaveButton.Click -= SavePositionEdit_Click;
+        PositionSaveButton.Click += SavePositionEditStable_Click;
 
         // Replace the original row double-tap handler. NumericUpDown and AutoCompleteBox can
         // retain transient internal values after the editor is visually cleared. A row switch
@@ -105,13 +124,11 @@ public partial class QuotationEditorView
         PositionsGrid.DoubleTapped -= PositionsGrid_DoubleTapped;
         PositionsGrid.DoubleTapped += PositionsGrid_DoubleTappedStable;
 
-        // AutoCompleteBox can finish synchronizing its text one dispatcher turn after a
-        // selection is cleared. Run a final visual normalization after that text event too,
-        // so the derived Amount cannot reappear as 0.00 in an otherwise blank editor.
-        ArticleAutoComplete.TextChanged += ArticleAutoComplete_TextChangedNormalizeBlank;
-
         if (ArticleAutoComplete.SelectedItem is Article selected)
+        {
+            _positionSourceArticle = selected;
             ViewModel.SelectedArticle = selected;
+        }
     }
 
     private void ArticleAutoComplete_SelectionChangedStable(object? sender, SelectionChangedEventArgs e)
@@ -119,10 +136,14 @@ public partial class QuotationEditorView
         var article = ArticleAutoComplete.SelectedItem as Article;
         ViewModel.SelectedArticle = article;
 
+        if (article is not null)
+            _positionSourceArticle = article;
+
         if (_loadingPositionEditor)
         {
             if (article is null && _editingPosition is null)
             {
+                _positionSourceArticle = null;
                 PositionQtyTextBox.Value = null;
                 PositionQtyTextBox.Text = string.Empty;
                 PositionAmountText.Text = string.Empty;
@@ -133,25 +154,45 @@ public partial class QuotationEditorView
 
         if (article is null)
         {
-            ScheduleBlankPositionNormalization();
-            UpdatePositionSaveState();
+            // When the user manually edits the selected Article name AutoCompleteBox clears
+            // SelectedItem. Keep _positionSourceArticle so the line remains linked to the
+            // originally chosen database Article, but let the visible text be saved verbatim.
+            if (IsVisuallyBlankNewPositionEditor())
+            {
+                _positionSourceArticle = null;
+                ScheduleBlankPositionNormalization();
+            }
+
+            UpdateStablePositionSaveState();
             return;
         }
 
         ApplySelectedArticleToEditorStable(article);
     }
 
-    private void ArticleAutoComplete_TextChangedNormalizeBlank(object? sender, TextChangedEventArgs e)
+    private void ArticleAutoComplete_TextChangedStable(object? sender, TextChangedEventArgs e)
     {
-        if (_editingPosition is not null)
+        if (_loadingPositionEditor)
             return;
 
-        if (IsVisuallyBlankNewPositionEditor())
+        if (_editingPosition is null && IsVisuallyBlankNewPositionEditor())
         {
+            _positionSourceArticle = null;
             PositionAmountText.Text = string.Empty;
             PositionSaveButton.IsEnabled = false;
             ScheduleBlankPositionNormalization();
+            return;
         }
+
+        UpdateStablePositionSaveState();
+    }
+
+    private void PositionEditor_VisibleFieldChangedStable(object? sender, TextChangedEventArgs e)
+    {
+        if (_loadingPositionEditor)
+            return;
+
+        UpdateStablePositionSaveState();
     }
 
     private bool IsVisuallyBlankNewPositionEditor()
@@ -165,7 +206,7 @@ public partial class QuotationEditorView
     private bool HasMeaningfulPositionEditorChanges()
     {
         if (_editingPosition is not null)
-            return !PositionEditorMatchesCurrentItem();
+            return !PositionEditorMatchesCurrentItemStable();
 
         // Qty and Amount are intentionally excluded for a new blank editor. NumericUpDown can
         // keep a hidden Value even when its text box is visually empty, and Amount is derived.
@@ -212,22 +253,33 @@ public partial class QuotationEditorView
         ViewModel.SetStatusMessage($"Editing position: {item.ArticleName}");
     }
 
-    private void NormalizeLoadedArticleDisplay(MiniERP.Desktop.ViewModels.Quotations.QuotationItemRowViewModel item)
+    private void NormalizeLoadedArticleDisplay(QuotationItemRowViewModel item)
     {
+        _positionSourceArticle = null;
+
         if (item.SourceArticleId is not int articleId)
+        {
+            UpdateStablePositionSaveState();
             return;
+        }
 
         var article = ViewModel.Articles.FirstOrDefault(candidate => candidate.Id == articleId);
         if (article is null)
+        {
+            UpdateStablePositionSaveState();
             return;
+        }
 
+        _positionSourceArticle = article;
         _loadingPositionEditor = true;
         try
         {
             ViewModel.SelectedArticle = article;
             ArticleAutoComplete.SelectedItem = article;
-            ArticleAutoComplete.Text = article.QuotationName;
-            ArticleAutoComplete.CaretIndex = article.QuotationName.Length;
+            // Existing quotation items may deliberately contain a customized Article name.
+            // Keep the stored line name instead of forcing the database Name_EN back over it.
+            ArticleAutoComplete.Text = item.ArticleName;
+            ArticleAutoComplete.CaretIndex = item.ArticleName.Length;
         }
         finally
         {
@@ -257,6 +309,7 @@ public partial class QuotationEditorView
             _loadingPositionEditor = true;
             try
             {
+                _positionSourceArticle = null;
                 ViewModel.SelectedArticle = null;
                 ArticleAutoComplete.IsDropDownOpen = false;
                 ArticleAutoComplete.SelectedItem = null;
@@ -278,6 +331,7 @@ public partial class QuotationEditorView
 
     private void ApplySelectedArticleToEditorStable(Article article)
     {
+        _positionSourceArticle = article;
         _loadingPositionEditor = true;
         try
         {
@@ -304,7 +358,7 @@ public partial class QuotationEditorView
             _loadingPositionEditor = false;
         }
 
-        UpdatePositionSaveState();
+        UpdateStablePositionSaveState();
         ViewModel.SetStatusMessage($"Article selected: {article.QuotationName}. Adjust the position details and click Save.");
     }
 
@@ -316,11 +370,152 @@ public partial class QuotationEditorView
         if (PositionQtyTextBox.Value is null || string.IsNullOrWhiteSpace(PositionQtyTextBox.Text))
         {
             PositionAmountText.Text = string.Empty;
-            UpdatePositionSaveState();
+            UpdateStablePositionSaveState();
             return;
         }
 
         UpdatePositionAmountPreview();
-        UpdatePositionSaveState();
+        UpdateStablePositionSaveState();
+    }
+
+    private void UpdateStablePositionSaveState()
+    {
+        if (_loadingPositionEditor)
+            return;
+
+        var articleName = (ArticleAutoComplete.Text ?? string.Empty).Trim();
+        var quantityText = NormalizeDecimalInput(PositionQtyTextBox.Text);
+        var unit = (PositionUnitTextBox.Text ?? string.Empty).Trim();
+        var unitPriceText = NormalizeDecimalInput(PositionUnitPriceTextBox.Text);
+        var discountText = NormalizeDecimalInput(PositionDiscountTextBox.Text);
+
+        var isValid = !string.IsNullOrWhiteSpace(articleName)
+            && TryParseDecimal(quantityText, out var quantity) && quantity > 0
+            && !string.IsNullOrWhiteSpace(unit)
+            && TryParseDecimal(unitPriceText, out var unitPrice) && unitPrice >= 0
+            && TryParseDecimal(discountText, out var discount) && discount >= 0 && discount <= 100;
+
+        PositionSaveButton.IsEnabled = isValid
+            && (_editingPosition is null || !PositionEditorMatchesCurrentItemStable());
+    }
+
+    private bool PositionEditorMatchesCurrentItemStable()
+    {
+        if (_editingPosition is null)
+            return false;
+
+        var sourceArticleId = _positionSourceArticle?.Id ?? _editingPosition.SourceArticleId;
+
+        return sourceArticleId == _editingPosition.SourceArticleId
+            && string.Equals((ArticleAutoComplete.Text ?? string.Empty).Trim(), _editingPosition.ArticleName, StringComparison.Ordinal)
+            && string.Equals(NormalizeDecimalInput(PositionQtyTextBox.Text), _editingPosition.QuantityText, StringComparison.Ordinal)
+            && string.Equals(PositionUnitTextBox.Text ?? string.Empty, _editingPosition.Unit, StringComparison.Ordinal)
+            && string.Equals(NormalizeDecimalInput(PositionUnitPriceTextBox.Text), _editingPosition.UnitPriceText, StringComparison.Ordinal)
+            && string.Equals(NormalizeDecimalInput(PositionDiscountTextBox.Text), _editingPosition.DiscountText, StringComparison.Ordinal)
+            && string.Equals(PositionDescriptionTextBox.Text ?? string.Empty, _editingPosition.Description ?? string.Empty, StringComparison.Ordinal);
+    }
+
+    private void SavePositionEditStable_Click(object? sender, RoutedEventArgs e)
+    {
+        var articleName = (ArticleAutoComplete.Text ?? string.Empty).Trim();
+        var quantityText = NormalizeDecimalInput(PositionQtyTextBox.Text);
+        var unit = (PositionUnitTextBox.Text ?? string.Empty).Trim();
+        var unitPriceText = NormalizeDecimalInput(PositionUnitPriceTextBox.Text);
+        var discountText = NormalizeDecimalInput(PositionDiscountTextBox.Text);
+        var description = PositionDescriptionTextBox.Text;
+
+        if (string.IsNullOrWhiteSpace(articleName))
+        {
+            ViewModel.SetStatusMessage("The position article name is required.");
+            return;
+        }
+
+        if (!TryParseDecimal(quantityText, out var quantity) || quantity <= 0)
+        {
+            ViewModel.SetStatusMessage($"Quantity for '{articleName}' must be greater than zero.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(unit))
+        {
+            ViewModel.SetStatusMessage($"Unit for '{articleName}' is required.");
+            return;
+        }
+
+        if (!TryParseDecimal(unitPriceText, out var unitPrice) || unitPrice < 0)
+        {
+            ViewModel.SetStatusMessage($"Unit price for '{articleName}' cannot be negative.");
+            return;
+        }
+
+        if (!TryParseDecimal(discountText, out var discount) || discount < 0 || discount > 100)
+        {
+            ViewModel.SetStatusMessage($"Discount for '{articleName}' must be between 0 and 100%.");
+            return;
+        }
+
+        var isNewPosition = _editingPosition is null;
+        QuotationItemRowViewModel target;
+
+        if (isNewPosition)
+        {
+            // Reuse the ViewModel's row-creation path so totals/property subscriptions stay
+            // intact. If this is a completely manual line with no database Article selected,
+            // use a temporary Article only to create the row and immediately clear its source id.
+            var sourceArticle = _positionSourceArticle;
+            Article articleForCreation;
+
+            if (sourceArticle is not null)
+            {
+                articleForCreation = sourceArticle;
+            }
+            else
+            {
+                var cnyPrice = ViewModel.Currency == "USD"
+                    ? unitPrice * ViewModel.ExchangeRateSnapshot
+                    : unitPrice;
+
+                articleForCreation = new Article
+                {
+                    Name = articleName,
+                    Name_EN = articleName,
+                    Description_EN = description,
+                    Price = cnyPrice
+                };
+            }
+
+            ViewModel.SelectedArticle = articleForCreation;
+            var countBefore = ViewModel.Items.Count;
+            ViewModel.AddSelectedArticle();
+            if (ViewModel.Items.Count == countBefore)
+            {
+                UpdateStablePositionSaveState();
+                return;
+            }
+
+            target = ViewModel.Items[^1];
+            target.SetSourceArticle(sourceArticle?.Id);
+        }
+        else
+        {
+            target = _editingPosition!;
+            target.SetSourceArticle(_positionSourceArticle?.Id ?? target.SourceArticleId);
+        }
+
+        // The editor is authoritative. Never replace a manually adjusted line name with the
+        // selected Article's database name during Save.
+        target.ArticleName = articleName;
+        target.QuantityText = quantityText;
+        target.Unit = unit;
+        target.UnitPriceText = unitPriceText;
+        target.DiscountText = discountText;
+        target.Description = description;
+
+        RenumberPositions();
+        ViewModel.SelectedItem = target;
+        ClearPositionEditor();
+        ViewModel.SetStatusMessage(isNewPosition
+            ? $"Position '{target.ArticleName}' added to the overview. Save the document to persist it."
+            : $"Position '{target.ArticleName}' updated in the overview. Save the document to persist it.");
     }
 }
