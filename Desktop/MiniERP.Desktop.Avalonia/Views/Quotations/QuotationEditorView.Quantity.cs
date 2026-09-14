@@ -6,6 +6,7 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using MiniERP.Desktop.Infrastructure;
@@ -18,18 +19,14 @@ public partial class QuotationEditorView
 {
     private bool _articleLookupConfigured;
     private bool _blankPositionNormalizationScheduled;
-    private bool _articleSuggestionClickPending;
     private Control? _articleSuggestionPointerRoot;
+    private Article? _pendingExplicitArticle;
     private Article? _positionSourceArticle;
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
 
-        // These tweaks depend on Fluent control templates having created their visual parts.
-        // Keep a single OnAttachedToVisualTree override for this partial class and initialize
-        // the compact quantity spinner, SelectLine-like navigation frame, and article lookup
-        // behavior together.
         Dispatcher.UIThread.Post(() =>
         {
             ApplyCompactQuantitySpinner();
@@ -76,16 +73,10 @@ public partial class QuotationEditorView
 
         _articleLookupConfigured = true;
 
-        // Typing is only for searching/editing. Matching the text of a database Article must
-        // never by itself commit that Article into the position editor.
+        // Typing is only search/edit input. Merely making the text equal to an Article name
+        // must never import that Article into the position editor.
         ArticleAutoComplete.IsTextCompletionEnabled = false;
-
-        // The popup deliberately keeps Article.Name through its ItemTemplate so the sales
-        // team can identify products by the familiar Chinese/internal name. The selected
-        // text, however, is the quotation-facing English name.
         ArticleAutoComplete.ValueMemberBinding = new Binding(nameof(Article.QuotationName));
-
-        // Search both internal/Chinese and English names.
         ArticleAutoComplete.ItemFilter = (search, item) =>
         {
             if (item is not Article article)
@@ -98,51 +89,59 @@ public partial class QuotationEditorView
                 || (article.Name_EN?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
         };
 
-        // SelectedItem is only used to seed the editor from the Article database. Once the
-        // fields are populated, the visible editor values are authoritative and may be
-        // changed freely before Position Save.
+        // Stop the original SelectedArticle-driven workflow. Article data is imported only by
+        // CommitExplicitArticleSelection, which is called from a real suggestion click, Enter
+        // on an open suggestion list, or the explicit "..." picker.
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ArticleAutoComplete.SelectionChanged += ArticleAutoComplete_SelectionChangedStable;
         ArticleAutoComplete.DropDownOpened += ArticleAutoComplete_DropDownOpened;
+        ArticleAutoComplete.KeyDown += ArticleAutoComplete_KeyDown;
 
-        // Article text editing intentionally breaks AutoCompleteBox.SelectedItem. Do not use
-        // the old TextChanged handler for this field because it treated SelectedArticle as a
-        // prerequisite for Save. The editor itself is now the source of truth.
         ArticleAutoComplete.TextChanged -= PositionEditor_TextChanged;
         ArticleAutoComplete.TextChanged += ArticleAutoComplete_TextChangedStable;
 
-        // The other fields still use their existing calculation handler. Add a second handler
-        // afterwards so the final Save state is based on the visible editor values rather than
-        // AutoCompleteBox selection state.
         PositionUnitTextBox.TextChanged += PositionEditor_VisibleFieldChangedStable;
         PositionUnitPriceTextBox.TextChanged += PositionEditor_VisibleFieldChangedStable;
         PositionDiscountTextBox.TextChanged += PositionEditor_VisibleFieldChangedStable;
         PositionDescriptionTextBox.TextChanged += PositionEditor_VisibleFieldChangedStable;
 
-        // Replace the original Position Save handler for the same reason: saving must persist
-        // exactly what is currently in the editor, including a manually adjusted Article name.
         PositionSaveButton.Click -= SavePositionEdit_Click;
         PositionSaveButton.Click += SavePositionEditStable_Click;
 
-        // Replace the original row double-tap handler. NumericUpDown and AutoCompleteBox can
-        // retain transient internal values after the editor is visually cleared. A row switch
-        // warning should be based on meaningful, visible user edits instead of those internal
-        // control values.
         PositionsGrid.DoubleTapped -= PositionsGrid_DoubleTapped;
         PositionsGrid.DoubleTapped += PositionsGrid_DoubleTappedStable;
 
-        if (ArticleAutoComplete.SelectedItem is Article selected)
+        // Replace the Article picker button as well, otherwise setting SelectedArticle from
+        // the old picker path would no longer have an explicit commit point.
+        if (ArticleAutoComplete.GetLogicalParent() is Grid articleLookupGrid)
         {
-            _positionSourceArticle = selected;
-            ViewModel.SelectedArticle = selected;
+            var pickerButton = articleLookupGrid.Children
+                .OfType<Button>()
+                .FirstOrDefault(button => !ReferenceEquals(button, ArticleAutoComplete));
+            if (pickerButton is not null)
+            {
+                pickerButton.Click -= PickArticle_Click;
+                pickerButton.Click += PickArticleStable_Click;
+            }
+        }
+
+        // The document Save command used the legacy hidden-control dirty check. Replace only
+        // that toolbar handler so a genuinely blank Position editor cannot block quotation Save.
+        var documentSaveButton = this.GetLogicalDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(button => !ReferenceEquals(button, PositionSaveButton)
+                && button.GetLogicalDescendants()
+                    .OfType<TextBlock>()
+                    .Any(text => string.Equals(text.Text, "Save", StringComparison.Ordinal)));
+        if (documentSaveButton is not null)
+        {
+            documentSaveButton.Click -= Save_Click;
+            documentSaveButton.Click += SaveDocumentStable_Click;
         }
     }
 
     private void ArticleAutoComplete_DropDownOpened(object? sender, EventArgs e)
     {
-        // AutoCompleteBox renders suggestions inside a Popup. Hook that popup's visual root so
-        // we can distinguish an explicit click on a suggestion from an automatic exact-text
-        // match performed internally by the control.
         Dispatcher.UIThread.Post(() =>
         {
             var popup = ArticleAutoComplete.GetVisualDescendants().OfType<Popup>().FirstOrDefault();
@@ -178,8 +177,33 @@ public partial class QuotationEditorView
                 .OfType<Article>()
                 .FirstOrDefault();
 
-        if (article is not null)
-            _articleSuggestionClickPending = true;
+        if (article is null)
+            return;
+
+        _pendingExplicitArticle = article;
+
+        // Let AutoCompleteBox finish its own click/selection bookkeeping first. We then seed
+        // the editor exactly once from the Article the user actually clicked.
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!ReferenceEquals(_pendingExplicitArticle, article))
+                return;
+
+            _pendingExplicitArticle = null;
+            CommitExplicitArticleSelection(article);
+        });
+    }
+
+    private void ArticleAutoComplete_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || !ArticleAutoComplete.IsDropDownOpen)
+            return;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (ArticleAutoComplete.SelectedItem is Article article)
+                CommitExplicitArticleSelection(article);
+        });
     }
 
     private void ArticleAutoComplete_SelectionChangedStable(object? sender, SelectionChangedEventArgs e)
@@ -188,29 +212,15 @@ public partial class QuotationEditorView
 
         if (_loadingPositionEditor)
         {
-            _articleSuggestionClickPending = false;
             ViewModel.SelectedArticle = article;
-
-            if (article is null && _editingPosition is null)
-            {
-                _positionSourceArticle = null;
-                PositionQtyTextBox.Value = null;
-                PositionQtyTextBox.Text = string.Empty;
-                PositionAmountText.Text = string.Empty;
-                ScheduleBlankPositionNormalization();
-            }
             return;
         }
 
         if (article is null)
         {
-            _articleSuggestionClickPending = false;
             ViewModel.SelectedArticle = null;
 
-            // When the user manually edits the selected Article name AutoCompleteBox clears
-            // SelectedItem. Keep _positionSourceArticle so the line remains linked to the
-            // originally chosen database Article, but let the visible text be saved verbatim.
-            if (IsVisuallyBlankNewPositionEditor())
+            if (_editingPosition is null && IsVisuallyBlankNewPositionEditor())
             {
                 _positionSourceArticle = null;
                 ScheduleBlankPositionNormalization();
@@ -220,23 +230,12 @@ public partial class QuotationEditorView
             return;
         }
 
-        var explicitlyClickedSuggestion = _articleSuggestionClickPending;
-        _articleSuggestionClickPending = false;
-
-        // Avalonia can select an item internally when edited text becomes an exact match for a
-        // suggestion. That must not overwrite Qty/Price/Description that the user has already
-        // customized. Only an explicit suggestion click (or a programmatic picker selection,
-        // which occurs while the popup is closed) is allowed to seed the editor.
-        var searchText = (ArticleAutoComplete.SearchText ?? string.Empty).Trim();
-        var looksLikeAutomaticExactMatch = ArticleAutoComplete.IsDropDownOpen
-            && !explicitlyClickedSuggestion
-            && string.Equals(searchText, article.QuotationName, StringComparison.OrdinalIgnoreCase);
-
-        if (looksLikeAutomaticExactMatch)
+        // IMPORTANT: SelectionChanged alone is never permission to overwrite the editor.
+        // Avalonia can select an exact text match while the user is merely typing. Explicit
+        // mouse/keyboard/picker paths call CommitExplicitArticleSelection separately.
+        if (!ReferenceEquals(_pendingExplicitArticle, article))
         {
-            var textToPreserve = string.IsNullOrEmpty(ArticleAutoComplete.SearchText)
-                ? ArticleAutoComplete.Text ?? string.Empty
-                : ArticleAutoComplete.SearchText;
+            var textToPreserve = ArticleAutoComplete.Text ?? string.Empty;
             var sourceToPreserve = _positionSourceArticle;
 
             _loadingPositionEditor = true;
@@ -254,11 +253,36 @@ public partial class QuotationEditorView
             }
 
             UpdateStablePositionSaveState();
+        }
+    }
+
+    private async void PickArticleStable_Click(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
             return;
+
+        var picker = new ArticlePickerWindow(ViewModel.Articles, _positionSourceArticle?.Id);
+        var selected = await picker.ShowDialog<Article?>(owner);
+        if (selected is not null)
+            CommitExplicitArticleSelection(selected);
+    }
+
+    private void CommitExplicitArticleSelection(Article article)
+    {
+        _pendingExplicitArticle = null;
+        _positionSourceArticle = article;
+
+        _loadingPositionEditor = true;
+        try
+        {
+            ViewModel.SelectedArticle = article;
+            ArticleAutoComplete.SelectedItem = article;
+        }
+        finally
+        {
+            _loadingPositionEditor = false;
         }
 
-        ViewModel.SelectedArticle = article;
-        _positionSourceArticle = article;
         ApplySelectedArticleToEditorStable(article);
     }
 
@@ -300,10 +324,8 @@ public partial class QuotationEditorView
         if (_editingPosition is not null)
             return !PositionEditorMatchesCurrentItemStable();
 
-        // Qty and Amount are intentionally excluded for a new blank editor. NumericUpDown can
-        // keep a hidden Value even when its text box is visually empty, and Amount is derived.
-        // With no article/name or other editable position data there is nothing meaningful to
-        // lose, so switching rows must not show a discard warning.
+        // Qty and Amount are excluded for a new blank editor: Qty is a NumericUpDown with a
+        // separate internal Value and Amount is derived. Neither should create phantom edits.
         return !string.IsNullOrWhiteSpace(ArticleAutoComplete.Text)
             || !string.IsNullOrWhiteSpace(PositionUnitTextBox.Text)
             || !string.IsNullOrWhiteSpace(PositionUnitPriceTextBox.Text)
@@ -368,8 +390,8 @@ public partial class QuotationEditorView
         {
             ViewModel.SelectedArticle = article;
             ArticleAutoComplete.SelectedItem = article;
-            // Existing quotation items may deliberately contain a customized Article name.
-            // Keep the stored line name instead of forcing the database Name_EN back over it.
+            // Preserve a customized line name. Loading an existing position must never force
+            // the current database Name_EN back over the stored quotation line.
             ArticleAutoComplete.Text = item.ArticleName;
             ArticleAutoComplete.CaretIndex = item.ArticleName.Length;
         }
@@ -389,36 +411,43 @@ public partial class QuotationEditorView
         _blankPositionNormalizationScheduled = true;
         Dispatcher.UIThread.Post(() =>
         {
-            // A visually blank editor wins over stale internal control state. In particular,
-            // AutoCompleteBox can temporarily restore its old SelectedItem after Text has
-            // already been cleared. Do not let that stale selection abort the cleanup.
             if (_editingPosition is not null || !IsVisuallyBlankNewPositionEditor())
             {
                 _blankPositionNormalizationScheduled = false;
                 return;
             }
 
-            _loadingPositionEditor = true;
-            try
-            {
-                _positionSourceArticle = null;
-                ViewModel.SelectedArticle = null;
-                ArticleAutoComplete.IsDropDownOpen = false;
-                ArticleAutoComplete.SelectedItem = null;
-                ArticleAutoComplete.Text = string.Empty;
-                ArticleAutoComplete.CaretIndex = 0;
-
-                PositionQtyTextBox.Value = null;
-                PositionQtyTextBox.Text = string.Empty;
-                PositionAmountText.Text = string.Empty;
-                PositionSaveButton.IsEnabled = false;
-            }
-            finally
-            {
-                _loadingPositionEditor = false;
-                _blankPositionNormalizationScheduled = false;
-            }
+            ForceBlankPositionEditorState();
+            _blankPositionNormalizationScheduled = false;
         });
+    }
+
+    private void ForceBlankPositionEditorState()
+    {
+        _loadingPositionEditor = true;
+        try
+        {
+            _pendingExplicitArticle = null;
+            _positionSourceArticle = null;
+            ViewModel.SelectedArticle = null;
+            ArticleAutoComplete.IsDropDownOpen = false;
+            ArticleAutoComplete.SelectedItem = null;
+            ArticleAutoComplete.Text = string.Empty;
+            ArticleAutoComplete.CaretIndex = 0;
+
+            PositionQtyTextBox.Value = null;
+            PositionQtyTextBox.Text = string.Empty;
+            PositionUnitTextBox.Text = string.Empty;
+            PositionUnitPriceTextBox.Text = string.Empty;
+            PositionDiscountTextBox.Text = string.Empty;
+            PositionDescriptionTextBox.Text = string.Empty;
+            PositionAmountText.Text = string.Empty;
+            PositionSaveButton.IsEnabled = false;
+        }
+        finally
+        {
+            _loadingPositionEditor = false;
+        }
     }
 
     private void ApplySelectedArticleToEditorStable(Article article)
@@ -552,8 +581,7 @@ public partial class QuotationEditorView
         if (isNewPosition)
         {
             // Reuse the ViewModel's row-creation path so totals/property subscriptions stay
-            // intact. If this is a completely manual line with no database Article selected,
-            // use a temporary Article only to create the row and immediately clear its source id.
+            // intact. A completely manual line uses a temporary Article only to create the row.
             var sourceArticle = _positionSourceArticle;
             Article articleForCreation;
 
@@ -594,8 +622,8 @@ public partial class QuotationEditorView
             target.SetSourceArticle(_positionSourceArticle?.Id ?? target.SourceArticleId);
         }
 
-        // The editor is authoritative. Never replace a manually adjusted line name with the
-        // selected Article's database name during Save.
+        // The visible editor is authoritative. Never replace a manually adjusted line name
+        // with the database Article name during Position Save.
         target.ArticleName = articleName;
         target.QuantityText = quantityText;
         target.Unit = unit;
@@ -606,8 +634,30 @@ public partial class QuotationEditorView
         RenumberPositions();
         ViewModel.SelectedItem = target;
         ClearPositionEditor();
+        ForceBlankPositionEditorState();
+        ScheduleBlankPositionNormalization();
+
         ViewModel.SetStatusMessage(isNewPosition
             ? $"Position '{target.ArticleName}' added to the overview. Save the document to persist it."
             : $"Position '{target.ArticleName}' updated in the overview. Save the document to persist it.");
+    }
+
+    private async void SaveDocumentStable_Click(object? sender, RoutedEventArgs e)
+    {
+        if (HasMeaningfulPositionEditorChanges())
+        {
+            ViewModel.SetStatusMessage("The position editor has unapplied changes. Click Position Save or Discard first.");
+            return;
+        }
+
+        // Normalize any stale AutoCompleteBox/NumericUpDown state before saving the document.
+        if (_editingPosition is null && IsVisuallyBlankNewPositionEditor())
+            ForceBlankPositionEditorState();
+
+        if (!await ViewModel.SaveAsync())
+            return;
+
+        _dirtyMonitor.MarkClean();
+        Saved?.Invoke(this, EventArgs.Empty);
     }
 }
