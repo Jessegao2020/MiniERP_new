@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -11,7 +12,6 @@ namespace MiniERP.Desktop.Views.Quotations;
 
 public partial class QuotationEditorView
 {
-    private bool _articleEnglishDisplayHooked;
     private bool _articleLookupConfigured;
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -27,7 +27,6 @@ public partial class QuotationEditorView
             ApplyCompactQuantitySpinner();
             InstallSectionNavigationFrame();
             ConfigureArticleLookup();
-            HookArticleEnglishDisplay();
         });
     }
 
@@ -69,12 +68,12 @@ public partial class QuotationEditorView
 
         _articleLookupConfigured = true;
 
-        // The text portion of the lookup must use the quotation-facing English name.
-        // The ItemTemplate still renders Article.Name, so the popup remains the familiar
-        // Chinese/internal product list used by the sales team.
+        // The popup deliberately keeps Article.Name through its ItemTemplate so the sales
+        // team can identify products by the familiar Chinese/internal name. The selected
+        // text, however, is the quotation-facing English name.
         ArticleAutoComplete.ValueMemberBinding = new Binding(nameof(Article.QuotationName));
 
-        // Search both the internal/Chinese name and the quotation-facing English name.
+        // Search both internal/Chinese and English names.
         ArticleAutoComplete.ItemFilter = (search, item) =>
         {
             if (item is not Article article)
@@ -86,88 +85,81 @@ public partial class QuotationEditorView
             return (article.Name?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
                 || (article.Name_EN?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
         };
+
+        // SelectedItem is the authoritative state for the Article lookup. The previous
+        // implementation tried to rewrite AutoCompleteBox.Text asynchronously after a
+        // selection. That allowed Text, SelectedItem and ViewModel.SelectedArticle to drift
+        // apart: Save could remain disabled, and a visually empty editor could still look
+        // dirty to HasUnappliedPositionChanges(). Keep the three states synchronized from
+        // one event instead.
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ArticleAutoComplete.SelectionChanged += ArticleAutoComplete_SelectionChangedStable;
+
+        if (ArticleAutoComplete.SelectedItem is Article selected)
+            ViewModel.SelectedArticle = selected;
     }
 
-    private void HookArticleEnglishDisplay()
+    private void ArticleAutoComplete_SelectionChangedStable(object? sender, SelectionChangedEventArgs e)
     {
-        if (_articleEnglishDisplayHooked)
-            return;
+        var article = ArticleAutoComplete.SelectedItem as Article;
+        ViewModel.SelectedArticle = article;
 
-        _articleEnglishDisplayHooked = true;
-        ArticleAutoComplete.SelectionChanged += ArticleAutoComplete_SelectionChanged;
-
-        if (ArticleAutoComplete.SelectedItem is Article article)
-            QueueEnglishArticleName(article);
-    }
-
-    private void ArticleAutoComplete_SelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (ArticleAutoComplete.SelectedItem is Article article)
+        if (_loadingPositionEditor)
         {
-            QueueEnglishArticleName(article);
-            return;
-        }
-
-        // NumericUpDown keeps a nullable Value separately from its visible Text. Clearing
-        // the editor by assigning Text="" can therefore leave a hidden numeric value behind.
-        // HasUnappliedPositionChanges() then sees the quantity as non-empty even though the
-        // editor looks blank, which caused an unnecessary discard prompt immediately after
-        // saving. Once article selection is cleared, normalize the blank editor on the next
-        // UI turn and clear the derived Amount as well.
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (_editingPosition is not null || ViewModel.SelectedArticle is not null || !string.IsNullOrWhiteSpace(ArticleAutoComplete.Text))
-                return;
-
-            _loadingPositionEditor = true;
-            try
+            // ClearPositionEditor runs with _loadingPositionEditor=true. NumericUpDown keeps
+            // Value separately from its visible Text, so reset the internal value here while
+            // the editor is being cleared. This prevents a blank editor from later reporting
+            // unsaved changes and also prevents Amount from reappearing as 0.00.
+            if (article is null && _editingPosition is null)
             {
                 PositionQtyTextBox.Value = null;
                 PositionQtyTextBox.Text = string.Empty;
-
-                if (string.IsNullOrWhiteSpace(PositionUnitTextBox.Text)
-                    && string.IsNullOrWhiteSpace(PositionUnitPriceTextBox.Text)
-                    && string.IsNullOrWhiteSpace(PositionDiscountTextBox.Text)
-                    && string.IsNullOrWhiteSpace(PositionDescriptionTextBox.Text))
-                {
-                    PositionAmountText.Text = string.Empty;
-                }
+                PositionAmountText.Text = string.Empty;
             }
-            finally
-            {
-                _loadingPositionEditor = false;
-            }
+            return;
+        }
 
-            PositionSaveButton.IsEnabled = false;
-        });
+        if (article is null)
+        {
+            UpdatePositionSaveState();
+            return;
+        }
+
+        ApplySelectedArticleToEditorStable(article);
     }
 
-    private void QueueEnglishArticleName(Article article)
+    private void ApplySelectedArticleToEditorStable(Article article)
     {
-        // ApplySelectedArticleToEditor fills the editor fields when selection changes.
-        // AutoCompleteBox then finishes its own text synchronization asynchronously. Post one
-        // final assignment using the SAME value exposed through ValueMemberBinding. Because
-        // those values now match, the control no longer clears SelectedItem/SelectedArticle.
-        Dispatcher.UIThread.Post(() =>
+        _loadingPositionEditor = true;
+        try
         {
-            if (!ReferenceEquals(ArticleAutoComplete.SelectedItem, article))
+            // This value matches ValueMemberBinding, so assigning it does not invalidate the
+            // current AutoCompleteBox selection.
+            ArticleAutoComplete.Text = article.QuotationName;
+            PositionQtyTextBox.Value = 1m;
+            PositionQtyTextBox.Text = "1";
+            PositionUnitTextBox.Text = "PCS";
+            PositionDiscountTextBox.Text = "0";
+            PositionDescriptionTextBox.Text = article.Description_EN ?? string.Empty;
+
+            if (!TryGetArticleUnitPrice(article, out var unitPrice))
+            {
+                PositionUnitPriceTextBox.Text = string.Empty;
+                PositionAmountText.Text = string.Empty;
+                PositionSaveButton.IsEnabled = false;
                 return;
-
-            var displayName = article.QuotationName;
-
-            _loadingPositionEditor = true;
-            try
-            {
-                ArticleAutoComplete.Text = displayName;
-                ArticleAutoComplete.CaretIndex = displayName.Length;
-            }
-            finally
-            {
-                _loadingPositionEditor = false;
             }
 
-            UpdatePositionSaveState();
-        });
+            PositionUnitPriceTextBox.Text = unitPrice.ToString("0.####", CultureInfo.InvariantCulture);
+            UpdatePositionAmountPreview();
+        }
+        finally
+        {
+            _loadingPositionEditor = false;
+        }
+
+        UpdatePositionSaveState();
+        ViewModel.SetStatusMessage($"Article selected: {article.QuotationName}. Adjust the position details and click Save.");
     }
 
     private void PositionQty_ValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)
