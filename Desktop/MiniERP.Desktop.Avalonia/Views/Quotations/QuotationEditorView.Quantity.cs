@@ -14,6 +14,7 @@ namespace MiniERP.Desktop.Views.Quotations;
 public partial class QuotationEditorView
 {
     private bool _articleLookupConfigured;
+    private bool _blankPositionNormalizationScheduled;
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -114,24 +115,77 @@ public partial class QuotationEditorView
         {
             // ClearPositionEditor runs with _loadingPositionEditor=true. NumericUpDown keeps
             // Value separately from its visible Text, so reset the internal value here while
-            // the editor is being cleared. This prevents a blank editor from later reporting
-            // unsaved changes and also prevents Amount from reappearing as 0.00.
+            // the editor is being cleared.
             if (article is null && _editingPosition is null)
             {
                 PositionQtyTextBox.Value = null;
                 PositionQtyTextBox.Text = string.Empty;
                 PositionAmountText.Text = string.Empty;
+                ScheduleBlankPositionNormalization();
             }
             return;
         }
 
         if (article is null)
         {
+            ScheduleBlankPositionNormalization();
             UpdatePositionSaveState();
             return;
         }
 
         ApplySelectedArticleToEditorStable(article);
+    }
+
+    private void ScheduleBlankPositionNormalization()
+    {
+        if (_blankPositionNormalizationScheduled)
+            return;
+
+        _blankPositionNormalizationScheduled = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            _blankPositionNormalizationScheduled = false;
+
+            // Do not interfere if the user has already started another position or loaded an
+            // existing one before this deferred cleanup runs.
+            if (_editingPosition is not null
+                || ArticleAutoComplete.SelectedItem is not null
+                || !string.IsNullOrWhiteSpace(ArticleAutoComplete.Text))
+            {
+                return;
+            }
+
+            _loadingPositionEditor = true;
+            try
+            {
+                // AutoCompleteBox and NumericUpDown both have internal state that can settle
+                // one dispatcher turn after their visible text was cleared. Normalize those
+                // hidden values after Save/Discard so a visually blank editor is also blank
+                // to HasUnappliedPositionChanges().
+                ViewModel.SelectedArticle = null;
+                ArticleAutoComplete.IsDropDownOpen = false;
+                ArticleAutoComplete.SelectedItem = null;
+                ArticleAutoComplete.Text = string.Empty;
+                ArticleAutoComplete.CaretIndex = 0;
+
+                PositionQtyTextBox.Value = null;
+                PositionQtyTextBox.Text = string.Empty;
+
+                if (string.IsNullOrWhiteSpace(PositionUnitTextBox.Text)
+                    && string.IsNullOrWhiteSpace(PositionUnitPriceTextBox.Text)
+                    && string.IsNullOrWhiteSpace(PositionDiscountTextBox.Text)
+                    && string.IsNullOrWhiteSpace(PositionDescriptionTextBox.Text))
+                {
+                    PositionAmountText.Text = string.Empty;
+                }
+            }
+            finally
+            {
+                _loadingPositionEditor = false;
+            }
+
+            PositionSaveButton.IsEnabled = false;
+        });
     }
 
     private void ApplySelectedArticleToEditorStable(Article article)
@@ -197,6 +251,16 @@ public partial class QuotationEditorView
     {
         if (_loadingPositionEditor)
             return;
+
+        // A blank quantity means there is no line to total. Avoid turning the derived Amount
+        // back into 0.00 after Save/Discard just because NumericUpDown finishes clearing its
+        // internal Value on a later dispatcher turn.
+        if (PositionQtyTextBox.Value is null || string.IsNullOrWhiteSpace(PositionQtyTextBox.Text))
+        {
+            PositionAmountText.Text = string.Empty;
+            UpdatePositionSaveState();
+            return;
+        }
 
         UpdatePositionAmountPreview();
         UpdatePositionSaveState();
