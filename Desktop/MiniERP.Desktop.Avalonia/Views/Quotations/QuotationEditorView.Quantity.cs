@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -95,6 +96,11 @@ public partial class QuotationEditorView
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ArticleAutoComplete.SelectionChanged += ArticleAutoComplete_SelectionChangedStable;
 
+        // LoadPositionEditor in the original editor still assigns the internal Name to Text.
+        // Normalize it after the normal double-click handler has loaded the row so an existing
+        // position also keeps a valid SelectedItem and displays the English quotation name.
+        PositionsGrid.DoubleTapped += PositionsGrid_DoubleTappedNormalizeArticle;
+
         if (ArticleAutoComplete.SelectedItem is Article selected)
             ViewModel.SelectedArticle = selected;
     }
@@ -160,6 +166,31 @@ public partial class QuotationEditorView
 
         UpdatePositionSaveState();
         ViewModel.SetStatusMessage($"Article selected: {article.QuotationName}. Adjust the position details and click Save.");
+    }
+
+    private void PositionsGrid_DoubleTappedNormalizeArticle(object? sender, TappedEventArgs e)
+    {
+        if (_editingPosition?.SourceArticleId is not int articleId)
+            return;
+
+        var article = ViewModel.Articles.FirstOrDefault(candidate => candidate.Id == articleId);
+        if (article is null)
+            return;
+
+        _loadingPositionEditor = true;
+        try
+        {
+            ViewModel.SelectedArticle = article;
+            ArticleAutoComplete.SelectedItem = article;
+            ArticleAutoComplete.Text = article.QuotationName;
+            ArticleAutoComplete.CaretIndex = article.QuotationName.Length;
+        }
+        finally
+        {
+            _loadingPositionEditor = false;
+        }
+
+        PositionSaveButton.IsEnabled = false;
     }
 
     private void PositionQty_ValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)
