@@ -18,6 +18,8 @@ public partial class QuotationEditorView
 {
     private bool _articleLookupConfigured;
     private bool _blankPositionNormalizationScheduled;
+    private bool _articleSuggestionClickPending;
+    private Control? _articleSuggestionPointerRoot;
     private Article? _positionSourceArticle;
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -74,6 +76,10 @@ public partial class QuotationEditorView
 
         _articleLookupConfigured = true;
 
+        // Typing is only for searching/editing. Matching the text of a database Article must
+        // never by itself commit that Article into the position editor.
+        ArticleAutoComplete.IsTextCompletionEnabled = false;
+
         // The popup deliberately keeps Article.Name through its ItemTemplate so the sales
         // team can identify products by the familiar Chinese/internal name. The selected
         // text, however, is the quotation-facing English name.
@@ -97,6 +103,7 @@ public partial class QuotationEditorView
         // changed freely before Position Save.
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ArticleAutoComplete.SelectionChanged += ArticleAutoComplete_SelectionChangedStable;
+        ArticleAutoComplete.DropDownOpened += ArticleAutoComplete_DropDownOpened;
 
         // Article text editing intentionally breaks AutoCompleteBox.SelectedItem. Do not use
         // the old TextChanged handler for this field because it treated SelectedArticle as a
@@ -131,16 +138,59 @@ public partial class QuotationEditorView
         }
     }
 
+    private void ArticleAutoComplete_DropDownOpened(object? sender, EventArgs e)
+    {
+        // AutoCompleteBox renders suggestions inside a Popup. Hook that popup's visual root so
+        // we can distinguish an explicit click on a suggestion from an automatic exact-text
+        // match performed internally by the control.
+        Dispatcher.UIThread.Post(() =>
+        {
+            var popup = ArticleAutoComplete.GetVisualDescendants().OfType<Popup>().FirstOrDefault();
+            var pointerRoot = popup?.Child;
+            if (pointerRoot is null || ReferenceEquals(pointerRoot, _articleSuggestionPointerRoot))
+                return;
+
+            if (_articleSuggestionPointerRoot is not null)
+            {
+                _articleSuggestionPointerRoot.RemoveHandler(
+                    InputElement.PointerPressedEvent,
+                    ArticleSuggestion_PointerPressed);
+            }
+
+            _articleSuggestionPointerRoot = pointerRoot;
+            _articleSuggestionPointerRoot.AddHandler(
+                InputElement.PointerPressedEvent,
+                ArticleSuggestion_PointerPressed,
+                RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+                handledEventsToo: true);
+        });
+    }
+
+    private void ArticleSuggestion_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!ArticleAutoComplete.IsDropDownOpen || e.Source is not Visual source)
+            return;
+
+        var article = (source as StyledElement)?.DataContext as Article
+            ?? source.GetVisualAncestors()
+                .OfType<StyledElement>()
+                .Select(element => element.DataContext)
+                .OfType<Article>()
+                .FirstOrDefault();
+
+        if (article is not null)
+            _articleSuggestionClickPending = true;
+    }
+
     private void ArticleAutoComplete_SelectionChangedStable(object? sender, SelectionChangedEventArgs e)
     {
         var article = ArticleAutoComplete.SelectedItem as Article;
-        ViewModel.SelectedArticle = article;
-
-        if (article is not null)
-            _positionSourceArticle = article;
 
         if (_loadingPositionEditor)
         {
+            _articleSuggestionClickPending = false;
+            ViewModel.SelectedArticle = article;
+
             if (article is null && _editingPosition is null)
             {
                 _positionSourceArticle = null;
@@ -154,6 +204,9 @@ public partial class QuotationEditorView
 
         if (article is null)
         {
+            _articleSuggestionClickPending = false;
+            ViewModel.SelectedArticle = null;
+
             // When the user manually edits the selected Article name AutoCompleteBox clears
             // SelectedItem. Keep _positionSourceArticle so the line remains linked to the
             // originally chosen database Article, but let the visible text be saved verbatim.
@@ -167,6 +220,45 @@ public partial class QuotationEditorView
             return;
         }
 
+        var explicitlyClickedSuggestion = _articleSuggestionClickPending;
+        _articleSuggestionClickPending = false;
+
+        // Avalonia can select an item internally when edited text becomes an exact match for a
+        // suggestion. That must not overwrite Qty/Price/Description that the user has already
+        // customized. Only an explicit suggestion click (or a programmatic picker selection,
+        // which occurs while the popup is closed) is allowed to seed the editor.
+        var searchText = (ArticleAutoComplete.SearchText ?? string.Empty).Trim();
+        var looksLikeAutomaticExactMatch = ArticleAutoComplete.IsDropDownOpen
+            && !explicitlyClickedSuggestion
+            && string.Equals(searchText, article.QuotationName, StringComparison.OrdinalIgnoreCase);
+
+        if (looksLikeAutomaticExactMatch)
+        {
+            var textToPreserve = string.IsNullOrEmpty(ArticleAutoComplete.SearchText)
+                ? ArticleAutoComplete.Text ?? string.Empty
+                : ArticleAutoComplete.SearchText;
+            var sourceToPreserve = _positionSourceArticle;
+
+            _loadingPositionEditor = true;
+            try
+            {
+                ArticleAutoComplete.SelectedItem = null;
+                ViewModel.SelectedArticle = null;
+                _positionSourceArticle = sourceToPreserve;
+                ArticleAutoComplete.Text = textToPreserve;
+                ArticleAutoComplete.CaretIndex = textToPreserve.Length;
+            }
+            finally
+            {
+                _loadingPositionEditor = false;
+            }
+
+            UpdateStablePositionSaveState();
+            return;
+        }
+
+        ViewModel.SelectedArticle = article;
+        _positionSourceArticle = article;
         ApplySelectedArticleToEditorStable(article);
     }
 
