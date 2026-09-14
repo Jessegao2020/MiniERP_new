@@ -150,6 +150,7 @@ public partial class QuotationEditorView
         {
             PositionAmountText.Text = string.Empty;
             PositionSaveButton.IsEnabled = false;
+            ScheduleBlankPositionNormalization();
         }
     }
 
@@ -244,12 +245,12 @@ public partial class QuotationEditorView
         _blankPositionNormalizationScheduled = true;
         Dispatcher.UIThread.Post(() =>
         {
-            _blankPositionNormalizationScheduled = false;
-
-            if (_editingPosition is not null
-                || ArticleAutoComplete.SelectedItem is not null
-                || !string.IsNullOrWhiteSpace(ArticleAutoComplete.Text))
+            // A visually blank editor wins over stale internal control state. In particular,
+            // AutoCompleteBox can temporarily restore its old SelectedItem after Text has
+            // already been cleared. Do not let that stale selection abort the cleanup.
+            if (_editingPosition is not null || !IsVisuallyBlankNewPositionEditor())
             {
+                _blankPositionNormalizationScheduled = false;
                 return;
             }
 
@@ -264,21 +265,14 @@ public partial class QuotationEditorView
 
                 PositionQtyTextBox.Value = null;
                 PositionQtyTextBox.Text = string.Empty;
-
-                if (string.IsNullOrWhiteSpace(PositionUnitTextBox.Text)
-                    && string.IsNullOrWhiteSpace(PositionUnitPriceTextBox.Text)
-                    && string.IsNullOrWhiteSpace(PositionDiscountTextBox.Text)
-                    && string.IsNullOrWhiteSpace(PositionDescriptionTextBox.Text))
-                {
-                    PositionAmountText.Text = string.Empty;
-                }
+                PositionAmountText.Text = string.Empty;
+                PositionSaveButton.IsEnabled = false;
             }
             finally
             {
                 _loadingPositionEditor = false;
+                _blankPositionNormalizationScheduled = false;
             }
-
-            PositionSaveButton.IsEnabled = false;
         });
     }
 
