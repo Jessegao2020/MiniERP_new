@@ -218,14 +218,16 @@ public static class QuotationPdfExporter
     private static float DrawTableHeader(SKCanvas canvas, string currency, float y)
     {
         using var header = Paint(9f, Bold);
-        using var currencyPaint = Paint(8f, Bold);
+        using var priceHeader = Paint(7.8f, Bold);
         using var line = Stroke(0.8f, new SKColor(70, 70, 70));
 
-        CenterText(canvas, $"({currency})", 337f, y + 3f, currencyPaint);
+        var normalizedCurrency = string.IsNullOrWhiteSpace(currency)
+            ? "USD"
+            : currency.Trim().ToUpperInvariant();
         var baseline = y + 17f;
         CenterText(canvas, "Item", ItemCenterX, baseline, header);
         DocumentPdfStyle.DrawText(canvas, "Product", ProductX, baseline, header);
-        RightText(canvas, "Unit Price", UnitPriceRightX, baseline, header);
+        RightText(canvas, $"{normalizedCurrency} Unit Price", UnitPriceRightX, baseline, priceHeader);
         RightText(canvas, "Quantity", QuantityRightX, baseline, header);
         CenterText(canvas, "Unit", UnitCenterX, baseline, header);
         RightText(canvas, "Amount", AmountRightX, baseline, header);
@@ -335,9 +337,15 @@ public static class QuotationPdfExporter
     }
 
     private static string FormatMoney(decimal value, string currency)
-        => string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase)
-            ? $"${value:N2}"
-            : $"CNY {value:N2}";
+    {
+        if (string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase))
+            return $"${value:N2}";
+
+        if (string.Equals(currency, "CNY", StringComparison.OrdinalIgnoreCase))
+            return $"￥{value:N2}";
+
+        return $"{currency} {value:N2}".Trim();
+    }
 
     private static string FormatQuantity(decimal value)
         => value == decimal.Truncate(value) ? value.ToString("0") : value.ToString("0.####");
