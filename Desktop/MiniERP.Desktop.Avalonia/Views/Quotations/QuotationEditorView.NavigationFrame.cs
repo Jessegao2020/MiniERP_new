@@ -12,6 +12,10 @@ public partial class QuotationEditorView
 {
     private void InstallSectionNavigationFrame()
     {
+        // The detail toolbar belongs to the same visual-tree initialization pass as the
+        // SelectLine-style section frame, so install the Copy action here as well.
+        InstallQuotationCopyButton();
+
         var sectionTabs = this.GetVisualDescendants()
             .OfType<TabControl>()
             .FirstOrDefault(tab => tab.Classes.Contains("document-sections"));
