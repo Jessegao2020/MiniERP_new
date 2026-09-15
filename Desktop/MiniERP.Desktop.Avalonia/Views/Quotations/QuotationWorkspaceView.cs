@@ -31,6 +31,7 @@ public sealed class QuotationWorkspaceView : UserControl
         var editor = new QuotationEditorView(quotation);
         editor.Deleted += (_, _) => _deleted = true;
         editor.RequestClose += Editor_RequestClose;
+        editor.CopyCreated += ShowEditor;
         editor.CreateInvoiceRequested += (source, type) => CreateInvoiceRequested?.Invoke(source, type);
         editor.CreatePackingListRequested += source => CreatePackingListRequested?.Invoke(source);
         editor.CreateContractRequested += source => CreateContractRequested?.Invoke(source);
