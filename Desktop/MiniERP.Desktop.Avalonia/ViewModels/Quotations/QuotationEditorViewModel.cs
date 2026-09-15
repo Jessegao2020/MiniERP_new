@@ -51,9 +51,16 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             var normalized = string.IsNullOrWhiteSpace(value) ? "USD" : value.Trim().ToUpperInvariant();
             if (_currency == normalized) return;
 
-            if (Items.Count > 0)
+            if (!Currencies.Contains(normalized))
             {
-                Status = "Remove quotation items before changing currency.";
+                Status = $"Unsupported quotation currency: {normalized}.";
+                OnPropertyChanged();
+                return;
+            }
+
+            if (Items.Count > 0 && !TryRepriceItems(normalized, out var error))
+            {
+                Status = error;
                 OnPropertyChanged();
                 return;
             }
@@ -61,7 +68,11 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             _currency = normalized;
             Quotation.Currency = normalized;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(TotalText));
+            NotifyTotals();
+
+            Status = Items.Count == 0
+                ? $"Quotation currency changed to {normalized}."
+                : $"Quotation repriced in {normalized} using the current Article CNY untaxed prices.";
         }
     }
 
@@ -301,6 +312,57 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         AddRow(row);
         SelectedItem = row;
         Status = $"Added '{row.ArticleName}' using the current {Currency} price snapshot.";
+    }
+
+    private bool TryRepriceItems(string targetCurrency, out string error)
+    {
+        if (targetCurrency == "USD" && ExchangeRateSnapshot <= 0)
+        {
+            error = "Set the USD exchange rate in Settings > System before switching this quotation to USD.";
+            return false;
+        }
+
+        if (Articles.Count == 0)
+        {
+            error = "Article prices are not loaded yet. Wait for the quotation to finish loading, then change currency again.";
+            return false;
+        }
+
+        var prepared = new List<(QuotationItemRowViewModel Row, decimal UnitPrice)>();
+
+        foreach (var row in Items)
+        {
+            if (row.SourceArticleId is null)
+            {
+                error = $"Position '{row.ArticleName}' is not linked to an Article, so its {targetCurrency} price cannot be refreshed automatically.";
+                return false;
+            }
+
+            var article = Articles.FirstOrDefault(candidate => candidate.Id == row.SourceArticleId.Value);
+            if (article is null)
+            {
+                error = $"The source Article for position '{row.ArticleName}' no longer exists, so its {targetCurrency} price cannot be refreshed.";
+                return false;
+            }
+
+            if (article.Price is null)
+            {
+                error = $"Article '{article.Name}' does not have a CNY untaxed price.";
+                return false;
+            }
+
+            var unitPrice = targetCurrency == "USD"
+                ? decimal.Round(article.Price.Value / ExchangeRateSnapshot, 2, MidpointRounding.AwayFromZero)
+                : article.Price.Value;
+
+            prepared.Add((row, unitPrice));
+        }
+
+        foreach (var item in prepared)
+            item.Row.Reprice(targetCurrency, ExchangeRateSnapshot, item.UnitPrice);
+
+        error = string.Empty;
+        return true;
     }
 
     public void RemoveSelectedItem()
