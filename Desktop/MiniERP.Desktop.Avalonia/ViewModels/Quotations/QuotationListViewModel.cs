@@ -90,6 +90,8 @@ public sealed class QuotationListViewModel : INotifyPropertyChanged
         }
     }
 
+    public void SetStatusMessage(string message) => Status = message;
+
     private void ApplyFilters()
     {
         IEnumerable<Quotation> filtered = _allQuotations;
