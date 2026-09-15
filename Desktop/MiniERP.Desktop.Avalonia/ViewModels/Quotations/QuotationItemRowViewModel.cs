@@ -16,11 +16,23 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
     private string _unit;
     private string _unitPriceText;
     private string _discountText;
+    private string _currency;
+    private decimal _exchangeRateSnapshot;
 
     public int Id { get; }
     public int? SourceArticleId { get; private set; }
-    public string Currency { get; }
-    public decimal ExchangeRateSnapshot { get; }
+
+    public string Currency
+    {
+        get => _currency;
+        private set => SetField(ref _currency, value);
+    }
+
+    public decimal ExchangeRateSnapshot
+    {
+        get => _exchangeRateSnapshot;
+        private set => SetField(ref _exchangeRateSnapshot, value);
+    }
 
     // UI-only sequence number. It is recalculated from the current collection order,
     // so moving a position changes 1/2/3 rather than carrying the old number with the item.
@@ -83,8 +95,8 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
     {
         Id = source.Id;
         SourceArticleId = source.SourceArticleId;
-        Currency = source.Currency;
-        ExchangeRateSnapshot = source.ExchangeRateSnapshot;
+        _currency = source.Currency;
+        _exchangeRateSnapshot = source.ExchangeRateSnapshot;
         _articleName = source.ArticleName;
         _description = source.Description;
         _specification = source.Specification;
@@ -97,8 +109,8 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
     public QuotationItemRowViewModel(Article source, string currency, decimal exchangeRateSnapshot, decimal unitPrice)
     {
         SourceArticleId = source.Id;
-        Currency = currency;
-        ExchangeRateSnapshot = exchangeRateSnapshot;
+        _currency = currency;
+        _exchangeRateSnapshot = exchangeRateSnapshot;
         _articleName = FirstNonEmpty(source.Name_EN, source.Name) ?? $"Article {source.Id}";
 
         // Quotation template rule: the small text printed below the bold product
@@ -116,6 +128,13 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
         if (SourceArticleId == sourceArticleId) return;
         SourceArticleId = sourceArticleId;
         OnPropertyChanged(nameof(SourceArticleId));
+    }
+
+    public void Reprice(string currency, decimal exchangeRateSnapshot, decimal unitPrice)
+    {
+        Currency = currency;
+        ExchangeRateSnapshot = exchangeRateSnapshot;
+        UnitPriceText = ToText(unitPrice);
     }
 
     public bool TryValidate(out string error)
