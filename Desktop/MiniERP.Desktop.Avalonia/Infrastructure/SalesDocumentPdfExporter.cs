@@ -455,18 +455,26 @@ public static class SalesDocumentPdfExporter
         }
     }
 
+    private const float PackageCountCenterX = 125f;
+    private const float PackageContentsX = 150f;
+    private const float PackageContentsWidth = 180f;
+    private const float PackageDimensionsCenterX = 365f;
+    private const float PackageNetWeightCenterX = 420f;
+    private const float PackageGrossWeightCenterX = 466f;
+    private const float PackageCbmCenterX = 516f;
+
     private static float DrawPackageHeader(SKCanvas canvas, float y)
     {
         using var header = Paint(8f, Bold);
         using var line = Stroke(0.8f, new SKColor(70, 70, 70));
         var baseline = y + 17f;
         canvas.DrawText("Carton", Left + 2f, baseline, header);
-        canvas.DrawText("Count", 112f, baseline, header);
-        canvas.DrawText("Contents", 151f, baseline, header);
-        canvas.DrawText("L×W×H cm", 302f, baseline, header);
-        canvas.DrawText("N.W.", 394f, baseline, header);
-        canvas.DrawText("G.W.", 443f, baseline, header);
-        canvas.DrawText("CBM", 493f, baseline, header);
+        DocumentPdfStyle.CenterText(canvas, "Count", PackageCountCenterX, baseline, header);
+        canvas.DrawText("Contents", PackageContentsX, baseline, header);
+        DocumentPdfStyle.CenterText(canvas, "L×W×H cm", PackageDimensionsCenterX, baseline, header);
+        DocumentPdfStyle.CenterText(canvas, "N.W.", PackageNetWeightCenterX, baseline, header);
+        DocumentPdfStyle.CenterText(canvas, "G.W.", PackageGrossWeightCenterX, baseline, header);
+        DocumentPdfStyle.CenterText(canvas, "CBM/ctn", PackageCbmCenterX, baseline, header);
         canvas.DrawLine(Left, baseline + 5f, Right, baseline + 5f, line);
         return baseline + 17f;
     }
@@ -474,25 +482,43 @@ public static class SalesDocumentPdfExporter
     private static void DrawPackageRow(SKCanvas canvas, PackingPackage package, float y)
     {
         using var text = Paint(7.6f, Regular);
-        canvas.DrawText(Trim(package.CartonNumber, 13), Left + 2f, y + 14f, text);
-        canvas.DrawText(package.PackageCount.ToString(), 112f, y + 14f, text);
-        canvas.DrawText(Trim(package.Contents, 22), 151f, y + 14f, text);
-        canvas.DrawText($"{package.LengthCm:0.##}×{package.WidthCm:0.##}×{package.HeightCm:0.##}", 302f, y + 14f, text);
-        canvas.DrawText($"{package.NetWeightKg:0.###}", 394f, y + 14f, text);
-        canvas.DrawText($"{package.GrossWeightKg:0.###}", 443f, y + 14f, text);
-        canvas.DrawText($"{package.Cbm:0.####}", 493f, y + 14f, text);
+        var baseline = y + 14f;
+
+        DocumentPdfStyle.DrawText(
+            canvas,
+            EllipsizeToWidth(package.CartonNumber, 46f, text),
+            Left + 2f,
+            baseline,
+            text);
+        DocumentPdfStyle.CenterText(canvas, package.PackageCount.ToString(), PackageCountCenterX, baseline, text);
+        DocumentPdfStyle.DrawText(
+            canvas,
+            EllipsizeToWidth(package.Contents, PackageContentsWidth, text),
+            PackageContentsX,
+            baseline,
+            text);
+        DocumentPdfStyle.CenterText(
+            canvas,
+            $"{package.LengthCm:0.##}×{package.WidthCm:0.##}×{package.HeightCm:0.##}",
+            PackageDimensionsCenterX,
+            baseline,
+            text);
+        DocumentPdfStyle.CenterText(canvas, $"{package.NetWeightKg:0.###}", PackageNetWeightCenterX, baseline, text);
+        DocumentPdfStyle.CenterText(canvas, $"{package.GrossWeightKg:0.###}", PackageGrossWeightCenterX, baseline, text);
+        DocumentPdfStyle.CenterText(canvas, $"{package.Cbm:0.####}", PackageCbmCenterX, baseline, text);
     }
 
     private static void DrawPackingTotals(SKCanvas canvas, PackingList packingList, float y)
     {
         using var label = Paint(8.5f, Bold);
         using var value = Paint(8.3f, Regular);
-        canvas.DrawText("Summary", Left, y, label);
+        DocumentPdfStyle.DrawText(canvas, "Summary", Left, y, label);
         y += 14f;
-        canvas.DrawText(
+        DocumentPdfStyle.DrawText(
+            canvas,
             $"Total Qty: {packingList.TotalQuantity:0.####}    Cartons: {packingList.TotalCartons}    " +
             $"N.W.: {packingList.TotalNetWeight:0.###} kg    G.W.: {packingList.TotalGrossWeight:0.###} kg    " +
-            $"CBM: {packingList.TotalCbm:0.####}",
+            $"Total CBM: {packingList.TotalCbm:0.####}",
             Left,
             y,
             value);
@@ -593,10 +619,27 @@ public static class SalesDocumentPdfExporter
             .Replace('\r', '\n')
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    private static string Trim(string? value, int max)
+    private static string EllipsizeToWidth(string? value, float maxWidth, SKPaint paint)
     {
         var text = value ?? string.Empty;
-        return text.Length <= max ? text : text[..Math.Max(1, max - 1)] + "…";
+        if (DocumentPdfStyle.MeasureText(text, paint) <= maxWidth)
+            return text;
+
+        const string ellipsis = "…";
+        var ellipsisWidth = DocumentPdfStyle.MeasureText(ellipsis, paint);
+        if (ellipsisWidth >= maxWidth)
+            return ellipsis;
+
+        var length = text.Length;
+        while (length > 0)
+        {
+            var candidate = text[..length].TrimEnd();
+            if (DocumentPdfStyle.MeasureText(candidate, paint) + ellipsisWidth <= maxWidth)
+                return candidate + ellipsis;
+            length--;
+        }
+
+        return ellipsis;
     }
 
     private static string FormatMoney(decimal value, string currency)
