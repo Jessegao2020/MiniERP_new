@@ -89,7 +89,7 @@
             <WrapPanel Orientation="Horizontal">
                 <Grid Width="355" Margin="0,2,12,2" ColumnDefinitions="92,*" ColumnSpacing="6">
                     <TextBlock Grid.Column="0" Classes="field-label" Text="Quotation No." />
-                    <TextBox Grid.Column="1" Text="{Binding Quotation.QuotationNumber, Mode=TwoWay}" />
+                    <TextBox Grid.Column="1" Text="{Binding QuotationNumber}" IsReadOnly="True" ToolTip.Tip="Quotation number is assigned automatically using date and User Code" />
                 </Grid>
 
                 <Grid Width="405" Margin="0,2,12,2" ColumnDefinitions="64,*" ColumnSpacing="6">
