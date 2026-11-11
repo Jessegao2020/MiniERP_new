@@ -21,6 +21,12 @@ namespace MiniERP.Infrastructure.Repositories
             => await _dbSet.AsNoTracking().Include(q => q.Customer).Include(q => q.User).Include(q => q.Items)
                 .FirstOrDefaultAsync(q => q.QuotationNumber == quotationNumber);
 
+        public async Task<IReadOnlyList<string>> GetNumbersByPrefixAsync(string prefix)
+            => await _dbSet.AsNoTracking()
+                .Where(q => q.QuotationNumber.StartsWith(prefix))
+                .Select(q => q.QuotationNumber)
+                .ToListAsync();
+
         public async Task<IEnumerable<Quotation>> GetByCustomerIdAsync(int customerId)
             => await _dbSet.AsNoTracking().Include(q => q.Customer).Include(q => q.User).Include(q => q.Items)
                 .Where(q => q.CustomerId == customerId).OrderByDescending(q => q.QuotationDate).ToListAsync();
