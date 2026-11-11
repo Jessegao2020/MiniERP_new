@@ -14,7 +14,8 @@ public static class QuotationCopySupport
 
         return new Quotation
         {
-            QuotationNumber = $"QT-{now:yyyyMMdd-HHmmssfff}",
+            // A fresh sequential number is assigned when the copy is inserted.
+            QuotationNumber = string.Empty,
             CustomerId = source.CustomerId,
             UserId = source.UserId,
             DeliveryTerm = source.DeliveryTerm,
