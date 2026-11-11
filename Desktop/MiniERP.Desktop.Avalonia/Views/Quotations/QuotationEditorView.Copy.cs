@@ -90,7 +90,7 @@ public partial class QuotationEditorView
 
             using var scope = App.Services.CreateScope();
             var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
-            await service.CreateQuotationAsync(copy);
+            await QuotationNumberSupport.CreateAsync(service, copy, ViewModel.SelectedUser!.Code);
 
             CopyCreated?.Invoke(copy);
         }
