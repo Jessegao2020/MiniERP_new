@@ -28,6 +28,10 @@ namespace MiniERP.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Quotation>()
+                .HasIndex(quotation => quotation.QuotationNumber)
+                .IsUnique();
+
             modelBuilder.Entity<Invoice>()
                 .HasIndex(invoice => invoice.InvoiceNumber)
                 .IsUnique();
