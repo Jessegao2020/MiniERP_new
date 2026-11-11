@@ -27,11 +27,14 @@ public static class QuotationNumberSupport
                 !number.StartsWith(prefix, StringComparison.Ordinal))
                 continue;
 
-            var suffix = number.AsSpan(prefix.Length);
-            if (!char.IsAsciiDigit(suffix[0]) || !char.IsAsciiDigit(suffix[1]))
+            // Index the string directly: ref-like Span locals inside async
+            // methods require C# 13, whereas MiniERP targets C# 12.
+            var firstDigit = number[prefix.Length];
+            var secondDigit = number[prefix.Length + 1];
+            if (!char.IsAsciiDigit(firstDigit) || !char.IsAsciiDigit(secondDigit))
                 continue;
 
-            var sequence = (suffix[0] - '0') * 10 + (suffix[1] - '0');
+            var sequence = (firstDigit - '0') * 10 + (secondDigit - '0');
             lastSequence = Math.Max(lastSequence, sequence);
         }
 
