@@ -21,9 +21,11 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
     private string _currency;
     private decimal _exchangeRateSnapshot;
     private string _status = string.Empty;
+    private int _numberPreviewVersion;
 
     public Quotation Quotation { get; }
     public bool IsNew { get; private set; }
+    public string QuotationNumber => Quotation.QuotationNumber;
     public ObservableCollection<Customer> Customers { get; } = new();
     public ObservableCollection<CustomerContact> CustomerContacts { get; } = new();
     public ObservableCollection<User> Users { get; } = new();
@@ -115,6 +117,8 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             if (ReferenceEquals(_selectedUser, value)) return;
             _selectedUser = value;
             OnPropertyChanged();
+            if (IsNew)
+                _ = RefreshQuotationNumberPreviewAsync();
         }
     }
 
@@ -182,7 +186,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         Quotation = source is null
             ? new Quotation
             {
-                QuotationNumber = $"QT-{DateTime.Now:yyyyMMdd-HHmmssfff}",
+                QuotationNumber = string.Empty,
                 QuotationDate = DateTime.Now,
                 ValidUntil = DateTime.Today.AddDays(30),
                 Currency = "USD",
@@ -209,6 +213,40 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 
         foreach (var item in Quotation.Items.OrderBy(item => item.SortOrder).ThenBy(item => item.Id))
             AddRow(new QuotationItemRowViewModel(item));
+    }
+
+    private async Task RefreshQuotationNumberPreviewAsync()
+    {
+        var version = ++_numberPreviewVersion;
+        var user = SelectedUser;
+        if (user is null)
+        {
+            Quotation.QuotationNumber = string.Empty;
+            OnPropertyChanged(nameof(QuotationNumber));
+            return;
+        }
+
+        try
+        {
+            using var scope = App.Services.CreateScope();
+            var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
+            var number = await QuotationNumberSupport.PreviewNextAsync(service, user.Code, DateTime.Now);
+
+            if (!IsNew || version != _numberPreviewVersion || !ReferenceEquals(user, SelectedUser))
+                return;
+
+            Quotation.QuotationNumber = number;
+            OnPropertyChanged(nameof(QuotationNumber));
+        }
+        catch (Exception ex)
+        {
+            if (!IsNew || version != _numberPreviewVersion)
+                return;
+
+            Quotation.QuotationNumber = string.Empty;
+            OnPropertyChanged(nameof(QuotationNumber));
+            Status = $"Quotation number unavailable: {ex.Message}";
+        }
     }
 
     public void RefreshExchangeRateFromSettings()
@@ -431,20 +469,24 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             using var scope = App.Services.CreateScope();
             var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
 
-            var sameNumber = await service.GetQuotationByNumberAsync(Quotation.QuotationNumber);
-            if (sameNumber is not null && sameNumber.Id != Quotation.Id)
-            {
-                Status = "Quotation number already exists.";
-                return false;
-            }
-
             if (IsNew)
             {
-                await service.CreateQuotationAsync(Quotation);
+                // A preview is only provisional. Generate the actual sequential number
+                // against committed quotations at the instant of creation.
+                ++_numberPreviewVersion;
+                await QuotationNumberSupport.CreateAsync(service, Quotation, SelectedUser!.Code);
                 IsNew = false;
+                OnPropertyChanged(nameof(QuotationNumber));
             }
             else
             {
+                var sameNumber = await service.GetQuotationByNumberAsync(Quotation.QuotationNumber);
+                if (sameNumber is not null && sameNumber.Id != Quotation.Id)
+                {
+                    Status = "Quotation number already exists.";
+                    return false;
+                }
+
                 await service.UpdateQuotationAsync(Quotation);
             }
 
@@ -482,7 +524,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 
     private bool TryPrepareDocument(bool requireItems)
     {
-        if (string.IsNullOrWhiteSpace(Quotation.QuotationNumber))
+        if (!IsNew && string.IsNullOrWhiteSpace(Quotation.QuotationNumber))
         {
             Status = "Quotation number is required.";
             return false;
