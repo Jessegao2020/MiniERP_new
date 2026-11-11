@@ -21,6 +21,9 @@ public sealed class QuotationService : IQuotationService
     public Task<Quotation?> GetQuotationByNumberAsync(string quotationNumber)
         => _repository.GetByNumberAsync(quotationNumber);
 
+    public Task<IReadOnlyList<string>> GetQuotationNumbersByPrefixAsync(string prefix)
+        => _repository.GetNumbersByPrefixAsync(prefix);
+
     public Task<IEnumerable<Quotation>> GetQuotationsByCustomerIdAsync(int customerId)
         => _repository.GetByCustomerIdAsync(customerId);
 
