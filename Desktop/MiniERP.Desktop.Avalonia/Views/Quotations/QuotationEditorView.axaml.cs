@@ -526,7 +526,7 @@ public partial class QuotationEditorView : UserControl
     }
 
     private static string PreferredArticleName(Article article)
-        => !string.IsNullOrWhiteSpace(article.Name_EN) ? article.Name_EN.Trim() : article.Name.Trim();
+        => !string.IsNullOrWhiteSpace(article.Name_EN) ? article.Name_EN.Trim() : article.Name?.Trim() ?? string.Empty;
 
     private static string NormalizeDecimalInput(string? value)
     {
