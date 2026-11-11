@@ -11,6 +11,7 @@ namespace MiniERP.Desktop.ViewModels.Quotations;
 public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 {
     private readonly AppSettingsService _settings;
+    private readonly int _defaultValidityDays;
     private Customer? _selectedCustomer;
     private CustomerContact? _selectedCustomerContact;
     private User? _selectedUser;
@@ -150,8 +151,14 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         set
         {
             if (_quotationDate == value) return;
+            // Follow the configured default if the user has not customized Valid Until.
+            // Once edited manually, the expiration date must not be overwritten.
+            var followDefault = IsNew && _quotationDate is not null && _validUntil is not null
+                && _validUntil.Value.Date == _quotationDate.Value.Date.AddDays(_defaultValidityDays);
             _quotationDate = value;
             OnPropertyChanged();
+            if (followDefault && value is not null)
+                ValidUntil = new DateTimeOffset(value.Value.Date.AddDays(_defaultValidityDays));
         }
     }
 
@@ -180,6 +187,8 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
     public QuotationEditorViewModel(Quotation? source, AppSettingsService settings)
     {
         _settings = settings;
+        _defaultValidityDays = settings.Current.DefaultValidityDays is >= 1 and <= 3650
+            ? settings.Current.DefaultValidityDays : 30;
         IsNew = source is null;
         var currentRate = settings.Current.CnyPerUsd ?? 0m;
 
@@ -188,7 +197,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             {
                 QuotationNumber = string.Empty,
                 QuotationDate = DateTime.Now,
-                ValidUntil = DateTime.Today.AddDays(30),
+                ValidUntil = DateTime.Today.AddDays(_defaultValidityDays),
                 Currency = "USD",
                 ExchangeRate = currentRate
             }
