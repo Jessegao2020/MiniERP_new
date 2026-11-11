@@ -752,6 +752,9 @@ namespace MiniERP.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
+                    b.HasIndex("QuotationNumber")
+                        .IsUnique();
+
                     b.ToTable("Quotations");
                 });
 
