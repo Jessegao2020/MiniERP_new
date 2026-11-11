@@ -69,8 +69,14 @@ public partial class QuotationListView
                 return;
             }
 
+            if (source.User is null)
+            {
+                ViewModel.SetStatusMessage("The source quotation user could not be loaded.");
+                return;
+            }
+
             var copy = QuotationCopySupport.CreateCopy(source);
-            await service.CreateQuotationAsync(copy);
+            await QuotationNumberSupport.CreateAsync(service, copy, source.User.Code);
             OpenQuotationRequested?.Invoke(copy);
         }
         catch (Exception ex)
