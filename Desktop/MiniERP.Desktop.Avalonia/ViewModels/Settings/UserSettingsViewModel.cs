@@ -105,9 +105,9 @@ public sealed class UserSettingsViewModel : INotifyPropertyChanged
 
     public async Task<bool> SaveAsync()
     {
-        if (!int.TryParse(CodeText, out var code) || code < 0)
+        if (!int.TryParse(CodeText, out var code) || code is < 1 or > 99)
         {
-            Status = "Code must be a non-negative integer.";
+            Status = "Code must be a one- or two-digit integer (1-99) for quotation numbering.";
             return false;
         }
 
