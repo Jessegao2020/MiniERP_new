@@ -5,6 +5,8 @@ namespace MiniERP.Desktop.Infrastructure;
 public sealed class AppSettings
 {
     public decimal? CnyPerUsd { get; set; }
+    // Calendar days from the document date. Older settings files default to 30.
+    public int DefaultValidityDays { get; set; } = 30;
 }
 
 public sealed class AppSettingsService
@@ -20,17 +22,27 @@ public sealed class AppSettingsService
         Current = Load(settingsPath);
     }
 
-    public async Task SaveExchangeRateAsync(decimal cnyPerUsd)
+    public Task SaveExchangeRateAsync(decimal cnyPerUsd)
+        => SaveSettingsAsync(cnyPerUsd, Current.DefaultValidityDays);
+
+    public async Task SaveSettingsAsync(decimal? cnyPerUsd, int defaultValidityDays)
     {
-        if (cnyPerUsd <= 0)
+        if (cnyPerUsd is <= 0)
             throw new ArgumentOutOfRangeException(nameof(cnyPerUsd), "Exchange rate must be greater than zero.");
+        if (defaultValidityDays is < 1 or > 3650)
+            throw new ArgumentOutOfRangeException(nameof(defaultValidityDays),
+                "Default validity must be between 1 and 3650 calendar days.");
 
         await _saveLock.WaitAsync();
         try
         {
-            Current.CnyPerUsd = cnyPerUsd;
+            var updated = new AppSettings
+            {
+                CnyPerUsd = cnyPerUsd,
+                DefaultValidityDays = defaultValidityDays
+            };
 
-            var json = JsonSerializer.Serialize(Current, new JsonSerializerOptions
+            var json = JsonSerializer.Serialize(updated, new JsonSerializerOptions
             {
                 WriteIndented = true
             });
@@ -42,6 +54,7 @@ public sealed class AppSettingsService
             var temporaryPath = _settingsPath + ".tmp";
             await File.WriteAllTextAsync(temporaryPath, json);
             File.Move(temporaryPath, _settingsPath, true);
+            Current = updated;
         }
         finally
         {
