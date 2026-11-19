@@ -140,7 +140,15 @@ try
     Directory.CreateDirectory(colleague);
     var colleagueErp = Path.Combine(colleague, "erp.db");
     var colleagueCatalog = Path.Combine(colleague, "catalog.db");
-    File.Copy(catalogPath, colleagueCatalog);
+    // SQLite may still have committed pages in the WAL; a byte-for-byte
+    // File.Copy of the main .db alone is NOT necessarily a complete snapshot.
+    using (var source = new SqliteConnection($"Data Source={catalogPath};Mode=ReadOnly"))
+    using (var destination = new SqliteConnection($"Data Source={colleagueCatalog}"))
+    {
+        source.Open();
+        destination.Open();
+        source.BackupDatabase(destination);
+    }
     var colleagueErpOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
         .UseSqlite($"Data Source={colleagueErp}").Options;
     var colleagueCatalogOptions = new DbContextOptionsBuilder<CatalogDbContext>()
