@@ -17,6 +17,9 @@ internal static class AppDataPaths
     public static string GetDatabasePath()
         => Path.Combine(GetDataDirectory(), "erp.db");
 
+    public static string GetCatalogDatabasePath()
+        => Path.Combine(GetDataDirectory(), "catalog.db");
+
     public static string GetSettingsPath()
         => Path.Combine(GetDataDirectory(), "settings.json");
 }

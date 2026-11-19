@@ -9,10 +9,15 @@ namespace MiniERP.Infrastructure
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, string? catalogConnectionString = null)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(connectionString));
+
+            // Legacy WPF callers without a catalog path continue using the original ERP file.
+            // Avalonia supplies a separate catalog.db path explicitly.
+            services.AddDbContext<CatalogDbContext>(options =>
+                options.UseSqlite(catalogConnectionString ?? connectionString));
 
             services.AddScoped<IArticleRepository, ArticleRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();

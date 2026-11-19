@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MiniERP.Infrastructure.Data;
 using MiniERP.Infrastructure;
 using MiniERP.UI.Helper;
 using System.IO;
@@ -29,6 +31,13 @@ namespace MiniERP
             services.AddUI();
             
             ServiceProvider = services.BuildServiceProvider();
+
+            // The legacy WPF shell uses its own erp.db and has no separate catalogue path.
+            // Initialize an empty schema if it is launched without the old bundled db file.
+            using (var scope = ServiceProvider.CreateScope())
+            {
+                scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.Migrate();
+            }
             
             base.OnStartup(e);
         }
