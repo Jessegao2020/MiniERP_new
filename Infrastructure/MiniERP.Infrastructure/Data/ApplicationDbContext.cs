@@ -10,7 +10,6 @@ namespace MiniERP.Infrastructure.Data
         {
         }
 
-        public DbSet<Article> Articles { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<CustomerContact> Contacts { get; set; }
         public DbSet<Quotation> Quotations { get; set; }

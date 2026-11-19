@@ -6,7 +6,7 @@ namespace MiniERP.Infrastructure.Data;
 /// <summary>
 /// Copies historical Articles into the new catalog without deleting or modifying any
 /// business record in erp.db. It is safe to resume after a failed first launch.
-/// Run after both DbContexts have applied their EF Core migrations.
+/// Run before the ERP migration that drops the historical Articles table.
 /// </summary>
 public static class CatalogDatabaseBootstrapper
 {
@@ -23,7 +23,7 @@ public static class CatalogDatabaseBootstrapper
     /// </summary>
     public static void BackupLegacyDatabaseBeforeFirstSplit(string erpPath, string catalogPath)
     {
-        if (!File.Exists(erpPath) || (File.Exists(catalogPath) && IsInitialized(catalogPath)))
+        if (!File.Exists(erpPath))
             return;
 
         var backupPath = Path.Combine(Path.GetDirectoryName(erpPath)!, "erp.pre-catalog-split.db");
@@ -126,6 +126,148 @@ public static class CatalogDatabaseBootstrapper
 
         transaction.Commit();
         // Deliberately DO NOT delete Articles in erp.db. They are rollback data.
+    }
+
+
+    /// <summary>
+    /// Makes a separate non-overwriting snapshot of the active catalogue immediately
+    /// before its old ERP counterpart is deleted.
+    /// </summary>
+    public static void BackupCatalogBeforeLegacyDrop(string catalogPath)
+    {
+        var backup = Path.Combine(Path.GetDirectoryName(catalogPath)!, "catalog.pre-legacy-drop.db");
+        if (File.Exists(backup)) return;
+
+        var temporary = backup + ".tmp";
+        if (File.Exists(temporary)) File.Delete(temporary);
+        try
+        {
+            using (var source = new SqliteConnection(
+                new SqliteConnectionStringBuilder { DataSource = catalogPath, Mode = SqliteOpenMode.ReadOnly }.ToString()))
+            using (var destination = new SqliteConnection(
+                new SqliteConnectionStringBuilder { DataSource = temporary, Mode = SqliteOpenMode.ReadWriteCreate }.ToString()))
+            {
+                source.Open();
+                destination.Open();
+                source.BackupDatabase(destination);
+            }
+
+            if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+                File.SetUnixFileMode(temporary, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+
+            File.Move(temporary, backup);
+        }
+        finally
+        {
+            if (File.Exists(temporary)) File.Delete(temporary);
+        }
+    }
+
+    /// <summary>
+    /// Called by the application's guarded upgrade procedure only. An explicit
+    /// SQLite permit is required by the destructive EF migration, so invoking
+    /// 'dotnet ef database update' directly cannot silently destroy Articles.
+    /// </summary>
+    public static void AuthorizeLegacyArticleRemoval(string erpPath, string catalogPath)
+    {
+        if (Path.GetFullPath(erpPath) == Path.GetFullPath(catalogPath))
+            throw new InvalidOperationException("Refusing cleanup: ERP and catalogue have the same path.");
+
+        if (!File.Exists(catalogPath) || !IsInitialized(catalogPath))
+            throw new InvalidOperationException("Refusing cleanup: catalogue import is not complete.");
+
+        using var catalog = new SqliteConnection(
+            new SqliteConnectionStringBuilder { DataSource = catalogPath, Mode = SqliteOpenMode.ReadOnly }.ToString());
+        catalog.Open();
+        CheckIntegrity(catalog, "catalog.db");
+
+        if (Scalar(catalog, null,
+                "SELECT COUNT(*) FROM main.sqlite_master WHERE type='table' AND name='Articles'") != 1)
+            throw new InvalidOperationException("Refusing cleanup: catalogue has no Articles table.");
+
+        if (Scalar(catalog, null,
+                "SELECT COUNT(*) FROM main.sqlite_master WHERE type='table' AND name IN " +
+                "('Customers','Contacts','Quotations','Invoices','Contracts','PackingLists','Users')") != 0)
+            throw new InvalidOperationException("Refusing cleanup: catalogue contains personal ERP tables.");
+
+        using var erp = new SqliteConnection(
+            new SqliteConnectionStringBuilder { DataSource = erpPath, Mode = SqliteOpenMode.ReadWrite }.ToString());
+        erp.Open();
+        CheckIntegrity(erp, "erp.db");
+
+        if (Scalar(erp, null,
+                "SELECT COUNT(*) FROM main.sqlite_master WHERE type='table' AND name='Articles'") != 1)
+            throw new InvalidOperationException("Refusing cleanup: legacy Articles table is unexpectedly absent.");
+
+        var oldCount = Scalar(erp, null, "SELECT COUNT(*) FROM main.Articles");
+        var importedCount = Scalar(catalog, null,
+            "SELECT LegacyArticleCount FROM main.__CatalogBootstrap WHERE Version=1");
+        var currentCount = Scalar(catalog, null, "SELECT COUNT(*) FROM main.Articles");
+
+        if (oldCount > 0)
+        {
+            if (importedCount != oldCount || currentCount == 0)
+                throw new InvalidOperationException(
+                    "Refusing cleanup: legacy Article count differs from the original import " +
+                    "or the active catalogue is empty. Resolve the mismatch before cleanup.");
+
+            var backupPath = Path.Combine(Path.GetDirectoryName(erpPath)!, "erp.pre-catalog-split.db");
+            if (!File.Exists(backupPath))
+                throw new InvalidOperationException("Refusing cleanup: the original ERP backup is missing.");
+
+            // Verify that the historical source has not been edited since it was
+            // backed up. Older backups may have fewer audit columns, so compare
+            // all the columns that existed at backup time.
+            using var backup = new SqliteConnection(
+                new SqliteConnectionStringBuilder { DataSource = backupPath, Mode = SqliteOpenMode.ReadOnly }.ToString());
+            backup.Open();
+            CheckIntegrity(backup, "ERP backup");
+
+            var backupColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using (var info = backup.CreateCommand())
+            {
+                info.CommandText = "PRAGMA table_info('Articles')";
+                using var reader = info.ExecuteReader();
+                while (reader.Read()) backupColumns.Add(reader.GetString(1));
+            }
+
+            var columns = ArticleColumns.Where(c => backupColumns.Contains(c))
+                .Select(c => "\"" + c + "\"").ToArray();
+            if (!backupColumns.Contains("Id") || columns.Length < 2)
+                throw new InvalidOperationException("Refusing cleanup: the original ERP backup is invalid.");
+
+            using (var attach = erp.CreateCommand())
+            {
+                attach.CommandText = "ATTACH DATABASE $path AS old_backup";
+                attach.Parameters.AddWithValue("$path", backupPath);
+                attach.ExecuteNonQuery();
+            }
+
+            var fields = string.Join(", ", columns);
+            if (Scalar(erp, null, "SELECT COUNT(*) FROM (SELECT " + fields +
+                    " FROM main.Articles EXCEPT SELECT " + fields + " FROM old_backup.Articles)") != 0 ||
+                Scalar(erp, null, "SELECT COUNT(*) FROM (SELECT " + fields +
+                    " FROM old_backup.Articles EXCEPT SELECT " + fields + " FROM main.Articles)") != 0)
+                throw new InvalidOperationException(
+                    "Refusing cleanup: original ERP Articles have changed since the backup.");
+        }
+
+        using var permit = erp.CreateCommand();
+        permit.CommandText =
+            "CREATE TABLE IF NOT EXISTS __CatalogSplitPermit " +
+            "(Version INTEGER PRIMARY KEY, VerifiedUtc TEXT NOT NULL);" +
+            "INSERT OR REPLACE INTO __CatalogSplitPermit (Version, VerifiedUtc) " +
+            "VALUES (1, strftime('%Y-%m-%dT%H:%M:%fZ','now'));";
+        permit.ExecuteNonQuery();
+    }
+
+    private static void CheckIntegrity(SqliteConnection connection, string label)
+    {
+        using var check = connection.CreateCommand();
+        check.CommandText = "PRAGMA quick_check";
+        if (!string.Equals(Convert.ToString(check.ExecuteScalar(), CultureInfo.InvariantCulture),
+                "ok", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Refusing cleanup: integrity check failed for " + label);
     }
 
     private static bool IsInitialized(string catalogPath)

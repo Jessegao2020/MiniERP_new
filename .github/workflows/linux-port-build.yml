@@ -33,14 +33,9 @@ jobs:
       - name: Install EF Core CLI
         run: dotnet tool install --global dotnet-ef --version 8.0.22
 
-      - name: Verify database migrations
-        run: |
-          rm -f erp.db
-          dotnet ef database update \
-            --project Infrastructure/MiniERP.Infrastructure/MiniERP.Infrastructure.csproj \
-            --startup-project Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj \
-            --context ApplicationDbContext
-
+      # The ERP cleanup migration intentionally rejects direct EF CLI updates.
+      # Only DatabaseStartupMigrator may apply it after verifying the catalogue
+      # and backups. The disposable smoke test below exercises this path.
       - name: Verify standalone catalog migrations
         run: |
           rm -f catalog.db
