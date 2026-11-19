@@ -46,3 +46,20 @@ jobs:
 
       - name: Verify safe split and rollback on disposable databases
         run: dotnet run --project tests/MiniERP.CatalogSmoke/MiniERP.CatalogSmoke.csproj --configuration Release
+
+
+  windows-smoke:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build Win64 Avalonia application
+        run: dotnet build Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj -c Release
+      - name: Exercise migration on Windows with disposable databases
+        run: dotnet run --project tests/MiniERP.CatalogSmoke/MiniERP.CatalogSmoke.csproj -c Release
+      - name: Publish a non-single-file self-contained Win64 build
+        run: dotnet publish Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o ./publish/windows
