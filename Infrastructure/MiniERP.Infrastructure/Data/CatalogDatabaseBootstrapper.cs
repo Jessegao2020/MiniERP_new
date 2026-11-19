@@ -37,9 +37,9 @@ public static class CatalogDatabaseBootstrapper
         try
         {
             using (var source = new SqliteConnection(
-                new SqliteConnectionStringBuilder { DataSource = erpPath, Mode = SqliteOpenMode.ReadOnly }.ToString()))
+                new SqliteConnectionStringBuilder { DataSource = erpPath, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString()))
             using (var destination = new SqliteConnection(
-                new SqliteConnectionStringBuilder { DataSource = temporaryPath, Mode = SqliteOpenMode.ReadWriteCreate }.ToString()))
+                new SqliteConnectionStringBuilder { DataSource = temporaryPath, Mode = SqliteOpenMode.ReadWriteCreate, Pooling = false }.ToString()))
             {
                 source.Open();
                 destination.Open();
@@ -65,7 +65,7 @@ public static class CatalogDatabaseBootstrapper
             throw new InvalidOperationException("ERP and catalog databases must have different paths.");
 
         using var target = new SqliteConnection(
-            new SqliteConnectionStringBuilder { DataSource = catalogPath, Mode = SqliteOpenMode.ReadWrite }.ToString());
+            new SqliteConnectionStringBuilder { DataSource = catalogPath, Mode = SqliteOpenMode.ReadWrite, Pooling = false }.ToString());
         target.Open();
 
         if (IsInitialized(target))
@@ -143,9 +143,9 @@ public static class CatalogDatabaseBootstrapper
         try
         {
             using (var source = new SqliteConnection(
-                new SqliteConnectionStringBuilder { DataSource = catalogPath, Mode = SqliteOpenMode.ReadOnly }.ToString()))
+                new SqliteConnectionStringBuilder { DataSource = catalogPath, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString()))
             using (var destination = new SqliteConnection(
-                new SqliteConnectionStringBuilder { DataSource = temporary, Mode = SqliteOpenMode.ReadWriteCreate }.ToString()))
+                new SqliteConnectionStringBuilder { DataSource = temporary, Mode = SqliteOpenMode.ReadWriteCreate, Pooling = false }.ToString()))
             {
                 source.Open();
                 destination.Open();
@@ -177,7 +177,7 @@ public static class CatalogDatabaseBootstrapper
             throw new InvalidOperationException("Refusing cleanup: catalogue import is not complete.");
 
         using var catalog = new SqliteConnection(
-            new SqliteConnectionStringBuilder { DataSource = catalogPath, Mode = SqliteOpenMode.ReadOnly }.ToString());
+            new SqliteConnectionStringBuilder { DataSource = catalogPath, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
         catalog.Open();
         CheckIntegrity(catalog, "catalog.db");
 
@@ -191,7 +191,7 @@ public static class CatalogDatabaseBootstrapper
             throw new InvalidOperationException("Refusing cleanup: catalogue contains personal ERP tables.");
 
         using var erp = new SqliteConnection(
-            new SqliteConnectionStringBuilder { DataSource = erpPath, Mode = SqliteOpenMode.ReadWrite }.ToString());
+            new SqliteConnectionStringBuilder { DataSource = erpPath, Mode = SqliteOpenMode.ReadWrite, Pooling = false }.ToString());
         erp.Open();
         CheckIntegrity(erp, "erp.db");
 
@@ -219,7 +219,7 @@ public static class CatalogDatabaseBootstrapper
             // backed up. Older backups may have fewer audit columns, so compare
             // all the columns that existed at backup time.
             using var backup = new SqliteConnection(
-                new SqliteConnectionStringBuilder { DataSource = backupPath, Mode = SqliteOpenMode.ReadOnly }.ToString());
+                new SqliteConnectionStringBuilder { DataSource = backupPath, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
             backup.Open();
             CheckIntegrity(backup, "ERP backup");
 
@@ -273,7 +273,7 @@ public static class CatalogDatabaseBootstrapper
     private static bool IsInitialized(string catalogPath)
     {
         using var connection = new SqliteConnection(
-            new SqliteConnectionStringBuilder { DataSource = catalogPath, Mode = SqliteOpenMode.ReadOnly }.ToString());
+            new SqliteConnectionStringBuilder { DataSource = catalogPath, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
         connection.Open();
         return IsInitialized(connection);
     }
