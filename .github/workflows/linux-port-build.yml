@@ -5,9 +5,11 @@ on:
   push:
     branches:
       - linux-port
+      - feature/split-article-catalog
   pull_request:
     branches:
       - master
+      - feature/selectline-grid
 
 jobs:
   build:
@@ -36,4 +38,16 @@ jobs:
           rm -f erp.db
           dotnet ef database update \
             --project Infrastructure/MiniERP.Infrastructure/MiniERP.Infrastructure.csproj \
-            --startup-project Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj
+            --startup-project Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj \
+            --context ApplicationDbContext
+
+      - name: Verify standalone catalog migrations
+        run: |
+          rm -f catalog.db
+          dotnet ef database update \
+            --project Infrastructure/MiniERP.Infrastructure/MiniERP.Infrastructure.csproj \
+            --startup-project Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj \
+            --context CatalogDbContext
+
+      - name: Verify safe split and rollback on disposable databases
+        run: dotnet run --project tests/MiniERP.CatalogSmoke/MiniERP.CatalogSmoke.csproj --configuration Release
