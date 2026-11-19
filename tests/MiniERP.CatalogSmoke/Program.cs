@@ -1,17 +1,12 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using MiniERP.Domain;
 using MiniERP.Infrastructure.Data;
 
 var folder = Path.Combine(Path.GetTempPath(), "minierp-catalog-smoke-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(folder);
-var erpPath = Path.Combine(folder, "erp.db");
-var catalogPath = Path.Combine(folder, "catalog.db");
-var backupPath = Path.Combine(folder, "erp.pre-catalog-split.db");
-var erpOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
-    .UseSqlite($"Data Source={erpPath}").Options;
-var catalogOptions = new DbContextOptionsBuilder<CatalogDbContext>()
-    .UseSqlite($"Data Source={catalogPath}").Options;
 
 static void Check(bool ok, string description)
 {
@@ -19,85 +14,172 @@ static void Check(bool ok, string description)
     Console.WriteLine("PASS: " + description);
 }
 
+static long SqlCount(string path, string sql)
+{
+    using var db = new SqliteConnection($"Data Source={path}");
+    db.Open();
+    using var command = db.CreateCommand();
+    command.CommandText = sql;
+    return Convert.ToInt64(command.ExecuteScalar());
+}
+
+static string SqlText(string path, string sql)
+{
+    using var db = new SqliteConnection($"Data Source={path}");
+    db.Open();
+    using var command = db.CreateCommand();
+    command.CommandText = sql;
+    return Convert.ToString(command.ExecuteScalar()) ?? string.Empty;
+}
+
 try
 {
-    // Seed a disposable legacy database with both shared and confidential data.
+    var erpPath = Path.Combine(folder, "erp.db");
+    var catalogPath = Path.Combine(folder, "catalog.db");
+    var backupPath = Path.Combine(folder, "erp.pre-catalog-split.db");
+    var erpOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+        .UseSqlite($"Data Source={erpPath}").Options;
+    var catalogOptions = new DbContextOptionsBuilder<CatalogDbContext>()
+        .UseSqlite($"Data Source={catalogPath}").Options;
+
+    // Simulate an ERP from the previous release (before removal of Articles).
     using (var erp = new ApplicationDbContext(erpOptions))
     {
-        erp.Database.Migrate();
-        erp.Articles.Add(new Article
-        {
-            Id = 27, Name = "FET3588-C", Name_EN = "Test module",
-            Price = 99.1234m, MinimumPrice = 75.50m, Discount = "5",
-            Category = "SoM", Note = "Keep every field",
-            Description_EN = "Detailed description",
-            CreatedBy = "test", CreatedAt = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc)
-        });
+        erp.Database.GetService<IMigrator>().Migrate(DatabaseStartupMigrator.LastLegacyMigration);
+        erp.Database.ExecuteSqlRaw("""
+            INSERT INTO Articles (Id, Name, Name_EN, Price, MinimumPrice,
+                                  Discount, Category, Note, Description_EN,
+                                  CreatedBy, CreatedAt)
+            VALUES (27, 'FET3588-C', 'Test module', '99.1234', '75.50', '5',
+                    'SoM', 'Keep every field', 'Detailed description',
+                    'test', '2026-01-02 03:04:05');
+            """);
         erp.Customers.Add(new Customer { Name = "CONFIDENTIAL-TEST-CUSTOMER" });
         erp.SaveChanges();
     }
 
-    CatalogDatabaseBootstrapper.BackupLegacyDatabaseBeforeFirstSplit(erpPath, catalogPath);
-    Check(File.Exists(backupPath), "First upgrade creates a private ERP backup");
+    // Direct EF update must be rejected: the catalogue is not backed up/imported.
+    var blocked = false;
+    try
+    {
+        using var erp = new ApplicationDbContext(erpOptions);
+        erp.Database.Migrate();
+    }
+    catch (SqliteException)
+    {
+        blocked = true;
+    }
 
+    Check(blocked, "Direct EF update cannot drop Articles before catalogue verification");
+    Check(SqlCount(erpPath,
+        "SELECT COUNT(*) FROM sqlite_master WHERE name='Articles' AND type='table'") == 1,
+        "Rejected unsafe migration leaves old Articles intact");
+
+    // Reproduce a Phase 1 machine which already has a separate live catalogue.
+    CatalogDatabaseBootstrapper.BackupLegacyDatabaseBeforeFirstSplit(erpPath, catalogPath);
+    Check(File.Exists(backupPath), "Backup of historical customer data created");
     using (var catalog = new CatalogDbContext(catalogOptions))
         catalog.Database.Migrate();
     CatalogDatabaseBootstrapper.Initialize(erpPath, catalogPath);
 
     using (var catalog = new CatalogDbContext(catalogOptions))
     {
-        var rows = catalog.Articles.AsNoTracking().ToList();
-        Check(rows.Count == 1 && rows[0].Id == 27, "Article IDs preserved exactly");
-        Check(rows[0].Price == 99.1234m && rows[0].MinimumPrice == 75.50m &&
-              rows[0].Description_EN == "Detailed description" &&
-              rows[0].CreatedBy == "test" &&
-              rows[0].CreatedAt == new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc),
-              "Values and audit fields preserved");
-    }
-
-    using (var sql = new SqliteConnection($"Data Source={catalogPath}"))
-    {
-        sql.Open();
-        using var cmd = sql.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' " +
-                          "AND name IN ('Customers','Contacts','Quotations','Invoices','Contracts','PackingLists','Users')";
-        Check(Convert.ToInt64(cmd.ExecuteScalar()) == 0,
-              "catalog.db has no personal customer or business-document tables");
+        var article = catalog.Articles.Single();
+        Check(article.Id == 27 && article.Price == 99.1234m &&
+              article.MinimumPrice == 75.50m && article.Name_EN == "Test module" &&
+              article.CreatedBy == "test",
+              "Imported Article fields, prices and IDs are preserved");
     }
 
     using (var erp = new ApplicationDbContext(erpOptions))
-    {
-        Check(erp.Customers.Count() == 1 &&
-              erp.Customers.Single().Name == "CONFIDENTIAL-TEST-CUSTOMER",
-              "Existing customer survives migration unchanged");
-        Check(erp.Articles.Single().Id == 27,
-              "Original ERP Articles remain intact for rollback");
-    }
+    using (var catalog = new CatalogDbContext(catalogOptions))
+        DatabaseStartupMigrator.Upgrade(erp, catalog, erpPath, catalogPath);
 
-    CatalogDatabaseBootstrapper.BackupLegacyDatabaseBeforeFirstSplit(erpPath, catalogPath);
-    CatalogDatabaseBootstrapper.Initialize(erpPath, catalogPath);
+    Check(File.Exists(Path.Combine(folder, "catalog.pre-legacy-drop.db")),
+          "Active catalog receives an independent pre-cleanup backup");
+    Check(SqlCount(erpPath,
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Articles'") == 0,
+        "Final ERP physically contains no Articles table");
+    Check(SqlCount(erpPath,
+        "SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId='20261119093000_RemoveLegacyArticles'") == 1,
+        "EF tracks the one-time cleanup migration");
+    Check(SqlCount(erpPath,
+        "SELECT COUNT(*) FROM Customers WHERE Name='CONFIDENTIAL-TEST-CUSTOMER'") == 1,
+        "Historical customer remains untouched");
+    Check(SqlCount(catalogPath,
+        "SELECT COUNT(*) FROM Articles WHERE Id=27") == 1,
+        "Original catalogue Article remains intact");
+    Check(SqlCount(catalogPath,
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN " +
+        "('Customers','Contacts','Quotations','Invoices','Contracts','PackingLists','Users')") == 0,
+        "Catalogue has no personal/business tables");
+
+    using (var erp = new ApplicationDbContext(erpOptions))
+    using (var catalog = new CatalogDbContext(catalogOptions))
+        DatabaseStartupMigrator.Upgrade(erp, catalog, erpPath, catalogPath);
+    Check(SqlCount(erpPath,
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Articles'") == 0,
+        "Restart does not recreate old Articles table");
+
     using (var catalog = new CatalogDbContext(catalogOptions))
     {
-        Check(catalog.Articles.Count() == 1, "Restart does not duplicate imported Articles");
         catalog.Articles.Add(new Article { Name = "NEW-CATALOG-ONLY" });
         catalog.SaveChanges();
         Check(catalog.Articles.Single(a => a.Name == "NEW-CATALOG-ONLY").Id > 27,
-              "New Article IDs continue after imported IDs");
+              "New Article stays in catalog and IDs continue");
     }
+    Check(SqlCount(catalogPath, "SELECT COUNT(*) FROM Articles") == 2,
+          "Catalog remains writable after ERP cleanup");
+    Check(SqlCount(backupPath, "SELECT COUNT(*) FROM Articles WHERE Id=27") == 1 &&
+          SqlCount(backupPath,
+              "SELECT COUNT(*) FROM Customers WHERE Name='CONFIDENTIAL-TEST-CUSTOMER'") == 1,
+          "Original ERP backup preserves legacy Articles and customers");
 
-    using (var erp = new ApplicationDbContext(erpOptions))
-        Check(erp.Articles.Count() == 1 && erp.Customers.Count() == 1,
-              "New catalogue writes never touch legacy ERP tables");
+    // Also test a colleague's virgin installation with only a supplied catalog.db.
+    var colleague = Path.Combine(folder, "colleague");
+    Directory.CreateDirectory(colleague);
+    var colleagueErp = Path.Combine(colleague, "erp.db");
+    var colleagueCatalog = Path.Combine(colleague, "catalog.db");
+    File.Copy(catalogPath, colleagueCatalog);
+    var colleagueErpOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+        .UseSqlite($"Data Source={colleagueErp}").Options;
+    var colleagueCatalogOptions = new DbContextOptionsBuilder<CatalogDbContext>()
+        .UseSqlite($"Data Source={colleagueCatalog}").Options;
+    using (var erp = new ApplicationDbContext(colleagueErpOptions))
+    using (var catalog = new CatalogDbContext(colleagueCatalogOptions))
+        DatabaseStartupMigrator.Upgrade(erp, catalog, colleagueErp, colleagueCatalog);
 
-    using (var backup = new SqliteConnection($"Data Source={backupPath}"))
-    {
-        backup.Open();
-        using var cmd = backup.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM Customers WHERE Name='CONFIDENTIAL-TEST-CUSTOMER'";
-        Check(Convert.ToInt64(cmd.ExecuteScalar()) == 1, "Backup contains intact customer data");
-    }
+    Check(SqlCount(colleagueErp,
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Articles'") == 0,
+        "Colleague's new erp.db contains no redundant Articles");
+    Check(SqlCount(colleagueErp, "SELECT COUNT(*) FROM Customers") == 0,
+        "Colleague's ERP starts with no private customer records");
+    Check(SqlCount(colleagueCatalog, "SELECT COUNT(*) FROM Articles") == 2,
+        "Colleague can access the shared standalone catalogue");
 
-    Console.WriteLine("Catalog split smoke test passed.");
+    // An entirely fresh installation should also create only one Article table.
+    var fresh = Path.Combine(folder, "fresh");
+    Directory.CreateDirectory(fresh);
+    var freshErp = Path.Combine(fresh, "erp.db");
+    var freshCatalog = Path.Combine(fresh, "catalog.db");
+    var freshErpOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+        .UseSqlite($"Data Source={freshErp}").Options;
+    var freshCatalogOptions = new DbContextOptionsBuilder<CatalogDbContext>()
+        .UseSqlite($"Data Source={freshCatalog}").Options;
+    using (var erp = new ApplicationDbContext(freshErpOptions))
+    using (var catalog = new CatalogDbContext(freshCatalogOptions))
+        DatabaseStartupMigrator.Upgrade(erp, catalog, freshErp, freshCatalog);
+
+    Check(SqlCount(freshErp,
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Articles'") == 0,
+        "Fresh installation erp.db has no Articles");
+    Check(SqlCount(freshCatalog, "SELECT COUNT(*) FROM Articles") == 0,
+        "Fresh installation starts with empty standalone catalog");
+    Check(SqlText(freshErp, "PRAGMA integrity_check") == "ok" &&
+          SqlText(freshCatalog, "PRAGMA integrity_check") == "ok",
+          "Both fresh databases pass integrity verification");
+
+    Console.WriteLine("All catalogue cleanup smoke tests passed.");
 }
 finally
 {
