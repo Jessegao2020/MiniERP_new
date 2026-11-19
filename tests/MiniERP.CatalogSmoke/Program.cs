@@ -191,5 +191,7 @@ try
 }
 finally
 {
+    // Windows keeps pooled SQLite handles open after disposal unless explicitly cleared.
+    SqliteConnection.ClearAllPools();
     Directory.Delete(folder, recursive: true);
 }
