@@ -31,6 +31,8 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
     public ObservableCollection<Article> Articles { get; } = new();
     public ObservableCollection<InvoiceItemRowViewModel> Items { get; } = new();
     public ObservableCollection<string> Currencies { get; } = new() { "USD", "CNY" };
+    public IReadOnlyList<string> DeliveryTermOptions { get; } = new[] { "FCA Baoding", "CFR", "CPT" };
+    public IReadOnlyList<string> LeadTimeOptions { get; } = new[] { "2 business days", "1 week", "4 weeks", "4-6 weeks" };
 
     public string DocumentTitle => Invoice.Type == InvoiceType.Proforma ? "Proforma Invoice" : "Commercial Invoice";
     public string SourceText => Invoice.SourceDocumentType == DocumentSourceType.None
@@ -131,6 +133,8 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
                 Type = type,
                 InvoiceNumber = $"{(type == InvoiceType.Proforma ? "PI" : "INV")}-{DateTime.Now:yyyyMMdd-HHmmssfff}",
                 InvoiceDate = DateTime.Now,
+                DeliveryTerm = "FCA Baoding",
+                PaymentTerm = "100% prepayment",
                 Currency = "USD",
                 ExchangeRate = currentRate
             }
