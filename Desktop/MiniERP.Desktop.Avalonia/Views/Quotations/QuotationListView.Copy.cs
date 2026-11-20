@@ -1,7 +1,4 @@
-using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.VisualTree;
 using Microsoft.Extensions.DependencyInjection;
 using MiniERP.ApplicationLayer.Services;
 using MiniERP.Desktop.Infrastructure;
@@ -10,44 +7,8 @@ namespace MiniERP.Desktop.Views.Quotations;
 
 public partial class QuotationListView
 {
-    private bool _copyButtonInstalled;
-
-    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnAttachedToVisualTree(e);
-        InstallCopyButton();
-    }
-
-    private void InstallCopyButton()
-    {
-        if (_copyButtonInstalled || Content is not Grid root)
-            return;
-
-        var toolbar = root.Children
-            .OfType<StackPanel>()
-            .FirstOrDefault(panel => panel.Children
-                .OfType<Button>()
-                .Any(button => string.Equals(button.Content as string, "New", StringComparison.Ordinal)));
-
-        if (toolbar is null)
-            return;
-
-        var copyButton = new Button
-        {
-            Padding = new Thickness(8, 2),
-            Content = "Duplicate"
-        };
-        copyButton.Click += Copy_Click;
-
-        var newButtonIndex = toolbar.Children
-            .Select((child, index) => (child, index))
-            .FirstOrDefault(pair => pair.child is Button button
-                && string.Equals(button.Content as string, "New", StringComparison.Ordinal))
-            .index;
-
-        toolbar.Children.Insert(Math.Min(newButtonIndex + 1, toolbar.Children.Count), copyButton);
-        _copyButtonInstalled = true;
-    }
+    // Duplicate is declared directly in the list toolbar XAML so it shares
+    // the Article/Quotation compact styling and cannot be inserted twice.
 
     private async void Copy_Click(object? sender, RoutedEventArgs e)
     {
