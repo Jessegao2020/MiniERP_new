@@ -31,7 +31,6 @@ publish_one() {
     --self-contained true \
     -p:PublishSingleFile=true \
     -p:IncludeNativeLibrariesForSelfExtract=true \
-    -p:IncludeAllContentForSelfExtract=true \
     -p:PublishTrimmed=false \
     -p:PublishReadyToRun=false \
     -p:DebugType=None \
