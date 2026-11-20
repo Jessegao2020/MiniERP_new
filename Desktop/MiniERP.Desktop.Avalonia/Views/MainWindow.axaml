@@ -26,7 +26,7 @@
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,Auto,*">
-        <Menu Grid.Row="0" Padding="2">
+        <Menu Grid.Row="0" Classes="erp-main-menu" Padding="2">
             <MenuItem Header="File" />
             <MenuItem Header="Edit" />
             <MenuItem Header="View">
@@ -38,7 +38,7 @@
             </MenuItem>
             <MenuItem Header="About" />
         </Menu>
-        <TabControl x:Name="MenuTabControl" Grid.Row="1" BorderThickness="1,1,1,0">
+        <TabControl x:Name="MenuTabControl" Classes="erp-ribbon" Grid.Row="1" BorderThickness="1,1,1,0">
             <TabItem Header="General" Padding="10,5">
                 <Border Height="66" Padding="2,1"><StackPanel Orientation="Horizontal">
                     <Button Classes="ribbon" Click="Article_Click" ToolTip.Tip="Articles"><StackPanel><TextBlock Classes="ribbonIcon" Text="▤" /><TextBlock Classes="ribbonText" Text="Article" /></StackPanel></Button>
