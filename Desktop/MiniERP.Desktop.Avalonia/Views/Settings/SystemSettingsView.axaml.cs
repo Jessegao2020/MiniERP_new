@@ -23,6 +23,10 @@ public partial class SystemSettingsView : UserControl
         _rateFilter = new DecimalTextBoxFilter(ExchangeRateTextBox);
     }
 
+    public void SyncThemeMode()
+        => ViewModel.ThemeMode =
+            App.Services.GetRequiredService<AppSettingsService>().Current.ThemeMode;
+
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
         if (!await ViewModel.SaveAsync())
