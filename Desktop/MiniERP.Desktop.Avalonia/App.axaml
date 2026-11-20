@@ -58,6 +58,12 @@
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
 
+        <Style Selector="Border.erp-toolbar-separator">
+            <Setter Property="Background" Value="{DynamicResource ErpBorderBrush}" />
+        </Style>
+        <Style Selector="Border.erp-nav-frame">
+            <Setter Property="BorderBrush" Value="{DynamicResource ErpFrameBrush}" />
+        </Style>
         <!-- The MDI/workspace tabs are created in C#, so style them by
              class rather than assigning a fixed white Background in code. -->
         <Style Selector="ContentControl.erp-workspace-content">
