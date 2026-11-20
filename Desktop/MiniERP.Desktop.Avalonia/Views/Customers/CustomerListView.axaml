@@ -88,6 +88,6 @@
             </dg:DataGrid>
         </Grid>
 
-        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1" IsVisible="False"><Grid ColumnDefinitions="*,Auto"><infra:StatusMessageTextBlock Text="{Binding Status}" /><TextBlock Grid.Column="1" Foreground="#CB004A" Text="Double-click a row to edit" /></Grid></Border>
+        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1"><Grid ColumnDefinitions="*,Auto"><infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" /><TextBlock Grid.Column="1" Foreground="#CB004A" Text="Double-click a row to edit" /></Grid></Border>
     </Grid>
 </UserControl>
