@@ -29,15 +29,19 @@ public partial class InvoiceEditorView : UserControl
         var settings = App.Services.GetRequiredService<AppSettingsService>();
         DataContext = new InvoiceEditorViewModel(invoice, type, settings);
         CreateCommercialButton.IsVisible = type == InvoiceType.Proforma;
+        InitializePositionEditor();
 
         var saveButton = EditorWorkflowSupport.AddGridViewToggle(this, GridView_Click);
         _dirtyMonitor = new EditorDirtyMonitor(saveButton, CaptureEditState);
         AttachedToVisualTree += async (_, _) =>
         {
             // Match the framed section strip used by the Quotation editor.
-            Avalonia.Threading.Dispatcher.UIThread.Post(
-                () => DocumentSectionNavigationFrame.Install(this),
-                Avalonia.Threading.DispatcherPriority.Loaded);
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                DocumentSectionNavigationFrame.Install(this);
+                ConfigurePositionEditor();
+                NormalizePickerButtons();
+            }, Avalonia.Threading.DispatcherPriority.Loaded);
             await ViewModel.LoadLookupsAsync();
             _dirtyMonitor.Start();
         };
@@ -68,6 +72,7 @@ public partial class InvoiceEditorView : UserControl
 
     private void MoveItemUp_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         var item = ViewModel.SelectedItem;
         if (item is null)
         {
@@ -91,6 +96,7 @@ public partial class InvoiceEditorView : UserControl
 
     private void MoveItemDown_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         var item = ViewModel.SelectedItem;
         if (item is null)
         {
@@ -142,7 +148,12 @@ public partial class InvoiceEditorView : UserControl
 
     private async void ExportPdf_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         if (!ViewModel.TryPrepareForExport()) return;
+        // Like Quotation: never export a document that has not been persisted.
+        if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
+        Saved?.Invoke(this, EventArgs.Empty);
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel?.StorageProvider is null) { ViewModel.SetStatusMessage("PDF export is not available on this desktop session."); return; }
         var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -166,6 +177,7 @@ public partial class InvoiceEditorView : UserControl
     private async void CreateCommercial_Click(object? sender, RoutedEventArgs e)
     {
         if (ViewModel.Invoice.Type != InvoiceType.Proforma) return;
+        if (!EnsurePositionEditorCommitted()) return;
         if (!await ViewModel.SaveAsync()) return;
         _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
@@ -174,6 +186,7 @@ public partial class InvoiceEditorView : UserControl
 
     private async void CreatePackingList_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         if (!await ViewModel.SaveAsync()) return;
         _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
@@ -182,6 +195,7 @@ public partial class InvoiceEditorView : UserControl
 
     private async void CreateContract_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         if (!await ViewModel.SaveAsync()) return;
         _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
@@ -190,6 +204,7 @@ public partial class InvoiceEditorView : UserControl
 
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         if (!await ViewModel.SaveAsync()) return;
         _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
