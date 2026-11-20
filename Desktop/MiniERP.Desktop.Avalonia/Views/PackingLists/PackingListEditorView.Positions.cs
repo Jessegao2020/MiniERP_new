@@ -64,6 +64,12 @@ public partial class PackingListEditorView
         GoodsArticleAutoComplete.SelectionChanged += GoodsArticle_SelectionChanged;
         GoodsArticleAutoComplete.DropDownOpened += GoodsArticle_DropDownOpened;
         GoodsArticleAutoComplete.KeyDown += GoodsArticle_KeyDown;
+        // The Packages tab starts inactive, so its spinner template is built
+        // later. Apply the same compact arrows when either editor is displayed.
+        GoodsQtyTextBox.AttachedToVisualTree += (_, _) =>
+            Dispatcher.UIThread.Post(ApplyPackingSpinners, DispatcherPriority.Loaded);
+        PackCountTextBox.AttachedToVisualTree += (_, _) =>
+            Dispatcher.UIThread.Post(ApplyPackingSpinners, DispatcherPriority.Loaded);
         ApplyPackingSpinners();
         Dispatcher.UIThread.Post(ApplyPackingSpinners, DispatcherPriority.Render);
         UpdateGoodsSaveState();
