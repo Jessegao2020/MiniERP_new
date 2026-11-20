@@ -222,14 +222,27 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
         Status = $"Added '{row.ArticleName}'.";
     }
 
+    public void AddPosition(ContractItemRowViewModel row)
+    {
+        AddRow(row);
+        SelectedItem = row;
+        Status = $"Position '{row.ArticleName}' added. Save the document to persist it.";
+    }
+
+    public void RemovePosition(ContractItemRowViewModel row)
+    {
+        row.PropertyChanged -= Item_PropertyChanged;
+        Items.Remove(row);
+        if (ReferenceEquals(SelectedItem, row))
+            SelectedItem = null;
+        NotifyTotals();
+        Status = "Contract item removed. Save to persist the change.";
+    }
+
     public void RemoveSelectedItem()
     {
         if (SelectedItem is null) { Status = "Select a contract item first."; return; }
-        SelectedItem.PropertyChanged -= Item_PropertyChanged;
-        Items.Remove(SelectedItem);
-        SelectedItem = null;
-        NotifyTotals();
-        Status = "Contract item removed. Save to persist the change.";
+        RemovePosition(SelectedItem);
     }
 
     public bool TryPrepareForExport() => TryPrepareDocument(requireItems: true);
