@@ -25,6 +25,8 @@
                     <SolidColorBrush x:Key="ErpSelectedSectionBrush" Color="#E7E7E7" />
                     <SolidColorBrush x:Key="ErpSelectedHoverBrush" Color="#F3F3F3" />
                     <SolidColorBrush x:Key="ErpFrameBrush" Color="#B5B5B5" />
+                                    <SolidColorBrush x:Key="ErpFilterBrush" Color="#FFFEEF" />
+                    <SolidColorBrush x:Key="ErpMutedBrush" Color="#666666" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="ErpSurfaceBrush" Color="#22252B" />
@@ -45,6 +47,8 @@
                     <SolidColorBrush x:Key="ErpSelectedSectionBrush" Color="#3B4553" />
                     <SolidColorBrush x:Key="ErpSelectedHoverBrush" Color="#303741" />
                     <SolidColorBrush x:Key="ErpFrameBrush" Color="#636B76" />
+                                    <SolidColorBrush x:Key="ErpFilterBrush" Color="#383629" />
+                    <SolidColorBrush x:Key="ErpMutedBrush" Color="#BAC3D0" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
