@@ -1,6 +1,7 @@
 <UserControl
     x:Class="MiniERP.Desktop.Views.Settings.UserSettingsView"
     xmlns="https://github.com/avaloniaui"
+    xmlns:infra="clr-namespace:MiniERP.Desktop.Infrastructure"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
 
@@ -42,8 +43,8 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
-            <TextBlock Foreground="#CB004A" Text="{Binding Status}" />
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1" IsVisible="False">
+            <infra:StatusMessageTextBlock Text="{Binding Status}" />
         </Border>
     </Grid>
 </UserControl>
