@@ -62,3 +62,33 @@ Linux desktop launcher.
 - Keep the WPF project untouched while screens are migrated incrementally.
 
 Next recommended step: migrate Article list/edit first, then Customer list/edit, then replace the WPF-only FilterableDataGrid.
+
+## Startup timing (experimental branch)
+
+The Avalonia application writes a best-effort startup profile to a local log
+after the main window opens. It does **not** change the startup/migration
+sequence or enable any unsafe database skipping.
+
+- Linux Mint: `~/.local/share/MiniERP/startup-timing.log`
+- Windows: `%LOCALAPPDATA%\\MiniERP\\startup-timing.log`
+
+The file is appended to on each launch, so you can compare multiple cold and
+warm runs. On Linux, inspect the last runs with:
+
+```bash
+tail -n 100 ~/.local/share/MiniERP/startup-timing.log
+```
+
+Each record contains a **cumulative offset** (`[+... ms]`) from
+`Program.Main` and, where applicable, a **duration** for that operation.
+Database substeps are nested within "Database upgrade and verification
+(total)", so do not add their durations to the overall database total.
+
+The `MainWindow.Opened` event and the subsequent UI background callback are
+useful visible/ready milestones, but neither guarantees that the OS compositor
+has presented the very first pixel. The timer also cannot measure the time
+before the managed `Main` entry point (OS loader / .NET runtime startup).
+
+Profiling is best-effort: failed log writes are ignored, and any startup
+exception is still reported separately in `startup-error.log`. For meaningful
+comparisons, use the same machine and publish mode, and compare several runs.
