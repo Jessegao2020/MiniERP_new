@@ -27,6 +27,8 @@
                     <SolidColorBrush x:Key="ErpFrameBrush" Color="#B5B5B5" />
                     <SolidColorBrush x:Key="ErpFilterBrush" Color="#FFFEEF" />
                     <SolidColorBrush x:Key="ErpMutedBrush" Color="#666666" />
+                                    <SolidColorBrush x:Key="ErpPlaceholderBrush" Color="#515A65" />
+                    <x:Double x:Key="TextControlPlaceholderOpacity">0.85</x:Double>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="ErpSurfaceBrush" Color="#22252B" />
@@ -49,6 +51,8 @@
                     <SolidColorBrush x:Key="ErpFrameBrush" Color="#636B76" />
                     <SolidColorBrush x:Key="ErpFilterBrush" Color="#383629" />
                     <SolidColorBrush x:Key="ErpMutedBrush" Color="#BAC3D0" />
+                                    <SolidColorBrush x:Key="ErpPlaceholderBrush" Color="#D8E1EA" />
+                    <x:Double x:Key="TextControlPlaceholderOpacity">0.85</x:Double>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
@@ -110,6 +114,10 @@
         <Style Selector="TabControl.document-sections TabItem:selected">
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
         </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+            <Setter Property="PlaceholderForeground" Value="{DynamicResource ErpPlaceholderBrush}" />
+        </Style>
         <Style Selector="TextBox.grid-filter">
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
         </Style>
@@ -119,9 +127,13 @@
         <Style Selector="AutoCompleteBox">
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
         </Style>
+        <Style Selector="AutoCompleteBox /template/ TextBox">
+            <Setter Property="PlaceholderForeground" Value="{DynamicResource ErpPlaceholderBrush}" />
+        </Style>
 
         <!-- Default ERP table skin. Views that need an integrated filter row provide their own external header/filter, while every DataGrid shares the same thin SelectLine look. -->
         <Style Selector="DataGrid">
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
             <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource ErpBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
@@ -145,6 +157,7 @@
             <Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" />
         </Style>
         <Style Selector="DataGrid DataGridCell">
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
             <Setter Property="Padding" Value="5,2" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <!-- DataGridTextColumn content is not clipped by default. Long text can render across the cell edge and visually cover the vertical grid line. -->
