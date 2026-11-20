@@ -128,7 +128,7 @@
 </Border>
 <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,0">
 <Button Classes="position-command" Click="NewGoods_Click" Content="New" />
-<Button x:Name="GoodsSaveButton" Classes="position-command" Click="Save"+prefix+"_Click" Content="Save" IsEnabled="False" />
+<Button x:Name="GoodsSaveButton" Classes="position-command" Click="SaveGoods_Click" Content="Save" IsEnabled="False" />
 <Button Classes="position-command" Click="MoveGoodsUp_Click" Content="↑" />
 <Button Classes="position-command" Click="MoveGoodsDown_Click" Content="↓" />
 <Button Classes="position-command" Click="DeleteGoods_Click" Content="Delete" />
@@ -204,7 +204,7 @@
 </Border>
 <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,0">
 <Button Classes="position-command" Click="NewPack_Click" Content="New" />
-<Button x:Name="PackSaveButton" Classes="position-command" Click="Save"+prefix+"_Click" Content="Save" IsEnabled="False" />
+<Button x:Name="PackSaveButton" Classes="position-command" Click="SavePack_Click" Content="Save" IsEnabled="False" />
 <Button Classes="position-command" Click="MovePackUp_Click" Content="↑" />
 <Button Classes="position-command" Click="MovePackDown_Click" Content="↓" />
 <Button Classes="position-command" Click="DeletePack_Click" Content="Delete" />
