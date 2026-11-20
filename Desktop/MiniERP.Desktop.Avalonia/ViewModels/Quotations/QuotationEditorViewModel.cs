@@ -23,16 +23,33 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
     private decimal _exchangeRateSnapshot;
     private string _status = string.Empty;
     private int _numberPreviewVersion;
+    private bool _quotationNumberManuallyEdited;
 
     public Quotation Quotation { get; }
     public bool IsNew { get; private set; }
-    public string QuotationNumber => Quotation.QuotationNumber;
+    // A newly created quotation gets a sequential preview, but the operator can
+    // override it. A manual number must never be replaced by later async previews.
+    public string QuotationNumber
+    {
+        get => Quotation.QuotationNumber;
+        set
+        {
+            var next = value ?? string.Empty;
+            if (string.Equals(Quotation.QuotationNumber, next, StringComparison.Ordinal)) return;
+            _quotationNumberManuallyEdited = true;
+            ++_numberPreviewVersion;
+            Quotation.QuotationNumber = next;
+            OnPropertyChanged();
+        }
+    }
     public ObservableCollection<Customer> Customers { get; } = new();
     public ObservableCollection<CustomerContact> CustomerContacts { get; } = new();
     public ObservableCollection<User> Users { get; } = new();
     public ObservableCollection<Article> Articles { get; } = new();
     public ObservableCollection<QuotationItemRowViewModel> Items { get; } = new();
     public ObservableCollection<string> Currencies { get; } = new() { "USD", "CNY" };
+    public IReadOnlyList<string> DeliveryTermOptions { get; } = new[] { "FCA Baoding", "CFR", "CPT" };
+    public IReadOnlyList<string> LeadTimeOptions { get; } = new[] { "2 business days", "1 week", "4 weeks", "4-6 weeks" };
 
     public decimal ExchangeRateSnapshot
     {
@@ -118,7 +135,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             if (ReferenceEquals(_selectedUser, value)) return;
             _selectedUser = value;
             OnPropertyChanged();
-            if (IsNew)
+            if (IsNew && !_quotationNumberManuallyEdited)
                 _ = RefreshQuotationNumberPreviewAsync();
         }
     }
@@ -196,6 +213,9 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             ? new Quotation
             {
                 QuotationNumber = string.Empty,
+                DeliveryTerm = "FCA Baoding",
+                PaymentTerm = "100% prepayment",
+                LeadTime = "2 business days",
                 QuotationDate = DateTime.Now,
                 ValidUntil = DateTime.Today.AddDays(_defaultValidityDays),
                 Currency = "USD",
@@ -226,6 +246,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 
     private async Task RefreshQuotationNumberPreviewAsync()
     {
+        if (_quotationNumberManuallyEdited) return;
         var version = ++_numberPreviewVersion;
         var user = SelectedUser;
         if (user is null)
@@ -241,7 +262,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
             var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
             var number = await QuotationNumberSupport.PreviewNextAsync(service, user.Code, DateTime.Now);
 
-            if (!IsNew || version != _numberPreviewVersion || !ReferenceEquals(user, SelectedUser))
+            if (!IsNew || _quotationNumberManuallyEdited || version != _numberPreviewVersion || !ReferenceEquals(user, SelectedUser))
                 return;
 
             Quotation.QuotationNumber = number;
@@ -249,7 +270,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            if (!IsNew || version != _numberPreviewVersion)
+            if (!IsNew || _quotationNumberManuallyEdited || version != _numberPreviewVersion)
                 return;
 
             Quotation.QuotationNumber = string.Empty;
@@ -480,10 +501,24 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 
             if (IsNew)
             {
-                // A preview is only provisional. Generate the actual sequential number
-                // against committed quotations at the instant of creation.
+                // Preview numbers are provisional. For an untouched auto-number, use
+                // the shared allocator at save time; manually edited numbers are used
+                // exactly as entered and checked for uniqueness before insertion.
                 ++_numberPreviewVersion;
-                await QuotationNumberSupport.CreateAsync(service, Quotation, SelectedUser!.Code);
+                if (_quotationNumberManuallyEdited)
+                {
+                    var existingNumber = await service.GetQuotationByNumberAsync(Quotation.QuotationNumber);
+                    if (existingNumber is not null)
+                    {
+                        Status = "Quotation number already exists.";
+                        return false;
+                    }
+                    await service.CreateQuotationAsync(Quotation);
+                }
+                else
+                {
+                    await QuotationNumberSupport.CreateAsync(service, Quotation, SelectedUser!.Code);
+                }
                 IsNew = false;
                 OnPropertyChanged(nameof(QuotationNumber));
             }
@@ -533,7 +568,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
 
     private bool TryPrepareDocument(bool requireItems)
     {
-        if (!IsNew && string.IsNullOrWhiteSpace(Quotation.QuotationNumber))
+        if ((!IsNew || _quotationNumberManuallyEdited) && string.IsNullOrWhiteSpace(Quotation.QuotationNumber))
         {
             Status = "Quotation number is required.";
             return false;
