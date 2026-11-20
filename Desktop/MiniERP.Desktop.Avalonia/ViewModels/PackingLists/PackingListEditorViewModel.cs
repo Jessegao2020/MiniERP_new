@@ -26,6 +26,7 @@ public sealed class PackingListEditorViewModel : INotifyPropertyChanged
     public ObservableCollection<User> Users { get; } = new();
     public ObservableCollection<Article> Articles { get; } = new();
     public ObservableCollection<PackingListItemRowViewModel> Items { get; } = new();
+    public IReadOnlyList<string> DeliveryTermOptions { get; } = new[] { "FCA Baoding", "CFR", "CPT" };
     public ObservableCollection<PackingPackageRowViewModel> Packages { get; } = new();
 
     public string SourceText => PackingList.SourceDocumentType == DocumentSourceType.None
@@ -62,7 +63,7 @@ public sealed class PackingListEditorViewModel : INotifyPropertyChanged
     {
         IsNew = source is null || source.Id == 0;
         PackingList = source is null
-            ? new PackingList { PackingListNumber = $"PL-{DateTime.Now:yyyyMMdd-HHmmssfff}", PackingDate = DateTime.Now }
+            ? new PackingList { PackingListNumber = $"PL-{DateTime.Now:yyyyMMdd-HHmmssfff}", PackingDate = DateTime.Now, DeliveryTerm = "FCA Baoding" }
             : Clone(source);
 
         PackingDate = new DateTimeOffset(PackingList.PackingDate);
