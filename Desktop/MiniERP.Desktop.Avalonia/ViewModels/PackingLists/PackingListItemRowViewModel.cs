@@ -15,7 +15,8 @@ public sealed class PackingListItemRowViewModel : INotifyPropertyChanged
     private string _unit;
 
     public int Id { get; }
-    public int? SourceArticleId { get; }
+    public int? SourceArticleId { get; private set; }
+    public void SetSourceArticle(int? value) => SourceArticleId = value;
     public string ArticleName { get => _articleName; set => SetField(ref _articleName, value ?? string.Empty); }
     public string? Description { get => _description; set => SetField(ref _description, value); }
     public string? Specification { get => _specification; set => SetField(ref _specification, value); }
@@ -46,6 +47,17 @@ public sealed class PackingListItemRowViewModel : INotifyPropertyChanged
         _specification = !string.IsNullOrWhiteSpace(source.Specs_EN) ? source.Specs_EN : source.Specification;
         _quantityText = "1";
         _unit = "PCS";
+    }
+
+    public PackingListItemRowViewModel(string articleName, string? description,
+        string? specification, int? sourceArticleId, decimal quantity, string unit)
+    {
+        SourceArticleId = sourceArticleId;
+        _articleName = articleName;
+        _description = description;
+        _specification = specification;
+        _quantityText = ToText(quantity);
+        _unit = unit;
     }
 
     public bool TryValidate(out string error)
