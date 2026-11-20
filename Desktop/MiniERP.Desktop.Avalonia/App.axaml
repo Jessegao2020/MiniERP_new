@@ -3,25 +3,72 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     RequestedThemeVariant="Default">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="ErpSurfaceBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="ErpPageBrush" Color="#F0F0F0" />
+                    <SolidColorBrush x:Key="ErpToolbarBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="ErpSubtleBrush" Color="#FAFAFA" />
+                    <SolidColorBrush x:Key="ErpStatusBrush" Color="#E8E8E8" />
+                    <SolidColorBrush x:Key="ErpAlternateBrush" Color="#F3F3F3" />
+                    <SolidColorBrush x:Key="ErpBorderBrush" Color="#D0D0D0" />
+                    <SolidColorBrush x:Key="ErpGridBrush" Color="#E4E4E4" />
+                    <SolidColorBrush x:Key="ErpTextBrush" Color="#202020" />
+                    <SolidColorBrush x:Key="ErpSelectedBrush" Color="#3394D6" />
+                    <SolidColorBrush x:Key="ErpSelectionTextBrush" Color="#111111" />
+                    <SolidColorBrush x:Key="ErpHoverBrush" Color="#EAF2F8" />
+                    <SolidColorBrush x:Key="ErpLookupBrush" Color="#EEEEEE" />
+                    <SolidColorBrush x:Key="ErpFooterAccentBrush" Color="#CB004A" />
+                    <SolidColorBrush x:Key="ErpSpecialBrush" Color="#DDDCCB" />
+                    <SolidColorBrush x:Key="ErpSelectedSectionBrush" Color="#E7E7E7" />
+                    <SolidColorBrush x:Key="ErpSelectedHoverBrush" Color="#F3F3F3" />
+                    <SolidColorBrush x:Key="ErpFrameBrush" Color="#B5B5B5" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="ErpSurfaceBrush" Color="#22252B" />
+                    <SolidColorBrush x:Key="ErpPageBrush" Color="#191C22" />
+                    <SolidColorBrush x:Key="ErpToolbarBrush" Color="#262A31" />
+                    <SolidColorBrush x:Key="ErpSubtleBrush" Color="#292D35" />
+                    <SolidColorBrush x:Key="ErpStatusBrush" Color="#272B33" />
+                    <SolidColorBrush x:Key="ErpAlternateBrush" Color="#292E36" />
+                    <SolidColorBrush x:Key="ErpBorderBrush" Color="#525967" />
+                    <SolidColorBrush x:Key="ErpGridBrush" Color="#444B55" />
+                    <SolidColorBrush x:Key="ErpTextBrush" Color="#ECEFF4" />
+                    <SolidColorBrush x:Key="ErpSelectedBrush" Color="#315E87" />
+                    <SolidColorBrush x:Key="ErpSelectionTextBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="ErpHoverBrush" Color="#354758" />
+                    <SolidColorBrush x:Key="ErpLookupBrush" Color="#363D47" />
+                    <SolidColorBrush x:Key="ErpFooterAccentBrush" Color="#FF83AD" />
+                    <SolidColorBrush x:Key="ErpSpecialBrush" Color="#42443D" />
+                    <SolidColorBrush x:Key="ErpSelectedSectionBrush" Color="#3B4553" />
+                    <SolidColorBrush x:Key="ErpSelectedHoverBrush" Color="#303741" />
+                    <SolidColorBrush x:Key="ErpFrameBrush" Color="#636B76" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
 
         <!-- Default ERP table skin. Views that need an integrated filter row provide their own external header/filter, while every DataGrid shares the same thin SelectLine look. -->
         <Style Selector="DataGrid">
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#D4D4D4" />
+            <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ErpBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="GridLinesVisibility" Value="All" />
-            <Setter Property="HorizontalGridLinesBrush" Value="#E4E4E4" />
-            <Setter Property="VerticalGridLinesBrush" Value="#E4E4E4" />
-            <Setter Property="RowBackground" Value="White" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource ErpGridBrush}" />
+            <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource ErpGridBrush}" />
+            <Setter Property="RowBackground" Value="{DynamicResource ErpSurfaceBrush}" />
         </Style>
         <Style Selector="DataGrid DataGridColumnHeader">
-            <Setter Property="Background" Value="White" />
-            <Setter Property="Foreground" Value="#202020" />
-            <Setter Property="BorderBrush" Value="#C9C9C9" />
+            <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ErpBorderBrush}" />
             <Setter Property="BorderThickness" Value="0,0,1,1" />
             <Setter Property="Padding" Value="5,0,4,0" />
             <Setter Property="FontSize" Value="11" />
@@ -29,7 +76,7 @@
             <Setter Property="Height" Value="24" />
         </Style>
         <Style Selector="DataGrid DataGridColumnHeader:pointerover">
-            <Setter Property="Background" Value="#F3F3F3" />
+            <Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" />
         </Style>
         <Style Selector="DataGrid DataGridCell">
             <Setter Property="Padding" Value="5,2" />
@@ -43,14 +90,14 @@
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
         <Style Selector="DataGrid DataGridRow.alternate">
-            <Setter Property="Background" Value="#F3F3F3" />
+            <Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" />
         </Style>
         <Style Selector="DataGrid DataGridRow:pointerover">
-            <Setter Property="Background" Value="#EAF2F8" />
+            <Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" />
         </Style>
         <Style Selector="DataGrid DataGridRow:selected">
-            <Setter Property="Background" Value="#3394D6" />
-            <Setter Property="TextBlock.Foreground" Value="#111111" />
+            <Setter Property="Background" Value="{DynamicResource ErpSelectedBrush}" />
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource ErpSelectionTextBrush}" />
         </Style>
     </Application.Styles>
 </Application>
