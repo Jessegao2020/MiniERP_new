@@ -103,13 +103,27 @@ public sealed class ArticleListViewModel : INotifyPropertyChanged
             var service = scope.ServiceProvider.GetRequiredService<IArticleService>();
             await service.DeleteArticleAsync(id);
 
-            await LoadAsync();
+            // Do not re-query and clear/rebuild the entire observable collection.
+            // DataGrid resets its ScrollViewer to the top when Articles.Clear()
+            // is called, even when only one row was deleted.
+            RemoveArticleFromCurrentList(id);
             Status = $"Article {id} deleted.";
         }
         catch (Exception ex)
         {
             Status = $"Delete failed: {ex.Message}";
         }
+    }
+
+    public void RemoveArticleFromCurrentList(int articleId)
+    {
+        _allArticles.RemoveAll(article => article.Id == articleId);
+        if (SelectedArticle?.Id == articleId)
+            SelectedArticle = null;
+
+        var visible = Articles.FirstOrDefault(article => article.Id == articleId);
+        if (visible is not null)
+            Articles.Remove(visible);
     }
 
     private void ApplyFilters()
