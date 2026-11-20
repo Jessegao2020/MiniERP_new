@@ -533,6 +533,13 @@ public partial class InvoiceEditorView
         else
         {
             var target = _editingPosition;
+            if (_positionSourceArticle is Article selectedMaster
+                && target.SourceArticleId != selectedMaster.Id)
+            {
+                // An explicit product switch replaces the product specification,
+                // not merely the label and price. Simple renaming does neither.
+                target.Specification = selectedMaster.Specs_EN ?? selectedMaster.Specification;
+            }
             target.SetSourceArticle(_positionSourceArticle?.Id ?? target.SourceArticleId);
             target.ArticleName = name;
             target.QuantityText = DecimalText(qty);
