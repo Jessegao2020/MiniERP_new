@@ -49,7 +49,7 @@
 <TabItem Header="Delivery / Text"><Border Classes="document-section"><ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"><StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left"><TextBlock FontSize="17" FontWeight="SemiBold" Text="Delivery / Text" />
 <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10">
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Delivery Term" />
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PackingList.DeliveryTerm, Mode=TwoWay}" />
+                    <ComboBox Grid.Row="0" Grid.Column="1" IsEditable="True" Width="280" MinWidth="280" MaxWidth="280" HorizontalAlignment="Left" ItemsSource="{Binding DeliveryTermOptions}" Text="{Binding PackingList.DeliveryTerm, Mode=TwoWay}" />
 </Grid>
                 <StackPanel Spacing="5"><TextBlock Text="Remarks" /><TextBox MinHeight="70" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding PackingList.Remarks, Mode=TwoWay}" /></StackPanel>
 </StackPanel></ScrollViewer></Border></TabItem>
