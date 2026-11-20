@@ -4,19 +4,26 @@
     xmlns:infra="clr-namespace:MiniERP.Desktop.Infrastructure"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
-    <Grid RowDefinitions="Auto,*,Auto">
+
+    <UserControl.Styles>
+        <Style Selector="TabControl.document-sections TabItem">
+            <Setter Property="Width" Value="150" /><Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="12,0" /><Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" /><Setter Property="FontSize" Value="12" />
+            <Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TabControl.document-sections TabItem:pointerover"><Setter Property="Background" Value="#F3F3F3" /></Style>
+        <Style Selector="TabControl.document-sections TabItem:selected"><Setter Property="Background" Value="#E7E7E7" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+        <Style Selector="Border.document-section"><Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#D2D2D2" /><Setter Property="BorderThickness" Value="1,0,0,0" /></Style>
+    </UserControl.Styles>
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0" Spacing="3">
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Save_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="✓" /><TextBlock Text="Save" FontSize="10" /></StackPanel></Button>
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Discard_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↶" /><TextBlock Text="Discard" FontSize="10" /></StackPanel></Button>
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Delete_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="×" /><TextBlock Text="Delete" FontSize="10" /></StackPanel></Button>
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="ExportPdf_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↓" /><TextBlock Text="Export PDF" FontSize="10" /></StackPanel></Button>
         </StackPanel>
-
-        <ScrollViewer Grid.Row="1">
-            <StackPanel Margin="24,18" Spacing="16" MaxWidth="1200" HorizontalAlignment="Left">
-                <Grid ColumnDefinitions="*,Auto"><TextBlock FontSize="24" FontWeight="SemiBold" Text="Packing List" /><TextBlock Grid.Column="1" VerticalAlignment="Center" Opacity="0.55" Text="{Binding SourceText}" /></Grid>
-
-                <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
+        <Border Grid.Row="1" Margin="0,4,0,0" Padding="12,9" Background="#FAFAFA" BorderBrush="#D0D0D0" BorderThickness="0,1,0,1"><ScrollViewer HorizontalScrollBarVisibility="Auto"><Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="8" HorizontalAlignment="Left">
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Packing List No." />
                     <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PackingList.PackingListNumber, Mode=TwoWay}" />
                     <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="User" />
@@ -26,20 +33,27 @@
                     <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,34"><AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type customer name" /><Button Grid.Column="1" Padding="0" Click="PickCustomer_Click" Content="..." /></Grid>
                     <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Packing Date" />
                     <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding PackingDate, Mode=TwoWay}" />
-
-                    <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Customer Contact" />
-                    <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,34"><AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name" /><Button Grid.Column="1" Padding="0" Click="PickContact_Click" Content="..." /></Grid>
-                    <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="Delivery Term" />
-                    <TextBox Grid.Row="2" Grid.Column="3" Text="{Binding PackingList.DeliveryTerm, Mode=TwoWay}" />
-
-                    <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Customer PO No." />
-                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding PackingList.CustomerPoNumber, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" Text="Customer PO Date" />
-                    <DatePicker Grid.Row="3" Grid.Column="3" SelectedDate="{Binding CustomerPoDate, Mode=TwoWay}" />
-                </Grid>
-
+</Grid></ScrollViewer></Border>
+        <TabControl Grid.Row="2" Classes="document-sections" TabStripPlacement="Left" SelectedIndex="2">
+<TabItem Header="General"><Border Classes="document-section"><ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"><StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left"><TextBlock FontSize="17" FontWeight="SemiBold" Text="General" />
+<Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Customer Contact" />
+                    <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,34"><AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name" /><Button Grid.Column="1" Padding="0" Click="PickContact_Click" Content="..." /></Grid>
+                    <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Customer PO No." />
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PackingList.CustomerPoNumber, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Customer PO Date" />
+                    <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding CustomerPoDate, Mode=TwoWay}" />
+</Grid>
+<TextBlock Opacity="0.6" Text="{Binding SourceText}" TextWrapping="Wrap" />
+</StackPanel></ScrollViewer></Border></TabItem>
+<TabItem Header="Delivery / Text"><Border Classes="document-section"><ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"><StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left"><TextBlock FontSize="17" FontWeight="SemiBold" Text="Delivery / Text" />
+<Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10">
+                    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Delivery Term" />
+                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PackingList.DeliveryTerm, Mode=TwoWay}" />
+</Grid>
                 <StackPanel Spacing="5"><TextBlock Text="Remarks" /><TextBox MinHeight="70" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding PackingList.Remarks, Mode=TwoWay}" /></StackPanel>
-
+</StackPanel></ScrollViewer></Border></TabItem>
+<TabItem Header="Goods"><Border Classes="document-section"><ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"><StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left"><TextBlock FontSize="17" FontWeight="SemiBold" Text="Goods" />
                 <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
                     <Grid RowDefinitions="Auto,Auto,235,Auto" RowSpacing="8">
                         <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Goods" />
@@ -62,7 +76,8 @@
                         <TextBlock Grid.Row="3" HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding TotalQuantity, StringFormat='Total Qty: {0:0.####}'}" />
                     </Grid>
                 </Border>
-
+</StackPanel></ScrollViewer></Border></TabItem>
+<TabItem Header="Packages / Cartons"><Border Classes="document-section"><ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"><StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left"><TextBlock FontSize="17" FontWeight="SemiBold" Text="Packages / Cartons" />
                 <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
                     <Grid RowDefinitions="Auto,Auto,260,Auto" RowSpacing="8">
                         <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Packages / Cartons" />
@@ -88,8 +103,8 @@
                         <TextBlock Grid.Row="3" HorizontalAlignment="Right" FontSize="14" FontWeight="SemiBold" Text="{Binding TotalsText}" />
                     </Grid>
                 </Border>
-            </StackPanel>
-        </ScrollViewer>
-        <Border Grid.Row="2" Padding="6,3" Height="26" ClipToBounds="True" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1"><infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" /></Border>
+</StackPanel></ScrollViewer></Border></TabItem>
+        </TabControl>
+        <Border Grid.Row="3" Padding="6,3" Height="26" ClipToBounds="True" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1"><infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" /></Border>
     </Grid>
 </UserControl>
