@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Microsoft.Extensions.DependencyInjection;
 using MiniERP.ApplicationLayer.Services;
+using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.Views.Articles;
 using MiniERP.Desktop.Views.Contracts;
 using MiniERP.Desktop.Views.Customers;
@@ -27,6 +28,50 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         ContentTabControl.ItemsSource = _workspaceTabs;
+    }
+
+    private async void ThemeSystem_Click(object? sender, RoutedEventArgs e)
+        => await SetThemeModeAsync(ThemeManager.System);
+
+    private async void ThemeLight_Click(object? sender, RoutedEventArgs e)
+        => await SetThemeModeAsync(ThemeManager.Light);
+
+    private async void ThemeDark_Click(object? sender, RoutedEventArgs e)
+        => await SetThemeModeAsync(ThemeManager.Dark);
+
+    private async Task SetThemeModeAsync(string mode)
+    {
+        var settings = App.Services.GetRequiredService<AppSettingsService>();
+        var previous = settings.Current.ThemeMode;
+        ThemeManager.Apply(mode);
+        try
+        {
+            await settings.SaveThemeModeAsync(mode);
+            if (_openTabs.TryGetValue("system", out var systemTab)
+                && systemTab.Content is SystemSettingsView settingsView)
+                settingsView.SyncThemeMode();
+        }
+        catch (Exception error)
+        {
+            ThemeManager.Apply(previous);
+            var dialog = new Window
+            {
+                Title = "MiniERP - Theme Settings",
+                Width = 460,
+                Height = 180,
+                CanResize = false,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+            var ok = new Button { Content = "OK", Width = 80, HorizontalAlignment = HorizontalAlignment.Right };
+            ok.Click += (_, _) => dialog.Close();
+            dialog.Content = new StackPanel
+            {
+                Margin = new Thickness(20),
+                Spacing = 16,
+                Children = { new TextBlock { Text = "Could not save the theme preference: " + error.Message, TextWrapping = TextWrapping.Wrap }, ok }
+            };
+            await dialog.ShowDialog(this);
+        }
     }
 
     private void Article_Click(object? sender, RoutedEventArgs e) => OpenArticleList();
