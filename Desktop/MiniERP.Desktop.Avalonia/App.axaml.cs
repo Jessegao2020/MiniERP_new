@@ -27,6 +27,7 @@ public partial class App : Application
         try
         {
             ConfigureDatabaseAndServices();
+            ThemeManager.Apply(Services.GetRequiredService<AppSettingsService>().Current.ThemeMode);
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
                 desktop.MainWindow = new MainWindow();
