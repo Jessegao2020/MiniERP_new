@@ -140,6 +140,16 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
             }
             : Clone(source);
 
+        // Converted new documents can arrive with empty terms; apply defaults
+        // only when the document is new and the source supplied no value.
+        if (IsNew)
+        {
+            if (string.IsNullOrWhiteSpace(Invoice.DeliveryTerm))
+                Invoice.DeliveryTerm = "FCA Baoding";
+            if (string.IsNullOrWhiteSpace(Invoice.PaymentTerm))
+                Invoice.PaymentTerm = "100% prepayment";
+        }
+
         Invoice.Type = type;
         _currency = string.IsNullOrWhiteSpace(Invoice.Currency) ? "USD" : Invoice.Currency.ToUpperInvariant();
         ExchangeRateSnapshot = Invoice.ExchangeRate > 0 ? Invoice.ExchangeRate : currentRate;
