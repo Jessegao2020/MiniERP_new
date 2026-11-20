@@ -610,8 +610,25 @@ public partial class QuotationEditorView : UserControl
 
     private async void ExportPdf_Click(object? sender, RoutedEventArgs e)
     {
-        if (!EnsurePositionEditApplied()) return;
+        // Never export uncommitted position edits. Use the same stable, visible
+        // field check as document Save (rather than the legacy control-state check).
+        if (HasMeaningfulPositionEditorChanges())
+        {
+            ViewModel.SetStatusMessage("Save or discard the current position changes before exporting PDF.");
+            return;
+        }
+
+        if (_editingPosition is null && IsVisuallyBlankNewPositionEditor())
+            ForceBlankPositionEditorState();
+
         if (!ViewModel.TryPrepareForExport()) return;
+
+        // Persist the complete document before producing a PDF. If validation,
+        // number uniqueness, or database storage fails, no PDF may be exported.
+        if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
+        Saved?.Invoke(this, EventArgs.Empty);
+
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel?.StorageProvider is null) { ViewModel.SetStatusMessage("PDF export is not available on this desktop session."); return; }
         var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
