@@ -150,6 +150,18 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
             }
             : Clone(source);
 
+        // Converted new documents can arrive with empty terms; apply defaults
+        // only when the document is new and the source supplied no value.
+        if (IsNew)
+        {
+            if (string.IsNullOrWhiteSpace(Contract.DeliveryTerm))
+                Contract.DeliveryTerm = "FCA Baoding";
+            if (string.IsNullOrWhiteSpace(Contract.PaymentTerm))
+                Contract.PaymentTerm = "100% prepayment";
+            if (string.IsNullOrWhiteSpace(Contract.LeadTime))
+                Contract.LeadTime = "2 business days";
+        }
+
         _currency = string.IsNullOrWhiteSpace(Contract.Currency) ? "USD" : Contract.Currency.ToUpperInvariant();
         ExchangeRateSnapshot = Contract.ExchangeRate > 0 ? Contract.ExchangeRate : currentRate;
         Contract.Currency = _currency;
