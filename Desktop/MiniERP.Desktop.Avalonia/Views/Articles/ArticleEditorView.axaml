@@ -1,6 +1,7 @@
 <UserControl
     x:Class="MiniERP.Desktop.Views.Articles.ArticleEditorView"
     xmlns="https://github.com/avaloniaui"
+    xmlns:infra="clr-namespace:MiniERP.Desktop.Infrastructure"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Grid RowDefinitions="Auto,*,Auto">
@@ -35,7 +36,7 @@
 
         <ScrollViewer Grid.Row="1">
             <Grid Margin="10,8,10,10"
-                  ColumnDefinitions="Auto,250,250"
+                  ColumnDefinitions="Auto,333,333"
                   RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
 
                 <TextBlock Grid.Row="0" Grid.Column="1" Margin="5,2" HorizontalAlignment="Center" FontWeight="SemiBold" Text="CHN" />
@@ -76,8 +77,8 @@
             </Grid>
         </ScrollViewer>
 
-        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
-            <TextBlock Foreground="#CB004A" Text="{Binding Status}" />
+        <Border Grid.Row="2" Padding="6,3" Height="26" ClipToBounds="True" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
+            <infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" />
         </Border>
     </Grid>
 </UserControl>

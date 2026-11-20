@@ -1,7 +1,9 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Articles;
 using MiniERP.Domain;
@@ -10,6 +12,11 @@ namespace MiniERP.Desktop.Views.Articles;
 
 public partial class ArticleListView : UserControl
 {
+    private bool _initialLoadCompleted;
+    private bool _hasSavedScrollOffset;
+    private Vector _savedScrollOffset;
+    private int? _articleToReveal;
+
     private ArticleListViewModel ViewModel => (ArticleListViewModel)DataContext!;
 
     public event Action<Article?>? OpenArticleRequested;
@@ -34,39 +41,102 @@ public partial class ArticleListView : UserControl
 
         AttachedToVisualTree += async (_, _) =>
         {
-            await ViewModel.LoadAsync();
-            Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Loaded);
+            // Switching from list to detail detaches this view. Reloading it on
+            // every reattachment used to clear all rows and reset the scrollbar.
+            if (!_initialLoadCompleted)
+            {
+                await ViewModel.LoadAsync();
+                _initialLoadCompleted = true;
+            }
+
+            ScheduleRestoreListViewport();
         };
     }
 
-    public Task ReloadAsync() => ViewModel.LoadAsync();
+    public async Task ReloadAsync()
+    {
+        RememberListViewport();
+        await ViewModel.LoadAsync();
+        _initialLoadCompleted = true;
+        ScheduleRestoreListViewport();
+    }
 
     public async Task ReloadAndSelectAsync(int? articleId)
     {
+        // When returning from a detail editor this list is detached, so keep
+        // the viewport captured before opening the editor.
+        RememberListViewport();
         await ViewModel.LoadAsync();
+        _initialLoadCompleted = true;
 
-        if (articleId is null || articleId <= 0)
+        _articleToReveal = articleId is > 0 ? articleId : null;
+        if (_articleToReveal is int id)
+            ViewModel.SelectedArticle = ViewModel.Articles.FirstOrDefault(article => article.Id == id);
+
+        ScheduleRestoreListViewport();
+    }
+
+    private ScrollViewer? FindArticleScrollViewer()
+        => ArticleGrid.GetVisualDescendants()
+            .OfType<ScrollViewer>()
+            .OrderByDescending(viewer => viewer.Extent.Height - viewer.Viewport.Height)
+            .FirstOrDefault();
+
+    private void RememberListViewport()
+    {
+        // An editor replaces this view in the visual tree. Do not overwrite a
+        // remembered position with an unattached DataGrid's reset offset.
+        if (TopLevel.GetTopLevel(this) is null)
             return;
 
-        var selected = ViewModel.Articles.FirstOrDefault(article => article.Id == articleId.Value);
-        if (selected is null)
+        var viewer = FindArticleScrollViewer();
+        if (viewer is null)
             return;
 
-        ViewModel.SelectedArticle = selected;
+        _savedScrollOffset = viewer.Offset;
+        _hasSavedScrollOffset = true;
+    }
+
+    private void ScheduleRestoreListViewport()
+    {
         Dispatcher.UIThread.Post(() =>
         {
-            if (ArticleGrid.Columns.Count > 0)
-                ArticleGrid.ScrollIntoView(selected, ArticleGrid.Columns[0]);
+            SyncDataGridColumnWidths();
+
+            if (_articleToReveal is int id)
+            {
+                var row = ViewModel.Articles.FirstOrDefault(article => article.Id == id);
+                if (row is not null && ArticleGrid.Columns.Count > 0)
+                {
+                    ArticleGrid.ScrollIntoView(row, ArticleGrid.Columns[0]);
+                    _articleToReveal = null;
+                    return;
+                }
+                _articleToReveal = null;
+            }
+
+            if (!_hasSavedScrollOffset)
+                return;
+
+            var viewer = FindArticleScrollViewer();
+            if (viewer is not null)
+                viewer.Offset = _savedScrollOffset;
         }, DispatcherPriority.Loaded);
     }
 
     private void New_Click(object? sender, RoutedEventArgs e)
-        => OpenArticleRequested?.Invoke(null);
+    {
+        RememberListViewport();
+        OpenArticleRequested?.Invoke(null);
+    }
 
     private void Duplicate_Click(object? sender, RoutedEventArgs e)
     {
         if (ViewModel.SelectedArticle is not null)
+        {
+            RememberListViewport();
             DuplicateArticleRequested?.Invoke(ViewModel.SelectedArticle);
+        }
     }
 
     private async void Delete_Click(object? sender, RoutedEventArgs e)
@@ -83,11 +153,15 @@ public partial class ArticleListView : UserControl
             $"Delete article '{ViewModel.SelectedArticle.Name}'? This cannot be undone.");
 
         if (confirmed)
+        {
+            RememberListViewport();
             await ViewModel.DeleteSelectedAsync();
+            ScheduleRestoreListViewport();
+        }
     }
 
     private async void Refresh_Click(object? sender, RoutedEventArgs e)
-        => await ViewModel.LoadAsync();
+        => await ReloadAsync();
 
     private void Filter_TextChanged(object? sender, TextChangedEventArgs e)
     {
@@ -162,6 +236,9 @@ public partial class ArticleListView : UserControl
     private void ArticleGrid_DoubleTapped(object? sender, TappedEventArgs e)
     {
         if (ViewModel.SelectedArticle is not null)
+        {
+            RememberListViewport();
             OpenArticleRequested?.Invoke(ViewModel.SelectedArticle);
+        }
     }
 }

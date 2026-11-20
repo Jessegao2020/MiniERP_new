@@ -35,7 +35,7 @@ public partial class QuotationListView
         var copyButton = new Button
         {
             Padding = new Thickness(8, 2),
-            Content = "Copy"
+            Content = "Duplicate"
         };
         copyButton.Click += Copy_Click;
 
@@ -54,7 +54,7 @@ public partial class QuotationListView
         var selected = ViewModel.SelectedQuotation;
         if (selected is null)
         {
-            ViewModel.SetStatusMessage("Select a quotation to copy.");
+            ViewModel.SetStatusMessage("Select a quotation to duplicate.");
             return;
         }
 
@@ -81,7 +81,7 @@ public partial class QuotationListView
         }
         catch (Exception ex)
         {
-            ViewModel.SetStatusMessage($"Copy failed: {ex.Message}");
+            ViewModel.SetStatusMessage($"Duplicate failed: {ex.Message}");
         }
     }
 }

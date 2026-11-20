@@ -5,9 +5,11 @@ on:
   push:
     branches:
       - linux-port
+      - feature/split-article-catalog
   pull_request:
     branches:
       - master
+      - feature/selectline-grid
 
 jobs:
   build:
@@ -31,9 +33,70 @@ jobs:
       - name: Install EF Core CLI
         run: dotnet tool install --global dotnet-ef --version 8.0.22
 
-      - name: Verify database migrations
+      # The ERP cleanup migration intentionally rejects direct EF CLI updates.
+      # Only DatabaseStartupMigrator may apply it after verifying the catalogue
+      # and backups. The disposable smoke test below exercises this path.
+      - name: Verify standalone catalog migrations
         run: |
-          rm -f erp.db
+          rm -f catalog.db
           dotnet ef database update \
             --project Infrastructure/MiniERP.Infrastructure/MiniERP.Infrastructure.csproj \
-            --startup-project Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj
+            --startup-project Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj \
+            --context CatalogDbContext
+
+      - name: Verify safe split and rollback on disposable databases
+        run: dotnet run --project tests/MiniERP.CatalogSmoke/MiniERP.CatalogSmoke.csproj --configuration Release
+
+
+
+      - name: Publish Linux and Windows single-file binaries
+        run: bash ./publish-single.sh
+
+      - name: Verify Linux single-file host launches without touching user data
+        run: |
+          ./publish/single-file/MiniERP-linux-x64 --verify-bundle
+          test -s ./publish/single-file/MiniERP-win-x64.exe
+
+      - name: Upload Linux single-file executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: MiniERP-linux-x64
+          path: publish/single-file/MiniERP-linux-x64
+          if-no-files-found: error
+
+      - name: Upload cross-published Windows single-file executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: MiniERP-win-x64
+          path: publish/single-file/MiniERP-win-x64.exe
+          if-no-files-found: error
+
+  windows-smoke:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build Win64 Avalonia application
+        run: dotnet build Desktop/MiniERP.Desktop.Avalonia/MiniERP.Desktop.Avalonia.csproj -c Release
+      - name: Exercise migration on Windows with disposable databases
+        run: dotnet run --project tests/MiniERP.CatalogSmoke/MiniERP.CatalogSmoke.csproj -c Release
+      - name: Download Windows single-file executable produced on Linux
+        uses: actions/download-artifact@v4
+        with:
+          name: MiniERP-win-x64
+          path: publish/windows-single
+
+      - name: Verify Linux-cross-published Windows executable starts
+        shell: pwsh
+        run: |
+          $app = Join-Path (Get-Location) "publish/windows-single/MiniERP-win-x64.exe"
+          $process = Start-Process -FilePath $app -ArgumentList "--verify-bundle" -PassThru -Wait
+          if ($process.ExitCode -ne 0) {
+            throw "Windows single-file app failed package self-check (exit $($process.ExitCode))."
+          }
+

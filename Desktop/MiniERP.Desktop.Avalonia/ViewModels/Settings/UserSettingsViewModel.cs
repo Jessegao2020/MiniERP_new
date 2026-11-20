@@ -59,7 +59,7 @@ public sealed class UserSettingsViewModel : INotifyPropertyChanged
     public string Status
     {
         get => _status;
-        private set { if (_status != value) { _status = value; OnPropertyChanged(); } }
+        private set { _status = value; OnPropertyChanged(); }
     }
 
     public bool IsExistingUser => _editingId > 0;

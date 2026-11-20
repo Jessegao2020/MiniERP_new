@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <!-- Embed app.ico as the native Windows EXE icon (Explorer/taskbar shortcuts). -->
+    <ApplicationIcon>Assets/app.ico</ApplicationIcon>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

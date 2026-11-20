@@ -361,3 +361,14 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Never publish local ERP databases, SQLite WAL files, or private backups.
+# This does not untrack files already committed or erase Git history.
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.db.tmp
+*.sqlite
+*.sqlite3
+*.bak

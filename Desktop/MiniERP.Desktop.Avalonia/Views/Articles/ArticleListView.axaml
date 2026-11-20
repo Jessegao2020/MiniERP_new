@@ -1,6 +1,7 @@
 <UserControl
     x:Class="MiniERP.Desktop.Views.Articles.ArticleListView"
     xmlns="https://github.com/avaloniaui"
+    xmlns:infra="clr-namespace:MiniERP.Desktop.Infrastructure"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
 
@@ -188,9 +189,9 @@
             </dg:DataGrid>
         </Grid>
 
-        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
+        <Border Grid.Row="2" Padding="6,3" Height="26" ClipToBounds="True" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
             <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Foreground="#CB004A" Text="{Binding Status}" />
+                <infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" />
                 <TextBlock Grid.Column="1" Foreground="#CB004A" Text="Double-click a row to edit" />
             </Grid>
         </Border>

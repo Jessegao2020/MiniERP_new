@@ -17,62 +17,6 @@ namespace MiniERP.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.22");
 
-            modelBuilder.Entity("MiniERP.Domain.Article", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Category")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description_EN")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Discount")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("MinimumPrice")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name_EN")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("Price")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Specification")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Specs_EN")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Articles");
-                });
-
             modelBuilder.Entity("MiniERP.Domain.Contract", b =>
                 {
                     b.Property<int>("Id")
