@@ -70,6 +70,10 @@ public partial class ContractEditorView
         ArticleAutoComplete.DropDownOpened += ArticleAutoComplete_DropDownOpened;
         ArticleAutoComplete.KeyDown += ArticleAutoComplete_KeyDown;
 
+        // A TabControl does not create the inactive tab's template until it is shown.
+        // Re-apply the compact arrows whenever the Qty control enters the visual tree.
+        PositionQtyTextBox.AttachedToVisualTree += (_, _) =>
+            Dispatcher.UIThread.Post(ApplyCompactQuantitySpinner, DispatcherPriority.Loaded);
         ApplyCompactQuantitySpinner();
         Dispatcher.UIThread.Post(ApplyCompactQuantitySpinner, DispatcherPriority.Render);
         UpdatePositionSaveState();
