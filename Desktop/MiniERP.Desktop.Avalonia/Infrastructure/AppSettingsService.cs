@@ -7,6 +7,8 @@ public sealed class AppSettings
     public decimal? CnyPerUsd { get; set; }
     // Calendar days from the document date. Older settings files default to 30.
     public int DefaultValidityDays { get; set; } = 30;
+    // System follows Windows/Linux appearance, with optional Light/Dark override.
+    public string ThemeMode { get; set; } = "System";
 }
 
 public sealed class AppSettingsService
@@ -25,6 +27,41 @@ public sealed class AppSettingsService
     public Task SaveExchangeRateAsync(decimal cnyPerUsd)
         => SaveSettingsAsync(cnyPerUsd, Current.DefaultValidityDays);
 
+    public async Task SaveThemeModeAsync(string themeMode)
+    {
+        var normalized = NormalizeThemeMode(themeMode);
+        await _saveLock.WaitAsync();
+        try
+        {
+            var updated = new AppSettings
+            {
+                CnyPerUsd = Current.CnyPerUsd,
+                DefaultValidityDays = Current.DefaultValidityDays,
+                ThemeMode = normalized
+            };
+            await WriteSettingsAsync(updated);
+        }
+        finally { _saveLock.Release(); }
+    }
+
+    public static string NormalizeThemeMode(string? value)
+        => value is "Light" or "Dark" ? value : "System";
+
+    private async Task WriteSettingsAsync(AppSettings settings)
+    {
+        var json = JsonSerializer.Serialize(settings,
+            new JsonSerializerOptions { WriteIndented = true });
+
+        var directory = Path.GetDirectoryName(_settingsPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
+
+        var temporaryPath = _settingsPath + ".tmp";
+        await File.WriteAllTextAsync(temporaryPath, json);
+        File.Move(temporaryPath, _settingsPath, true);
+        Current = settings;
+    }
+
     public async Task SaveSettingsAsync(decimal? cnyPerUsd, int defaultValidityDays)
     {
         if (cnyPerUsd is <= 0)
@@ -39,22 +76,10 @@ public sealed class AppSettingsService
             var updated = new AppSettings
             {
                 CnyPerUsd = cnyPerUsd,
-                DefaultValidityDays = defaultValidityDays
+                DefaultValidityDays = defaultValidityDays,
+                ThemeMode = NormalizeThemeMode(Current.ThemeMode)
             };
-
-            var json = JsonSerializer.Serialize(updated, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
-            var directory = Path.GetDirectoryName(_settingsPath);
-            if (!string.IsNullOrWhiteSpace(directory))
-                Directory.CreateDirectory(directory);
-
-            var temporaryPath = _settingsPath + ".tmp";
-            await File.WriteAllTextAsync(temporaryPath, json);
-            File.Move(temporaryPath, _settingsPath, true);
-            Current = updated;
+            await WriteSettingsAsync(updated);
         }
         finally
         {
