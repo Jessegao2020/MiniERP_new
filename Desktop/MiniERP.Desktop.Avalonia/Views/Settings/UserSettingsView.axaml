@@ -33,7 +33,7 @@
             </dg:DataGrid.Columns>
         </dg:DataGrid>
 
-        <Border Grid.Row="1" Grid.Column="1" Margin="0,5,5,5" Padding="18" BorderBrush="LightGray" BorderThickness="1">
+        <Border Grid.Row="1" Grid.Column="1" Margin="0,5,5,5" Padding="18" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
             <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="6">
                 <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,8" FontSize="20" FontWeight="SemiBold" Text="User Details" />
                 <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Code" /><TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CodeText, Mode=TwoWay}" />
@@ -43,7 +43,7 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Padding="6,3" Height="26" ClipToBounds="True" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Padding="6,3" Height="26" ClipToBounds="True" Background="{DynamicResource ErpStatusBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
             <infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" />
         </Border>
     </Grid>
