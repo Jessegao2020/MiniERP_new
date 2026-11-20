@@ -5,6 +5,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
 
+    <UserControl.Resources>
+        <infra:DateTimeOffsetDateConverter x:Key="DateValueConverter" />
+    </UserControl.Resources>
+
     <UserControl.Styles>
         <Style Selector="TabControl.document-sections TabItem">
             <Setter Property="Width" Value="150" /><Setter Property="Height" Value="28" />
@@ -58,26 +62,66 @@
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Delete_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="×" /><TextBlock Text="Delete" FontSize="10" /></StackPanel></Button>
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="ExportPdf_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↓" /><TextBlock Text="Export PDF" FontSize="10" /></StackPanel></Button>
         </StackPanel>
-        <Border Grid.Row="1" Margin="0,4,0,0" Padding="12,9" Background="#FAFAFA" BorderBrush="#D0D0D0" BorderThickness="0,1,0,1"><ScrollViewer HorizontalScrollBarVisibility="Auto"><Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="8" HorizontalAlignment="Left">
-                    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Packing List No." />
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PackingList.PackingListNumber, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="User" />
-                    <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
-
-                    <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Customer" />
-                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,34"><AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type customer name" /><Button Grid.Column="1" Padding="0" Click="PickCustomer_Click" Content="..." /></Grid>
-                    <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Packing Date" />
-                    <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding PackingDate, Mode=TwoWay}" />
-</Grid></ScrollViewer></Border>
+        <Border Grid.Row="1" Margin="0,4,0,0" Padding="8,7" Background="#FAFAFA" BorderBrush="#D0D0D0" BorderThickness="0,1,0,1">
+            <WrapPanel Orientation="Horizontal">
+                <Grid Width="355" Margin="0,2,12,2" ColumnDefinitions="92,*" ColumnSpacing="6">
+                    <TextBlock Grid.Column="0" Classes="field-label" Text="Packing List No." />
+                    <TextBox Grid.Column="1" Text="{Binding PackingList.PackingListNumber, Mode=TwoWay}" />
+                </Grid>
+                <Grid Width="405" Margin="0,2,12,2" ColumnDefinitions="64,*" ColumnSpacing="6">
+                    <TextBlock Grid.Column="0" Classes="field-label" Text="Customer" />
+                    <Border Grid.Column="1" Classes="lookup-field">
+                        <Grid ColumnDefinitions="*,26">
+                            <AutoCompleteBox x:Name="CustomerAutoComplete" Grid.Column="0"
+                                             ItemsSource="{Binding Customers}"
+                                             SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
+                                             ValueMemberBinding="{Binding Name}"
+                                             FilterMode="ContainsOrdinal" MinimumPrefixLength="0"
+                                             MaxDropDownHeight="260" Watermark="Type customer name">
+                                <AutoCompleteBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="2*,*,Auto" ColumnSpacing="8" MinWidth="250">
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" />
+                                            <TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding City}" />
+                                            <TextBlock Grid.Column="2" Opacity="0.6" Text="{Binding Country}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </AutoCompleteBox.ItemTemplate>
+                            </AutoCompleteBox>
+                            <Button Grid.Column="1" Classes="lookup-button" Click="PickCustomer_Click" Content="..." ToolTip.Tip="Open customer list" />
+                        </Grid>
+                    </Border>
+                </Grid>
+                <Grid Width="190" Margin="0,2,12,2" ColumnDefinitions="40,118" ColumnSpacing="6">
+                    <TextBlock Grid.Column="0" Classes="field-label" Text="Packing Date" />
+                    <CalendarDatePicker Grid.Column="1" Width="118" HorizontalAlignment="Left"
+                                        SelectedDate="{Binding PackingDate, Mode=TwoWay, Converter={StaticResource DateValueConverter}}" />
+                </Grid>
+                <Grid Width="180" Margin="0,2,12,2" ColumnDefinitions="36,*" ColumnSpacing="6">
+                    <TextBlock Grid.Column="0" Classes="field-label" Text="User" />
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+            </WrapPanel>
+        </Border>
         <TabControl Grid.Row="2" Classes="document-sections" TabStripPlacement="Left" SelectedIndex="2">
 <TabItem Header="General"><Border Classes="document-section"><ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"><StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left"><TextBlock FontSize="17" FontWeight="SemiBold" Text="General" />
 <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Customer Contact" />
-                    <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,34"><AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name" /><Button Grid.Column="1" Padding="0" Click="PickContact_Click" Content="..." /></Grid>
+                    <Border Grid.Row="0" Grid.Column="1" Classes="lookup-field">
+                        <Grid ColumnDefinitions="*,26">
+                            <AutoCompleteBox Grid.Column="0" ItemsSource="{Binding CustomerContacts}"
+                                             SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}"
+                                             ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal"
+                                             MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name"/>
+                            <Button Grid.Column="1" Classes="lookup-button" Click="PickContact_Click" Content="..." />
+                        </Grid>
+                    </Border>
                     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Customer PO No." />
                     <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PackingList.CustomerPoNumber, Mode=TwoWay}" />
                     <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Customer PO Date" />
-                    <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding CustomerPoDate, Mode=TwoWay}" />
+                    <CalendarDatePicker Grid.Row="1" Grid.Column="3" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding CustomerPoDate, Mode=TwoWay, Converter={StaticResource DateValueConverter}}" />
 </Grid>
 <TextBlock Opacity="0.6" Text="{Binding SourceText}" TextWrapping="Wrap" />
 </StackPanel></ScrollViewer></Border></TabItem>
