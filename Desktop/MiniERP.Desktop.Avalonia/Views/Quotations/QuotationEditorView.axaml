@@ -89,7 +89,7 @@
             <WrapPanel Orientation="Horizontal">
                 <Grid Width="355" Margin="0,2,12,2" ColumnDefinitions="92,*" ColumnSpacing="6">
                     <TextBlock Grid.Column="0" Classes="field-label" Text="Quotation No." />
-                    <TextBox Grid.Column="1" Text="{Binding QuotationNumber}" IsReadOnly="True" ToolTip.Tip="Quotation number is assigned automatically using date and User Code" />
+                    <TextBox Grid.Column="1" Text="{Binding QuotationNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip.Tip="Automatically generated from date and User Code. You can override the number manually." />
                 </Grid>
 
                 <Grid Width="405" Margin="0,2,12,2" ColumnDefinitions="64,*" ColumnSpacing="6">
@@ -150,12 +150,12 @@
                             <TextBlock FontSize="17" FontWeight="SemiBold" Text="Price / Terms" />
                             <Grid ColumnDefinitions="120,280,120,280" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Delivery Term" />
-                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Quotation.DeliveryTerm, Mode=TwoWay}" />
+                                <ComboBox Grid.Row="0" Grid.Column="1" IsEditable="True" Text="{Binding Quotation.DeliveryTerm, Mode=TwoWay}" ItemsSource="{Binding DeliveryTermOptions}" />
                                 <TextBlock Grid.Row="0" Grid.Column="2" Classes="field-label" Text="Payment Term" />
                                 <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding Quotation.PaymentTerm, Mode=TwoWay}" />
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Lead Time" />
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Quotation.LeadTime, Mode=TwoWay}" />
+                                <ComboBox Grid.Row="1" Grid.Column="1" IsEditable="True" Text="{Binding Quotation.LeadTime, Mode=TwoWay}" ItemsSource="{Binding LeadTimeOptions}" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" Classes="field-label" Text="Currency" />
                                 <ComboBox Grid.Row="1" Grid.Column="3" Width="130" HorizontalAlignment="Left" ItemsSource="{Binding Currencies}" SelectedItem="{Binding Currency, Mode=TwoWay}" />
 
