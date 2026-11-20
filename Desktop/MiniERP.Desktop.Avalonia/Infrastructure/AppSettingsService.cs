@@ -62,7 +62,7 @@ public sealed class AppSettingsService
         Current = settings;
     }
 
-    public async Task SaveSettingsAsync(decimal? cnyPerUsd, int defaultValidityDays)
+    public async Task SaveSettingsAsync(decimal? cnyPerUsd, int defaultValidityDays, string? themeMode = null)
     {
         if (cnyPerUsd is <= 0)
             throw new ArgumentOutOfRangeException(nameof(cnyPerUsd), "Exchange rate must be greater than zero.");
@@ -77,7 +77,7 @@ public sealed class AppSettingsService
             {
                 CnyPerUsd = cnyPerUsd,
                 DefaultValidityDays = defaultValidityDays,
-                ThemeMode = NormalizeThemeMode(Current.ThemeMode)
+                ThemeMode = NormalizeThemeMode(themeMode ?? Current.ThemeMode)
             };
             await WriteSettingsAsync(updated);
         }
