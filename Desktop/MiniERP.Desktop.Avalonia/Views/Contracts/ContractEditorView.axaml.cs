@@ -27,15 +27,19 @@ public partial class ContractEditorView : UserControl
         InitializeComponent();
         var settings = App.Services.GetRequiredService<AppSettingsService>();
         DataContext = new ContractEditorViewModel(contract, settings);
+        InitializePositionEditor();
 
         var saveButton = EditorWorkflowSupport.AddGridViewToggle(this, GridView_Click);
         _dirtyMonitor = new EditorDirtyMonitor(saveButton, CaptureEditState);
         AttachedToVisualTree += async (_, _) =>
         {
             // Match the framed section strip used by the Quotation editor.
-            Avalonia.Threading.Dispatcher.UIThread.Post(
-                () => DocumentSectionNavigationFrame.Install(this),
-                Avalonia.Threading.DispatcherPriority.Loaded);
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                DocumentSectionNavigationFrame.Install(this);
+                ConfigurePositionEditor();
+                NormalizePickerButtons();
+            }, Avalonia.Threading.DispatcherPriority.Loaded);
             await ViewModel.LoadLookupsAsync();
             _dirtyMonitor.Start();
         };
@@ -66,6 +70,7 @@ public partial class ContractEditorView : UserControl
 
     private void MoveItemUp_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         var item = ViewModel.SelectedItem;
         if (item is null) { ViewModel.SetStatusMessage("Select a contract item first."); return; }
         var index = ViewModel.Items.IndexOf(item);
@@ -80,6 +85,7 @@ public partial class ContractEditorView : UserControl
 
     private void MoveItemDown_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         var item = ViewModel.SelectedItem;
         if (item is null) { ViewModel.SetStatusMessage("Select a contract item first."); return; }
         var index = ViewModel.Items.IndexOf(item);
@@ -134,7 +140,11 @@ public partial class ContractEditorView : UserControl
 
     private async void ExportPdf_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         if (!ViewModel.TryPrepareForExport()) return;
+        if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
+        Saved?.Invoke(this, EventArgs.Empty);
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel?.StorageProvider is null)
         {
@@ -163,7 +173,11 @@ public partial class ContractEditorView : UserControl
 
     private async void ExportXlsx_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         if (!ViewModel.TryPrepareForExport()) return;
+        if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
+        Saved?.Invoke(this, EventArgs.Empty);
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel?.StorageProvider is null)
         {
@@ -192,6 +206,7 @@ public partial class ContractEditorView : UserControl
 
     private async void CreateProforma_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         if (!await ViewModel.SaveAsync()) return;
         _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
@@ -200,6 +215,7 @@ public partial class ContractEditorView : UserControl
 
     private async void CreateInvoice_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         if (!await ViewModel.SaveAsync()) return;
         _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
@@ -208,6 +224,7 @@ public partial class ContractEditorView : UserControl
 
     private async void CreatePackingList_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         if (!await ViewModel.SaveAsync()) return;
         _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
@@ -216,6 +233,7 @@ public partial class ContractEditorView : UserControl
 
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePositionEditorCommitted()) return;
         if (!await ViewModel.SaveAsync()) return;
         _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
