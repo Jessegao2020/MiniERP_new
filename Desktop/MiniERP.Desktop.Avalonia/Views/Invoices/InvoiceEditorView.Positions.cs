@@ -21,6 +21,7 @@ public partial class InvoiceEditorView
     private InvoiceItemRowViewModel? _editingPosition;
     private Article? _positionSourceArticle;
     private Article? _pendingExplicitArticle;
+    private Article? _highlightedArticleSuggestion;
     private Control? _articleSuggestionPointerRoot;
     private bool _loadingPositionEditor;
     private bool _positionLookupConfigured;
@@ -148,11 +149,12 @@ public partial class InvoiceEditorView
         if (e.Key != Key.Enter || !ArticleAutoComplete.IsDropDownOpen)
             return;
 
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (ArticleAutoComplete.SelectedItem is Article article)
-                ApplyExplicitArticle(article);
-        });
+        // Avalonia may clear its temporary SelectedItem before the posted
+        // action runs; keep the highlighted suggestion for explicit Enter.
+        var selected = ArticleAutoComplete.SelectedItem as Article
+            ?? _highlightedArticleSuggestion;
+        if (selected is not null)
+            Dispatcher.UIThread.Post(() => ApplyExplicitArticle(selected));
     }
 
     private void ArticleAutoComplete_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -165,6 +167,8 @@ public partial class InvoiceEditorView
         if (ArticleAutoComplete.SelectedItem is Article article
             && !ReferenceEquals(_pendingExplicitArticle, article))
         {
+            if (ArticleAutoComplete.IsDropDownOpen)
+                _highlightedArticleSuggestion = article;
             var name = ArticleAutoComplete.Text ?? string.Empty;
             _loadingPositionEditor = true;
             try
@@ -251,6 +255,9 @@ public partial class InvoiceEditorView
     {
         if (_loadingPositionEditor)
             return;
+
+        if (ReferenceEquals(sender, ArticleAutoComplete))
+            _highlightedArticleSuggestion = null;
 
         UpdatePositionPreview();
         UpdatePositionSaveState();
@@ -366,6 +373,7 @@ public partial class InvoiceEditorView
         {
             _positionSourceArticle = null;
             _pendingExplicitArticle = null;
+            _highlightedArticleSuggestion = null;
             ArticleAutoComplete.IsDropDownOpen = false;
             ArticleAutoComplete.SelectedItem = null;
             ViewModel.SelectedArticle = null;
