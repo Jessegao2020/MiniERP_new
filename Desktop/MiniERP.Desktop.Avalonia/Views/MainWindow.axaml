@@ -26,7 +26,18 @@
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,Auto,*">
-        <Menu Grid.Row="0" Padding="2"><MenuItem Header="File" /><MenuItem Header="Edit" /><MenuItem Header="About" /></Menu>
+        <Menu Grid.Row="0" Padding="2">
+            <MenuItem Header="File" />
+            <MenuItem Header="Edit" />
+            <MenuItem Header="View">
+                <MenuItem Header="Appearance">
+                    <MenuItem Header="Follow system" Click="ThemeSystem_Click" />
+                    <MenuItem Header="Light" Click="ThemeLight_Click" />
+                    <MenuItem Header="Dark" Click="ThemeDark_Click" />
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="About" />
+        </Menu>
         <TabControl x:Name="MenuTabControl" Grid.Row="1" BorderThickness="1,1,1,0">
             <TabItem Header="General" Padding="10,5">
                 <Border Height="66" Padding="2,1"><StackPanel Orientation="Horizontal">
