@@ -91,33 +91,52 @@ public sealed class StatusMessageTextBlock : TextBlock
 
     private static bool ShouldOpenDialog(string message)
     {
-        // These are ambient page status indicators, not notifications. Showing
-        // them as modal alerts would interrupt every navigation and filter edit.
-        if (message is "Ready." or "New quotation." or "New user." or "New customer." or "New article.")
-            return false;
+        // Only invalid operations, validation failures and errors should block the
+        // user. Ordinary feedback ("Position added", "Saved", "PDF exported",
+        // "Item moved", etc.) remains non-modal.
+        //
+        // Use an explicit error classifier instead of treating every Status
+        // change as a notification. New status messages default to non-modal.
+        var value = message.Trim();
 
-        if (message.StartsWith("Editing ", StringComparison.OrdinalIgnoreCase)
-            || message.StartsWith("Exchange rate refreshed", StringComparison.OrdinalIgnoreCase)
-            || message.StartsWith("Quotation currency changed", StringComparison.OrdinalIgnoreCase)
-            || message.StartsWith("Quotation repriced", StringComparison.OrdinalIgnoreCase)
-            || message.StartsWith("Article selected:", StringComparison.OrdinalIgnoreCase)
-            || message.StartsWith("Country set to ", StringComparison.OrdinalIgnoreCase))
-            return false;
+        if (value.StartsWith("Please select", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("Select a ", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("Select an ", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("Set the ", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("Please set ", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("Remove ", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("Save or discard ", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("Complete or remove ", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("Enter a ", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("Enter an ", StringComparison.OrdinalIgnoreCase))
+            return true;
 
-        // Lists publish a count on load and with every filter keystroke.
-        if (char.IsDigit(message[0]) && (message.Contains(" of ", StringComparison.Ordinal)
-            || message.Contains(" record", StringComparison.OrdinalIgnoreCase)
-            || message.Contains(" item(s)", StringComparison.OrdinalIgnoreCase)
-            || message.Contains(" quotation(s)", StringComparison.OrdinalIgnoreCase)
-            || message.Contains(" customer(s)", StringComparison.OrdinalIgnoreCase)
-            || message.Contains(" article(s)", StringComparison.OrdinalIgnoreCase)
-            || message.Contains(" contract(s)", StringComparison.OrdinalIgnoreCase)
-            || message.Contains(" document(s)", StringComparison.OrdinalIgnoreCase)
-            || message.Contains(" packing list(s)", StringComparison.OrdinalIgnoreCase)
-            || message.Contains(" user(s)", StringComparison.OrdinalIgnoreCase)))
-            return false;
-
-        return true;
+        return value.Contains("failed", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("required", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("cannot", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("can't ", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("must ", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("invalid", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("unapplied changes", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("unsaved changes", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("already exists", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("already first", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("already last", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("does not exist", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("does not have", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("no longer exists", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("not configured", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("not loaded", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("not linked", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("not available", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("not supported", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("unsupported", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("unavailable", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("greater than", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("less than", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("between 0 and", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("between 1 and", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("cannot be", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task ShowStatusDialogAsync(string message)
@@ -135,7 +154,7 @@ public sealed class StatusMessageTextBlock : TextBlock
 
             var dialog = new Window
             {
-                Title = IsErrorMessage(message) ? "MiniERP - Attention" : "MiniERP - Notification",
+                Title = "MiniERP - Attention",
                 Width = 460,
                 MinHeight = 165,
                 SizeToContent = SizeToContent.Height,
@@ -183,11 +202,4 @@ public sealed class StatusMessageTextBlock : TextBlock
         }
     }
 
-    private static bool IsErrorMessage(string message)
-        => message.Contains("failed", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("required", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("cannot", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("must ", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("unapplied", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("already exists", StringComparison.OrdinalIgnoreCase);
 }
