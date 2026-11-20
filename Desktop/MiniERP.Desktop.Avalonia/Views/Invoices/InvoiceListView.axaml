@@ -1,6 +1,7 @@
 <UserControl
     x:Class="MiniERP.Desktop.Views.Invoices.InvoiceListView"
     xmlns="https://github.com/avaloniaui"
+    xmlns:infra="clr-namespace:MiniERP.Desktop.Infrastructure"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
     <UserControl.Styles>
@@ -31,6 +32,6 @@
                 <dg:DataGrid.Columns><dg:DataGridTextColumn Width="1.5*" Binding="{Binding InvoiceNumber}" /><dg:DataGridTextColumn Width="2*" Binding="{Binding CustomerNameSnapshot}" /><dg:DataGridTextColumn Width="1.2*" Binding="{Binding SalesContactNameSnapshot}" /><dg:DataGridTextColumn Width="1.1*" Binding="{Binding InvoiceDate, StringFormat='{}{0:yyyy-MM-dd}'}" /><dg:DataGridTextColumn Width="1.2*" Binding="{Binding CustomerPoNumber}" /><dg:DataGridTextColumn Width="0.8*" Binding="{Binding Currency}" /><dg:DataGridTextColumn Width="1.1*" Binding="{Binding TotalAmount, StringFormat='{}{0:N2}'}" /><dg:DataGridTextColumn Width="1.3*" Binding="{Binding SourceDocumentNumber}" /></dg:DataGrid.Columns>
             </dg:DataGrid>
         </Grid>
-        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1"><Grid ColumnDefinitions="*,Auto"><TextBlock Foreground="#CB004A" Text="{Binding Status}" /><TextBlock Grid.Column="1" Foreground="#CB004A" Text="Double-click a row to edit" /></Grid></Border>
+        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1" IsVisible="False"><Grid ColumnDefinitions="*,Auto"><infra:StatusMessageTextBlock Text="{Binding Status}" /><TextBlock Grid.Column="1" Foreground="#CB004A" Text="Double-click a row to edit" /></Grid></Border>
     </Grid>
 </UserControl>
