@@ -71,6 +71,7 @@ public partial class InvoiceEditorView
         ArticleAutoComplete.KeyDown += ArticleAutoComplete_KeyDown;
 
         ApplyCompactQuantitySpinner();
+        Dispatcher.UIThread.Post(ApplyCompactQuantitySpinner, DispatcherPriority.Render);
         UpdatePositionSaveState();
     }
 
@@ -94,6 +95,11 @@ public partial class InvoiceEditorView
             button.Padding = new Thickness(0);
             button.HorizontalContentAlignment = HorizontalAlignment.Center;
             button.VerticalContentAlignment = VerticalAlignment.Center;
+            foreach (var icon in button.GetVisualDescendants().OfType<PathIcon>())
+            {
+                icon.Width = 8;
+                icon.Height = 4;
+            }
         }
     }
 
