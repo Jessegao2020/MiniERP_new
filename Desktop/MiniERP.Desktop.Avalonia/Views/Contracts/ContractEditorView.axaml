@@ -61,9 +61,9 @@
 <TabItem Header="Price / Terms"><Border Classes="document-section"><ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"><StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left"><TextBlock FontSize="17" FontWeight="SemiBold" Text="Price / Terms" />
 <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Lead Time" />
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Contract.LeadTime, Mode=TwoWay}" />
+                    <ComboBox Grid.Row="0" Grid.Column="1" IsEditable="True" Width="280" MinWidth="280" MaxWidth="280" HorizontalAlignment="Left" ItemsSource="{Binding LeadTimeOptions}" Text="{Binding Contract.LeadTime, Mode=TwoWay}" />
                     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Delivery Term" />
-                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Contract.DeliveryTerm, Mode=TwoWay}" />
+                    <ComboBox Grid.Row="1" Grid.Column="1" IsEditable="True" Width="280" MinWidth="280" MaxWidth="280" HorizontalAlignment="Left" ItemsSource="{Binding DeliveryTermOptions}" Text="{Binding Contract.DeliveryTerm, Mode=TwoWay}" />
                     <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Payment Term" />
                     <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding Contract.PaymentTerm, Mode=TwoWay}" />
                     <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Currency" />
