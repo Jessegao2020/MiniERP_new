@@ -16,16 +16,16 @@
             <Setter Property="VerticalContentAlignment" Value="Center" /><Setter Property="FontSize" Value="12" />
             <Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" />
         </Style>
-        <Style Selector="TabControl.document-sections TabItem:pointerover"><Setter Property="Background" Value="#F3F3F3" /></Style>
-        <Style Selector="TabControl.document-sections TabItem:selected"><Setter Property="Background" Value="#E7E7E7" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
-        <Style Selector="Border.document-section"><Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#D2D2D2" /><Setter Property="BorderThickness" Value="1,0,0,0" /></Style>
+        <Style Selector="TabControl.document-sections TabItem:pointerover"><Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" /></Style>
+        <Style Selector="TabControl.document-sections TabItem:selected"><Setter Property="Background" Value="{DynamicResource ErpSelectedSectionBrush}" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+        <Style Selector="Border.document-section"><Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource ErpBorderBrush}" /><Setter Property="BorderThickness" Value="1,0,0,0" /></Style>
         <Style Selector="TextBlock.field-label">
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="FontSize" Value="12" />
         </Style>
         <Style Selector="Border.lookup-field">
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#8A8A8A" />
+            <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ErpFrameBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="3" />
             <Setter Property="ClipToBounds" Value="True" />
@@ -39,8 +39,8 @@
             <Setter Property="MinWidth" Value="26" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0" />
-            <Setter Property="Background" Value="#EEEEEE" />
-            <Setter Property="BorderBrush" Value="#B5B5B5" />
+            <Setter Property="Background" Value="{DynamicResource ErpLookupBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ErpFrameBrush}" />
             <Setter Property="BorderThickness" Value="1,0,0,0" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -62,7 +62,7 @@
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="Delete_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="×" /><TextBlock Text="Delete" FontSize="10" /></StackPanel></Button>
             <Button Padding="6,2" Background="Transparent" BorderThickness="0" Click="ExportPdf_Click"><StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="↓" /><TextBlock Text="Export PDF" FontSize="10" /></StackPanel></Button>
         </StackPanel>
-        <Border Grid.Row="1" Margin="0,4,0,0" Padding="8,7" Background="#FAFAFA" BorderBrush="#D0D0D0" BorderThickness="0,1,0,1">
+        <Border Grid.Row="1" Margin="0,4,0,0" Padding="8,7" Background="{DynamicResource ErpSubtleBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="0,1,0,1">
             <WrapPanel Orientation="Horizontal">
                 <Grid Width="355" Margin="0,2,12,2" ColumnDefinitions="92,*" ColumnSpacing="6">
                     <TextBlock Grid.Column="0" Classes="field-label" Text="Packing List No." />
@@ -134,7 +134,7 @@
 </StackPanel></ScrollViewer></Border></TabItem>
 <TabItem Header="Goods"><Border Classes="document-section"><Grid Margin="12,10" RowDefinitions="Auto,Auto,*,Auto">
 
-<Border Grid.Row="0" Padding="8,7" Background="#FAFAFA" BorderBrush="#CCCCCC" BorderThickness="1">
+<Border Grid.Row="0" Padding="8,7" Background="{DynamicResource ErpSubtleBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
   <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="7">
     <TextBlock Grid.Row="0" FontWeight="SemiBold" Text="Selected Goods Position"/>
     <WrapPanel Grid.Row="1" Orientation="Horizontal">
@@ -199,7 +199,7 @@
 </Grid></Border></TabItem>
 <TabItem Header="Packages / Cartons"><Border Classes="document-section"><Grid Margin="12,10" RowDefinitions="Auto,Auto,*,Auto">
 
-<Border Grid.Row="0" Padding="8,7" Background="#FAFAFA" BorderBrush="#CCCCCC" BorderThickness="1">
+<Border Grid.Row="0" Padding="8,7" Background="{DynamicResource ErpSubtleBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
  <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="7">
    <TextBlock Grid.Row="0" FontWeight="SemiBold" Text="Selected Package / Carton"/>
    <WrapPanel Grid.Row="1" Orientation="Horizontal">
@@ -278,6 +278,6 @@
 
 </Grid></Border></TabItem>
         </TabControl>
-        <Border Grid.Row="3" Padding="6,3" Height="26" ClipToBounds="True" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1"><infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" /></Border>
+        <Border Grid.Row="3" Padding="6,3" Height="26" ClipToBounds="True" Background="{DynamicResource ErpStatusBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1"><infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" /></Border>
     </Grid>
 </UserControl>
