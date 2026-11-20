@@ -23,6 +23,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="TextBlock.ribbonIcon"><Setter Property="FontSize" Value="25" /><Setter Property="HorizontalAlignment" Value="Center" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
+        <Style Selector="Image.ribbonIcon"><Setter Property="Width" Value="28" /><Setter Property="Height" Value="28" /><Setter Property="Stretch" Value="Uniform" /><Setter Property="HorizontalAlignment" Value="Center" /></Style>
         <Style Selector="TextBlock.ribbonText"><Setter Property="FontSize" Value="12" /><Setter Property="HorizontalAlignment" Value="Center" /></Style>
     </Window.Styles>
 
@@ -42,17 +43,17 @@
         <TabControl x:Name="MenuTabControl" Classes="erp-ribbon" Grid.Row="1" BorderThickness="1,1,1,0">
             <TabItem Header="General" Padding="10,5">
                 <Border Height="66" Padding="2,1"><StackPanel Orientation="Horizontal">
-                    <Button Classes="ribbon" Click="Article_Click" ToolTip.Tip="Articles"><StackPanel><TextBlock Classes="ribbonIcon" Text="▤" /><TextBlock Classes="ribbonText" Text="Article" /></StackPanel></Button>
-                    <Button Classes="ribbon" Click="Customer_Click" ToolTip.Tip="Customers"><StackPanel><TextBlock Classes="ribbonIcon" Text="♙" /><TextBlock Classes="ribbonText" Text="Customer" /></StackPanel></Button>
+                    <Button Classes="ribbon" Click="Article_Click" ToolTip.Tip="Articles"><StackPanel><Image Classes="ribbonIcon" Source="/Assets/article.png" /><TextBlock Classes="ribbonText" Text="Article" /></StackPanel></Button>
+                    <Button Classes="ribbon" Click="Customer_Click" ToolTip.Tip="Customers"><StackPanel><Image Classes="ribbonIcon" Source="/Assets/customer.png" /><TextBlock Classes="ribbonText" Text="Customer" /></StackPanel></Button>
                 </StackPanel></Border>
             </TabItem>
 
             <TabItem Header="Documents" Padding="10,5">
                 <Border Height="66" Padding="2,1"><StackPanel Orientation="Horizontal">
-                    <Button Classes="ribbon" Click="Quotation_Click" ToolTip.Tip="Quotation"><StackPanel><TextBlock Classes="ribbonIcon" Text="≣" /><TextBlock Classes="ribbonText" Text="Quote" /></StackPanel></Button>
-                    <Button Classes="ribbon" Click="ProformaInvoice_Click" ToolTip.Tip="Proforma Invoice"><StackPanel><TextBlock Classes="ribbonIcon" Text="PI" FontSize="18" Margin="0,5,0,2" /><TextBlock Classes="ribbonText" Text="P/I" /></StackPanel></Button>
-                    <Button Classes="ribbon" Click="Invoice_Click" ToolTip.Tip="Commercial Invoice"><StackPanel><TextBlock Classes="ribbonIcon" Text="¤" /><TextBlock Classes="ribbonText" Text="Invoice" /></StackPanel></Button>
-                    <Button Classes="ribbon" Click="PackingList_Click" ToolTip.Tip="Packing List"><StackPanel><TextBlock Classes="ribbonIcon" Text="▦" /><TextBlock Classes="ribbonText" Text="P/L" /></StackPanel></Button>
+                    <Button Classes="ribbon" Click="Quotation_Click" ToolTip.Tip="Quotation"><StackPanel><Image Classes="ribbonIcon" Source="/Assets/quotation.png" /><TextBlock Classes="ribbonText" Text="Quote" /></StackPanel></Button>
+                    <Button Classes="ribbon" Click="ProformaInvoice_Click" ToolTip.Tip="Proforma Invoice"><StackPanel><Image Classes="ribbonIcon" Source="/Assets/order.png" /><TextBlock Classes="ribbonText" Text="P/I" /></StackPanel></Button>
+                    <Button Classes="ribbon" Click="Invoice_Click" ToolTip.Tip="Commercial Invoice"><StackPanel><Image Classes="ribbonIcon" Source="/Assets/invoice.png" /><TextBlock Classes="ribbonText" Text="Invoice" /></StackPanel></Button>
+                    <Button Classes="ribbon" Click="PackingList_Click" ToolTip.Tip="Packing List"><StackPanel><Image Classes="ribbonIcon" Source="/Assets/packing-list.png" /><TextBlock Classes="ribbonText" Text="P/L" /></StackPanel></Button>
                     <Button Classes="ribbon" Click="Contract_Click" ToolTip.Tip="Contract"><StackPanel><TextBlock Classes="ribbonIcon" Text="§" /><TextBlock Classes="ribbonText" Text="Contract" /></StackPanel></Button>
                 </StackPanel></Border>
             </TabItem>
