@@ -66,6 +66,14 @@ public sealed class PackingListEditorViewModel : INotifyPropertyChanged
             ? new PackingList { PackingListNumber = $"PL-{DateTime.Now:yyyyMMdd-HHmmssfff}", PackingDate = DateTime.Now, DeliveryTerm = "FCA Baoding" }
             : Clone(source);
 
+        // Converted new documents can arrive with empty terms; apply defaults
+        // only when the document is new and the source supplied no value.
+        if (IsNew)
+        {
+            if (string.IsNullOrWhiteSpace(PackingList.DeliveryTerm))
+                PackingList.DeliveryTerm = "FCA Baoding";
+        }
+
         PackingDate = new DateTimeOffset(PackingList.PackingDate);
         CustomerPoDate = PackingList.CustomerPoDate is null ? null : new DateTimeOffset(PackingList.CustomerPoDate.Value);
         foreach (var item in PackingList.Items.OrderBy(i => i.SortOrder).ThenBy(i => i.Id)) AddItemRow(new PackingListItemRowViewModel(item));
