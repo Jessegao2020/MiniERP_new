@@ -45,7 +45,7 @@ public partial class QuotationEditorView
                     new TextBlock { Text = "⧉" },
                     new TextBlock
                     {
-                        Text = "Copy",
+                        Text = "Duplicate",
                         FontSize = 10,
                         VerticalAlignment = VerticalAlignment.Center
                     }
@@ -67,19 +67,19 @@ public partial class QuotationEditorView
     {
         if (HasMeaningfulPositionEditorChanges())
         {
-            ViewModel.SetStatusMessage("Save or discard the current position changes before copying the quotation.");
+            ViewModel.SetStatusMessage("Save or discard the current position changes before duplicating the quotation.");
             return;
         }
 
         if (ViewModel.SelectedCustomer is null)
         {
-            ViewModel.SetStatusMessage("Select a customer before copying the quotation.");
+            ViewModel.SetStatusMessage("Select a customer before duplicating the quotation.");
             return;
         }
 
         if (ViewModel.SelectedUser is null)
         {
-            ViewModel.SetStatusMessage("Select a user before copying the quotation.");
+            ViewModel.SetStatusMessage("Select a user before duplicating the quotation.");
             return;
         }
 
@@ -96,7 +96,7 @@ public partial class QuotationEditorView
         }
         catch (Exception ex)
         {
-            ViewModel.SetStatusMessage($"Copy failed: {ex.Message}");
+            ViewModel.SetStatusMessage($"Duplicate failed: {ex.Message}");
         }
     }
 
