@@ -10,6 +10,7 @@ public sealed class SystemSettingsViewModel : INotifyPropertyChanged
     private readonly AppSettingsService _settings;
     private string _exchangeRateText = string.Empty;
     private string _validityDaysText = string.Empty;
+    private string _themeMode = ThemeManager.System;
     private string _status = string.Empty;
 
     public string ExchangeRateText
@@ -21,6 +22,22 @@ public sealed class SystemSettingsViewModel : INotifyPropertyChanged
             _exchangeRateText = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(PreviewText));
+        }
+    }
+
+    public IReadOnlyList<string> ThemeModes { get; } = new[] { ThemeManager.System, ThemeManager.Light, ThemeManager.Dark };
+
+    public string ThemeMode
+    {
+        get => _themeMode;
+        set
+        {
+            var normalized = AppSettingsService.NormalizeThemeMode(value);
+            if (_themeMode == normalized) return;
+            _themeMode = normalized;
+            OnPropertyChanged();
+            // Live preview: changing the dropdown updates all open windows instantly.
+            ThemeManager.Apply(normalized);
         }
     }
 
@@ -69,6 +86,7 @@ public sealed class SystemSettingsViewModel : INotifyPropertyChanged
         _settings = settings;
         ExchangeRateText = settings.Current.CnyPerUsd?.ToString("0.############################", CultureInfo.InvariantCulture) ?? string.Empty;
         ValidityDaysText = settings.Current.DefaultValidityDays.ToString(CultureInfo.InvariantCulture);
+        ThemeMode = AppSettingsService.NormalizeThemeMode(settings.Current.ThemeMode);
     }
 
     public async Task<bool> SaveAsync()
@@ -93,7 +111,7 @@ public sealed class SystemSettingsViewModel : INotifyPropertyChanged
 
         try
         {
-            await _settings.SaveSettingsAsync(rate, validityDays);
+            await _settings.SaveSettingsAsync(rate, validityDays, ThemeMode);
             Status = "Settings saved.";
             OnPropertyChanged(nameof(PreviewText));
             OnPropertyChanged(nameof(ValidityPreviewText));
