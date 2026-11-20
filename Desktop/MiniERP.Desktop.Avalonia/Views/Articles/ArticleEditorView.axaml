@@ -36,7 +36,7 @@
 
         <ScrollViewer Grid.Row="1">
             <Grid Margin="10,8,10,10"
-                  ColumnDefinitions="Auto,250,250"
+                  ColumnDefinitions="Auto,333,333"
                   RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
 
                 <TextBlock Grid.Row="0" Grid.Column="1" Margin="5,2" HorizontalAlignment="Center" FontWeight="SemiBold" Text="CHN" />
