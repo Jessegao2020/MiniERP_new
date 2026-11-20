@@ -29,13 +29,13 @@ internal static class DocumentSectionNavigationFrame
 
         var frame = new Border
         {
-            BorderBrush = new SolidColorBrush(Color.Parse("#B5B5B5")),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(0),
             Background = Brushes.Transparent,
             IsHitTestVisible = false
         };
 
+        frame.Classes.Add("erp-nav-frame");
         AdornerLayer.SetAdorner(presenter, frame);
     }
 }
