@@ -195,7 +195,7 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         get => _status;
         private set
         {
-            if (_status == value) return;
+            if (_status == value) { OnPropertyChanged(); return; }
             _status = value;
             OnPropertyChanged();
         }
