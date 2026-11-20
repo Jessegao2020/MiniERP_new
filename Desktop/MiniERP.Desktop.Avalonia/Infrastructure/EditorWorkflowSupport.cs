@@ -58,12 +58,13 @@ public static class EditorWorkflowSupport
         gridButton.Click += clickHandler;
 
         toolbar.Children.Insert(0, gridButton);
-        toolbar.Children.Insert(1, new Border
+        var separator = new Border
         {
             Width = 1,
-            Margin = new Thickness(3),
-            Background = Brushes.LightGray
-        });
+            Margin = new Thickness(3)
+        };
+        separator.Classes.Add("erp-toolbar-separator");
+        toolbar.Children.Insert(1, separator);
 
         return saveButton;
     }
