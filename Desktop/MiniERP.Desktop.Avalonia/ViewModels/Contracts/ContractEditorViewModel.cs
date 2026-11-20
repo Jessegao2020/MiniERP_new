@@ -30,6 +30,8 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
     public ObservableCollection<Article> Articles { get; } = new();
     public ObservableCollection<ContractItemRowViewModel> Items { get; } = new();
     public ObservableCollection<string> Currencies { get; } = new() { "USD", "CNY" };
+    public IReadOnlyList<string> DeliveryTermOptions { get; } = new[] { "FCA Baoding", "CFR", "CPT" };
+    public IReadOnlyList<string> LeadTimeOptions { get; } = new[] { "2 business days", "1 week", "4 weeks", "4-6 weeks" };
 
     public string SourceText => Contract.SourceDocumentType == DocumentSourceType.None
         ? "Created manually"
@@ -140,6 +142,9 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
             {
                 ContractNumber = $"CON-{DateTime.Now:yyyyMMdd-HHmmssfff}",
                 ContractDate = DateTime.Now,
+                DeliveryTerm = "FCA Baoding",
+                PaymentTerm = "100% prepayment",
+                LeadTime = "2 business days",
                 Currency = "USD",
                 ExchangeRate = currentRate
             }
