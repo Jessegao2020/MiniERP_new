@@ -53,6 +53,19 @@
                 </StackPanel>
             </Border>
 
+            <Border Padding="16" BorderThickness="1" BorderBrush="{DynamicResource ErpBorderBrush}" CornerRadius="4">
+                <StackPanel Spacing="10">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="Appearance / Theme" />
+                    <TextBlock Opacity="0.65" Text="System follows your Windows or Linux light/dark setting. Light and Dark override it in MiniERP." TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock VerticalAlignment="Center" Text="Theme" />
+                        <ComboBox Width="160" ItemsSource="{Binding ThemeModes}"
+                                  SelectedItem="{Binding ThemeMode, Mode=TwoWay}" />
+                    </StackPanel>
+                    <TextBlock Opacity="0.65" Text="Theme changes immediately. Click Save to remember your preference after restarting MiniERP." TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
             <TextBlock Opacity="0.55" Text="The Article master data keeps its CNY base price. USD is calculated from this setting and is not stored as a second article price." TextWrapping="Wrap" />
         </StackPanel>
 
