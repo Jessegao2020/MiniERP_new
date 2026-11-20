@@ -200,14 +200,27 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
         Status = $"Added '{row.ArticleName}'.";
     }
 
+    public void AddPosition(InvoiceItemRowViewModel row)
+    {
+        AddRow(row);
+        SelectedItem = row;
+        Status = $"Position '{row.ArticleName}' added. Save the document to persist it.";
+    }
+
+    public void RemovePosition(InvoiceItemRowViewModel row)
+    {
+        row.PropertyChanged -= Item_PropertyChanged;
+        Items.Remove(row);
+        if (ReferenceEquals(SelectedItem, row))
+            SelectedItem = null;
+        NotifyTotals();
+        Status = "Invoice item removed. Save to persist the change.";
+    }
+
     public void RemoveSelectedItem()
     {
         if (SelectedItem is null) { Status = "Select an invoice item first."; return; }
-        SelectedItem.PropertyChanged -= Item_PropertyChanged;
-        Items.Remove(SelectedItem);
-        SelectedItem = null;
-        NotifyTotals();
-        Status = "Invoice item removed. Save to persist the change.";
+        RemovePosition(SelectedItem);
     }
 
     public bool TryPrepareForExport() => TryPrepareDocument(requireItems: true);
