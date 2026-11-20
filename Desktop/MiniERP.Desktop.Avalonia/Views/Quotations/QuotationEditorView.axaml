@@ -150,12 +150,12 @@
                             <TextBlock FontSize="17" FontWeight="SemiBold" Text="Price / Terms" />
                             <Grid ColumnDefinitions="120,280,120,280" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Delivery Term" />
-                                <ComboBox Grid.Row="0" Grid.Column="1" IsEditable="True" Text="{Binding Quotation.DeliveryTerm, Mode=TwoWay}" ItemsSource="{Binding DeliveryTermOptions}" />
+                                <ComboBox Grid.Row="0" Grid.Column="1" Width="280" MinWidth="280" MaxWidth="280" HorizontalAlignment="Left" IsEditable="True" Text="{Binding Quotation.DeliveryTerm, Mode=TwoWay}" ItemsSource="{Binding DeliveryTermOptions}" />
                                 <TextBlock Grid.Row="0" Grid.Column="2" Classes="field-label" Text="Payment Term" />
                                 <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding Quotation.PaymentTerm, Mode=TwoWay}" />
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Lead Time" />
-                                <ComboBox Grid.Row="1" Grid.Column="1" IsEditable="True" Text="{Binding Quotation.LeadTime, Mode=TwoWay}" ItemsSource="{Binding LeadTimeOptions}" />
+                                <ComboBox Grid.Row="1" Grid.Column="1" Width="280" MinWidth="280" MaxWidth="280" HorizontalAlignment="Left" IsEditable="True" Text="{Binding Quotation.LeadTime, Mode=TwoWay}" ItemsSource="{Binding LeadTimeOptions}" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" Classes="field-label" Text="Currency" />
                                 <ComboBox Grid.Row="1" Grid.Column="3" Width="130" HorizontalAlignment="Left" ItemsSource="{Binding Currencies}" SelectedItem="{Binding Currency, Mode=TwoWay}" />
 
