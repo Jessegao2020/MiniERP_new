@@ -5,6 +5,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid">
 
+    <UserControl.Resources>
+        <infra:DateTimeOffsetDateConverter x:Key="DateValueConverter" />
+    </UserControl.Resources>
+
     <UserControl.Styles>
         <Style Selector="TabControl.document-sections TabItem">
             <Setter Property="Width" Value="150" />
@@ -28,6 +32,41 @@
             <Setter Property="BorderBrush" Value="#D2D2D2" />
             <Setter Property="BorderThickness" Value="1,0,0,0" />
         </Style>
+        <Style Selector="TextBlock.field-label">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style Selector="Border.lookup-field">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#8A8A8A" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="Border.lookup-field AutoCompleteBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Border.lookup-field Button.lookup-button">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="MinWidth" Value="26" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Background" Value="#EEEEEE" />
+            <Setter Property="BorderBrush" Value="#B5B5B5" />
+            <Setter Property="BorderThickness" Value="1,0,0,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.position-command">
+            <Setter Property="Width" Value="64" />
+            <Setter Property="MinWidth" Value="64" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,4,2" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
@@ -41,23 +80,48 @@
             <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreatePackingList_Click" Content="Create Packing List" />
             <Button Padding="7,2" Background="Transparent" BorderThickness="0" Click="CreateContract_Click" Content="Create Contract" />
         </StackPanel>
-        <Border Grid.Row="1" Margin="0,4,0,0" Padding="12,9" Background="#FAFAFA" BorderBrush="#D0D0D0" BorderThickness="0,1,0,1">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto">
-                <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="8" HorizontalAlignment="Left">
-                    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Document No." />
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Invoice.InvoiceNumber, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="User" />
-                    <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
-
-                    <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Customer" />
-                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,34">
-                        <AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type customer name" />
-                        <Button Grid.Column="1" Padding="0" Click="PickCustomer_Click" Content="..." ToolTip.Tip="Open customer list" />
-                    </Grid>
-                    <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Date" />
-                    <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding InvoiceDate, Mode=TwoWay}" />
+        <Border Grid.Row="1" Margin="0,4,0,0" Padding="8,7" Background="#FAFAFA" BorderBrush="#D0D0D0" BorderThickness="0,1,0,1">
+            <WrapPanel Orientation="Horizontal">
+                <Grid Width="355" Margin="0,2,12,2" ColumnDefinitions="92,*" ColumnSpacing="6">
+                    <TextBlock Grid.Column="0" Classes="field-label" Text="Document No." />
+                    <TextBox Grid.Column="1" Text="{Binding Invoice.InvoiceNumber, Mode=TwoWay}" />
                 </Grid>
-            </ScrollViewer>
+                <Grid Width="405" Margin="0,2,12,2" ColumnDefinitions="64,*" ColumnSpacing="6">
+                    <TextBlock Grid.Column="0" Classes="field-label" Text="Customer" />
+                    <Border Grid.Column="1" Classes="lookup-field">
+                        <Grid ColumnDefinitions="*,26">
+                            <AutoCompleteBox x:Name="CustomerAutoComplete" Grid.Column="0"
+                                             ItemsSource="{Binding Customers}"
+                                             SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
+                                             ValueMemberBinding="{Binding Name}"
+                                             FilterMode="ContainsOrdinal" MinimumPrefixLength="0"
+                                             MaxDropDownHeight="260" Watermark="Type customer name">
+                                <AutoCompleteBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="2*,*,Auto" ColumnSpacing="8" MinWidth="250">
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" />
+                                            <TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding City}" />
+                                            <TextBlock Grid.Column="2" Opacity="0.6" Text="{Binding Country}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </AutoCompleteBox.ItemTemplate>
+                            </AutoCompleteBox>
+                            <Button Grid.Column="1" Classes="lookup-button" Click="PickCustomer_Click" Content="..." ToolTip.Tip="Open customer list" />
+                        </Grid>
+                    </Border>
+                </Grid>
+                <Grid Width="190" Margin="0,2,12,2" ColumnDefinitions="40,118" ColumnSpacing="6">
+                    <TextBlock Grid.Column="0" Classes="field-label" Text="Date" />
+                    <CalendarDatePicker Grid.Column="1" Width="118" HorizontalAlignment="Left"
+                                        SelectedDate="{Binding InvoiceDate, Mode=TwoWay, Converter={StaticResource DateValueConverter}}" />
+                </Grid>
+                <Grid Width="180" Margin="0,2,12,2" ColumnDefinitions="36,*" ColumnSpacing="6">
+                    <TextBlock Grid.Column="0" Classes="field-label" Text="User" />
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+            </WrapPanel>
         </Border>
         <TabControl Grid.Row="2" Classes="document-sections" TabStripPlacement="Left" SelectedIndex="3">
             <TabItem Header="General">
@@ -67,14 +131,16 @@
                             <TextBlock FontSize="17" FontWeight="SemiBold" Text="General" />
 <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Customer Contact" />
-                    <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,34">
-                        <AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name" />
-                        <Button Grid.Column="1" Padding="0" Click="PickContact_Click" Content="..." />
-                    </Grid>
+                    <Border Grid.Row="0" Grid.Column="1" Classes="lookup-field">
+                        <Grid ColumnDefinitions="*,26">
+                            <AutoCompleteBox Grid.Column="0" ItemsSource="{Binding CustomerContacts}" SelectedItem="{Binding SelectedCustomerContact, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="220" Watermark="Type contact name" />
+                            <Button Grid.Column="1" Classes="lookup-button" Click="PickContact_Click" Content="..." ToolTip.Tip="Open contact list" />
+                        </Grid>
+                    </Border>
                     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Customer PO No." />
                     <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Invoice.CustomerPoNumber, Mode=TwoWay}" />
                     <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Customer PO Date" />
-                    <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding CustomerPoDate, Mode=TwoWay}" />
+                    <CalendarDatePicker Grid.Row="1" Grid.Column="3" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding CustomerPoDate, Mode=TwoWay, Converter={StaticResource DateValueConverter}}" />
 </Grid>
 <TextBlock Opacity="0.6" Text="{Binding SourceText}" TextWrapping="Wrap" />
                         </StackPanel>
@@ -88,7 +154,7 @@
                             <TextBlock FontSize="17" FontWeight="SemiBold" Text="Price / Terms" />
 <Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Due Date" />
-                    <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding DueDate, Mode=TwoWay}" />
+                    <CalendarDatePicker Grid.Row="0" Grid.Column="1" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding DueDate, Mode=TwoWay, Converter={StaticResource DateValueConverter}}" />
                     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Delivery Term" />
                     <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Invoice.DeliveryTerm, Mode=TwoWay}" />
                     <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Payment Term" />
@@ -117,39 +183,108 @@
             </TabItem>
             <TabItem Header="Positions">
                 <Border Classes="document-section">
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left">
-                            <TextBlock FontSize="17" FontWeight="SemiBold" Text="Positions" />
-                <Border Padding="12" BorderBrush="LightGray" BorderThickness="1" CornerRadius="2">
-                    <Grid RowDefinitions="Auto,Auto,280,Auto" RowSpacing="8">
-                        <TextBlock Grid.Row="0" FontSize="18" FontWeight="SemiBold" Text="Items" />
-                        <Grid Grid.Row="1" ColumnDefinitions="Auto,360,Auto,Auto,Auto,Auto" ColumnSpacing="6">
-                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Article" />
-                            <Grid Grid.Column="1" ColumnDefinitions="*,34">
-                                <AutoCompleteBox Grid.Column="0" Margin="0,0,4,0" ItemsSource="{Binding Articles}" SelectedItem="{Binding SelectedArticle, Mode=TwoWay}" ValueMemberBinding="{Binding Name}" FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="260" Watermark="Type article name" />
-                                <Button Grid.Column="1" Padding="0" Click="PickArticle_Click" Content="..." />
+                    <!-- No outer horizontal ScrollViewer: clicking rows must not shift the whole page. -->
+                    <Grid Margin="12,10" RowDefinitions="Auto,Auto,*,Auto">
+                        <Border x:Name="PositionEditorPanel" Grid.Row="0" Padding="8,7"
+                                Background="#FAFAFA" BorderBrush="#CCCCCC" BorderThickness="1">
+                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="7">
+                                <TextBlock Grid.Row="0" FontWeight="SemiBold" Text="Selected Position" />
+                                <WrapPanel Grid.Row="1" Orientation="Horizontal">
+                                    <StackPanel Width="500" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Article" />
+                                        <Border Classes="lookup-field">
+                                            <Grid ColumnDefinitions="*,26">
+                                                <AutoCompleteBox x:Name="ArticleAutoComplete" Grid.Column="0"
+                                                                 ItemsSource="{Binding Articles}"
+                                                                 SelectedItem="{Binding SelectedArticle, Mode=TwoWay}"
+                                                                 ValueMemberBinding="{Binding Name}"
+                                                                 FilterMode="ContainsOrdinal" MinimumPrefixLength="0"
+                                                                 MaxDropDownHeight="260" Watermark="Type article name"
+                                                                 TextChanged="PositionEditor_TextChanged">
+                                                    <AutoCompleteBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid ColumnDefinitions="2*,Auto" ColumnSpacing="12" MinWidth="280">
+                                                                <TextBlock Grid.Column="0" Text="{Binding Name}" />
+                                                                <TextBlock Grid.Column="1" Opacity="0.6" Text="{Binding Price, StringFormat='CNY {0:N2}'}" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </AutoCompleteBox.ItemTemplate>
+                                                </AutoCompleteBox>
+                                                <Button Grid.Column="1" Classes="lookup-button" Click="PickPositionArticle_Click"
+                                                        Content="..." ToolTip.Tip="Open article list" />
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+                                    <StackPanel Width="82" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Qty" />
+                                        <NumericUpDown x:Name="PositionQtyTextBox"
+                                                       Minimum="1" Increment="1" FormatString="0"
+                                                       ClipValueToMinMax="True" AllowSpin="True"
+                                                       ShowButtonSpinner="True"
+                                                       ValueChanged="PositionQty_ValueChanged" />
+                                    </StackPanel>
+                                    <StackPanel Width="100" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Unit" />
+                                        <TextBox x:Name="PositionUnitTextBox" TextChanged="PositionEditor_TextChanged" />
+                                    </StackPanel>
+                                    <StackPanel Width="116" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Unit Price" />
+                                        <TextBox x:Name="PositionUnitPriceTextBox" TextChanged="PositionEditor_TextChanged" />
+                                    </StackPanel>
+                                    <StackPanel Width="100" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Disc. %" />
+                                        <TextBox x:Name="PositionDiscountTextBox" TextChanged="PositionEditor_TextChanged" />
+                                    </StackPanel>
+                                    <StackPanel Width="110" Margin="0,0,10,4" Spacing="3">
+                                        <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Amount" />
+                                        <TextBox x:Name="PositionAmountText" IsReadOnly="True" IsTabStop="False" />
+                                    </StackPanel>
+                                </WrapPanel>
+                                <StackPanel Grid.Row="2" Spacing="3">
+                                    <TextBlock Classes="field-label" HorizontalAlignment="Left" Text="Description EN" />
+                                    <TextBox x:Name="PositionDescriptionTextBox" MinHeight="128" AcceptsReturn="True"
+                                             TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                             TextChanged="PositionEditor_TextChanged" />
+                                </StackPanel>
                             </Grid>
-                            <Button Grid.Column="2" Padding="10,2" Click="AddItem_Click" Content="Add" />
-                            <Button Grid.Column="3" Padding="10,2" Click="RemoveItem_Click" Content="Remove" />
-                            <Button Grid.Column="4" Width="34" Padding="0" Click="MoveItemUp_Click" Content="↑" ToolTip.Tip="Move selected item up" />
-                            <Button Grid.Column="5" Width="34" Padding="0" Click="MoveItemDown_Click" Content="↓" ToolTip.Tip="Move selected item down" />
-                        </Grid>
-                        <dg:DataGrid Grid.Row="2" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" LoadingRow="SelectLineGrid_LoadingRow" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                        </Border>
+                        <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,0">
+                            <Button Classes="position-command" Click="NewPosition_Click" Content="New" />
+                            <Button x:Name="PositionSaveButton" Classes="position-command" IsEnabled="False"
+                                    Click="SavePositionEdit_Click" Content="Save" ToolTip.Tip="Apply this position to the overview" />
+                            <Button Classes="position-command" Click="MoveItemUp_Click" Content="↑" />
+                            <Button Classes="position-command" Click="MoveItemDown_Click" Content="↓" />
+                            <Button Classes="position-command" Click="DeletePosition_Click" Content="Delete" />
+                            <Button Classes="position-command" Click="DiscardPosition_Click" Content="Discard" />
+                        </WrapPanel>
+                        <dg:DataGrid x:Name="PositionsGrid" Grid.Row="2" Margin="0,6,0,0"
+                                     MinHeight="80" AutoGenerateColumns="False"
+                                     CanUserResizeColumns="True" CanUserSortColumns="False"
+                                     HeadersVisibility="All" RowHeight="26"
+                                     IsReadOnly="True" GridLinesVisibility="All"
+                                     LoadingRow="PositionsGrid_LoadingRow"
+                                     DoubleTapped="PositionsGrid_DoubleTapped"
+                                     ItemsSource="{Binding Items}"
+                                     SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
                             <dg:DataGrid.Columns>
-                                <dg:DataGridTextColumn Width="1.7*" Header="Article" Binding="{Binding ArticleName, Mode=TwoWay}" />
-                                <dg:DataGridTextColumn Width="2.6*" Header="Description EN" Binding="{Binding Description, Mode=TwoWay}" />
-                                <dg:DataGridTemplateColumn Width="80" Header="Qty"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding QuantityText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="70" Header="Unit"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding Unit, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="105" Header="Unit Price"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding UnitPriceText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTemplateColumn Width="85" Header="Disc. %"><dg:DataGridTemplateColumn.CellTemplate><DataTemplate><TextBox Height="32" Margin="2" VerticalAlignment="Top" Text="{Binding DiscountText, Mode=TwoWay}" /></DataTemplate></dg:DataGridTemplateColumn.CellTemplate></dg:DataGridTemplateColumn>
-                                <dg:DataGridTextColumn Width="115" Header="Amount" IsReadOnly="True" Binding="{Binding LineTotal, StringFormat='{}{0:N2}'}" />
+                                <dg:DataGridTextColumn Width="2*" MinWidth="120" Header="Article" Binding="{Binding ArticleName}" />
+                                <dg:DataGridTextColumn Width="3*" MinWidth="180" Header="Description EN" Binding="{Binding Description}" />
+                                <dg:DataGridTextColumn Width="70" Header="Qty" Binding="{Binding QuantityText}" />
+                                <dg:DataGridTextColumn Width="70" Header="Unit" Binding="{Binding Unit}" />
+                                <dg:DataGridTextColumn Width="95" Header="Unit Price" Binding="{Binding UnitPriceText}" />
+                                <dg:DataGridTextColumn Width="75" Header="Disc. %" Binding="{Binding DiscountText}" />
+                                <dg:DataGridTextColumn Width="105" Header="Amount" Binding="{Binding LineTotal, StringFormat='{}{0:N2}'}" />
                             </dg:DataGrid.Columns>
                         </dg:DataGrid>
-                        <Grid Grid.Row="3" ColumnDefinitions="*,Auto"><TextBlock Opacity="0.55" VerticalAlignment="Center" Text="Article text and prices are saved as document snapshots." /><StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><TextBlock FontSize="16" FontWeight="SemiBold" Text="Total" /><TextBlock FontSize="16" FontWeight="Bold" Text="{Binding TotalText}" /></StackPanel></Grid>
+                        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,2,0,0">
+                            <TextBlock Opacity="0.55" VerticalAlignment="Center"
+                                       Text="New starts a blank position. Double-click a row to edit. Position Save applies changes." />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <TextBlock FontSize="15" FontWeight="SemiBold" Text="Total" />
+                                <TextBlock FontSize="15" FontWeight="Bold" Text="{Binding TotalText}" />
+                            </StackPanel>
+                        </Grid>
                     </Grid>
-                </Border>
-                        </StackPanel>
-                    </ScrollViewer>
                 </Border>
             </TabItem>
         </TabControl>
