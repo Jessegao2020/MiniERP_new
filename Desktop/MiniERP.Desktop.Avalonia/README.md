@@ -28,6 +28,32 @@ The database is created/migrated in the user's local application-data directory.
 ~/.local/share/MiniERP/erp.db
 ```
 
+## Linux desktop icon and application menu
+
+The project keeps `Desktop/MiniERP.Desktop.Avalonia/Assets/app.ico` for the
+native Windows EXE icon. It also contains `Assets/app.png`, extracted from the
+256×256 PNG frame already embedded in that same ICO, for Linux.
+
+The Avalonia window uses `Icon="/Assets/app.png"` on both platforms.
+On Linux, `dotnet run` alone does not register an application in the Cinnamon
+menu or associate a dock launcher with an icon. To install a user-local
+published application, menu entry, and 256×256 icon, run from the repository root:
+
+```bash
+bash scripts/install-linux-launcher.sh
+```
+
+The installer publishes Release `linux-x64` self-contained, installs to
+`~/.local/share/minierp/app`, and writes
+`~/.local/share/applications/minierp.desktop` and the matching hicolor icon
+in `~/.local/share/icons/hicolor/256x256/apps`. It does not require sudo.
+Launch the installed version from the desktop's MiniERP menu entry. Re-run the
+script to update the installed app after pulling code changes.
+
+The `.desktop` launcher is separate from the Windows `<ApplicationIcon>`
+setting in the project file; `<ApplicationIcon>` alone does not install a
+Linux desktop launcher.
+
 ## Phase 1 goals
 
 - Prove Avalonia starts on Linux.
