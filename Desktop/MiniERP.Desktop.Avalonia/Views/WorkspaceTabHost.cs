@@ -60,13 +60,6 @@ public sealed class WorkspaceTabHost : UserControl
     private const double TabHeight = 24d;
     private const double ContentGap = 12d;
 
-    private static readonly IBrush InactiveBackground = new SolidColorBrush(Color.Parse("#F0F0F0"));
-    private static readonly IBrush HoverBackground = new SolidColorBrush(Color.Parse("#E4E4E4"));
-    private static readonly IBrush ActiveBackground = Brushes.White;
-    private static readonly IBrush TabBorderBrush = new SolidColorBrush(Color.Parse("#A8A8A8"));
-    private static readonly IBrush ActiveBorderBrush = new SolidColorBrush(Color.Parse("#858585"));
-    private static readonly IBrush CloseHoverBackground = new SolidColorBrush(Color.Parse("#D8D8D8"));
-
     private readonly StackPanel _tabPanel;
     private readonly ScrollViewer _scrollViewer;
     private readonly ContentControl _contentHost;
@@ -140,10 +133,10 @@ public sealed class WorkspaceTabHost : UserControl
 
         _contentHost = new ContentControl
         {
-            Background = Brushes.White,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Stretch
         };
+        _contentHost.Classes.Add("erp-workspace-content");
         Grid.SetRow(_contentHost, 1);
         root.Children.Add(_contentHost);
 
@@ -284,13 +277,11 @@ public sealed class WorkspaceTabHost : UserControl
             Height = 18,
             CornerRadius = new CornerRadius(9),
             Child = closeGlyph,
-            Background = Brushes.Transparent,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };
+        closeHost.Classes.Add("erp-workspace-close");
         ToolTip.SetTip(closeHost, "Close");
-        closeHost.PointerEntered += (_, _) => closeHost.Background = CloseHoverBackground;
-        closeHost.PointerExited += (_, _) => closeHost.Background = Brushes.Transparent;
         closeHost.PointerPressed += (_, e) =>
         {
             if (e.GetCurrentPoint(closeHost).Properties.PointerUpdateKind != PointerUpdateKind.LeftButtonPressed)
@@ -313,27 +304,15 @@ public sealed class WorkspaceTabHost : UserControl
             Width = TabWidth,
             Height = TabHeight,
             Child = panel,
-            BorderBrush = TabBorderBrush,
             BorderThickness = new Thickness(1),
-            Background = InactiveBackground,
             Margin = new Thickness(0, 0, -1, 0),
             VerticalAlignment = VerticalAlignment.Bottom
         };
+        border.Classes.Add("erp-workspace-tab");
         ToolTip.SetTip(border, descriptor.FullTitle);
         border.ContextMenu = BuildTabContextMenu(tab);
 
-        // Hover belongs to the whole tab rectangle, not only to the title text area.
-        border.PointerEntered += (_, _) =>
-        {
-            if (!ReferenceEquals(tab, _selectedItem))
-                border.Background = HoverBackground;
-        };
-        border.PointerExited += (_, _) =>
-        {
-            border.Background = ReferenceEquals(tab, _selectedItem)
-                ? ActiveBackground
-                : InactiveBackground;
-        };
+        // Hover and selected colors now come from theme-aware Avalonia styles.
         border.PointerPressed += (_, e) =>
         {
             if (e.GetCurrentPoint(border).Properties.PointerUpdateKind != PointerUpdateKind.LeftButtonPressed)
@@ -388,10 +367,14 @@ public sealed class WorkspaceTabHost : UserControl
         foreach (var pair in _visuals)
         {
             var active = ReferenceEquals(pair.Key, _selectedItem);
-            pair.Value.Background = active ? ActiveBackground : InactiveBackground;
-            pair.Value.BorderBrush = active ? ActiveBorderBrush : TabBorderBrush;
+            // Avoid local Background/Foreground values: they override theme styles
+            // and previously produced white-on-white tab titles in dark mode.
+            if (active)
+                pair.Value.Classes.Add("active");
+            else
+                pair.Value.Classes.Remove("active");
 
-            // Selected top tab merges subtly into the white document surface below.
+            // Selected top tab merges into the document surface below.
             pair.Value.BorderThickness = active
                 ? new Thickness(1, 1, 1, 0)
                 : new Thickness(1);
