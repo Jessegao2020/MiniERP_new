@@ -55,7 +55,7 @@ public sealed class PackingListEditorViewModel : INotifyPropertyChanged
     public string Status
     {
         get => _status;
-        private set { if (_status == value) return; _status = value; OnPropertyChanged(); }
+        private set { if (_status == value) { OnPropertyChanged(); return; } _status = value; OnPropertyChanged(); }
     }
 
     public PackingListEditorViewModel(PackingList? source)
