@@ -27,7 +27,7 @@ public sealed class InvoiceListViewModel : INotifyPropertyChanged
     public string Status
     {
         get => _status;
-        private set { if (_status == value) return; _status = value; OnPropertyChanged(); }
+        private set { if (_status == value) { OnPropertyChanged(); return; } _status = value; OnPropertyChanged(); }
     }
 
     public InvoiceListViewModel(InvoiceType type) => _type = type;
