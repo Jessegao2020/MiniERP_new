@@ -112,30 +112,50 @@ public sealed class PackingListEditorViewModel : INotifyPropertyChanged
         Status = $"Added '{row.ArticleName}'.";
     }
 
-    public void RemoveSelectedItem()
+    public void AddGoodsPosition(PackingListItemRowViewModel row)
     {
-        if (SelectedItem is null) { Status = "Select a packing-list item first."; return; }
-        SelectedItem.PropertyChanged -= Row_PropertyChanged;
-        Items.Remove(SelectedItem);
-        SelectedItem = null;
+        AddItemRow(row);
+        SelectedItem = row;
+        Status = $"Goods '{row.ArticleName}' added. Save to persist the change.";
+    }
+
+    public void RemoveGoodsPosition(PackingListItemRowViewModel row)
+    {
+        row.PropertyChanged -= Row_PropertyChanged;
+        Items.Remove(row);
+        if (ReferenceEquals(SelectedItem, row))
+            SelectedItem = null;
         NotifyTotals();
     }
 
-    public void AddPackage()
+    public void RemoveSelectedItem()
     {
-        var row = new PackingPackageRowViewModel();
+        if (SelectedItem is null) { Status = "Select a packing-list item first."; return; }
+        RemoveGoodsPosition(SelectedItem);
+    }
+
+    public void AddPackagePosition(PackingPackageRowViewModel row)
+    {
         AddPackageRow(row);
         SelectedPackage = row;
         Status = "Package row added.";
     }
 
+    public void RemovePackagePosition(PackingPackageRowViewModel row)
+    {
+        row.PropertyChanged -= Row_PropertyChanged;
+        Packages.Remove(row);
+        if (ReferenceEquals(SelectedPackage, row))
+            SelectedPackage = null;
+        NotifyTotals();
+    }
+
+    public void AddPackage() => AddPackagePosition(new PackingPackageRowViewModel());
+
     public void RemoveSelectedPackage()
     {
         if (SelectedPackage is null) { Status = "Select a package row first."; return; }
-        SelectedPackage.PropertyChanged -= Row_PropertyChanged;
-        Packages.Remove(SelectedPackage);
-        SelectedPackage = null;
-        NotifyTotals();
+        RemovePackagePosition(SelectedPackage);
     }
 
     public bool TryPrepareForExport() => TryPrepareDocument(requireItems: true, requirePackages: true);
