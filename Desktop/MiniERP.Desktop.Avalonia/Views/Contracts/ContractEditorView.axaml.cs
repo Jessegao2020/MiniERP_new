@@ -32,6 +32,10 @@ public partial class ContractEditorView : UserControl
         _dirtyMonitor = new EditorDirtyMonitor(saveButton, CaptureEditState);
         AttachedToVisualTree += async (_, _) =>
         {
+            // Match the framed section strip used by the Quotation editor.
+            Avalonia.Threading.Dispatcher.UIThread.Post(
+                () => DocumentSectionNavigationFrame.Install(this),
+                Avalonia.Threading.DispatcherPriority.Loaded);
             await ViewModel.LoadLookupsAsync();
             _dirtyMonitor.Start();
         };
