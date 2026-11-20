@@ -43,7 +43,7 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Padding="6,3" Height="26" ClipToBounds="True" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
             <infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" />
         </Border>
     </Grid>
