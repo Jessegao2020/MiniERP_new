@@ -56,7 +56,7 @@
             <TextBlock Opacity="0.55" Text="The Article master data keeps its CNY base price. USD is calculated from this setting and is not stored as a second article price." TextWrapping="Wrap" />
         </StackPanel>
 
-        <Border Grid.Row="2" Padding="6,3" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
+        <Border Grid.Row="2" Padding="6,3" Height="26" ClipToBounds="True" Background="#E8E8E8" BorderBrush="LightGray" BorderThickness="1">
             <infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" />
         </Border>
     </Grid>
