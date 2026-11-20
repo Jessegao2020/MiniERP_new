@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -15,6 +16,7 @@ public sealed class StatusMessageTextBlock : TextBlock
 {
     private static readonly SemaphoreSlim DialogGate = new(1, 1);
     private bool _attached;
+    private INotifyPropertyChanged? _source;
     private string? _lastMessage;
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -22,22 +24,64 @@ public sealed class StatusMessageTextBlock : TextBlock
         base.OnAttachedToVisualTree(e);
         _attached = true;
         _lastMessage = Text;
+        SubscribeToStatus();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
+        UnsubscribeFromStatus();
         _attached = false;
         base.OnDetachedFromVisualTree(e);
+    }
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+        if (!_attached)
+            return;
+
+        UnsubscribeFromStatus();
+        _lastMessage = Text;
+        SubscribeToStatus();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property != TextProperty || !_attached)
+        // For INotifyPropertyChanged ViewModels, listen directly to Status rather
+        // than Text. Text bindings may not raise a change when the same validation
+        // message is emitted twice in succession.
+        if (change.Property == TextProperty && _attached && _source is null)
+            HandleMessage(Text, allowRepeat: false);
+    }
+
+    private void SubscribeToStatus()
+    {
+        _source = DataContext as INotifyPropertyChanged;
+        if (_source is not null)
+            _source.PropertyChanged += StatusPropertyChanged;
+    }
+
+    private void UnsubscribeFromStatus()
+    {
+        if (_source is not null)
+            _source.PropertyChanged -= StatusPropertyChanged;
+        _source = null;
+    }
+
+    private void StatusPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!_attached || (e.PropertyName != "Status" && !string.IsNullOrEmpty(e.PropertyName)))
             return;
 
-        var message = (Text ?? string.Empty).Trim();
-        if (message.Length == 0 || string.Equals(_lastMessage, message, StringComparison.Ordinal))
+        var message = sender?.GetType().GetProperty("Status")?.GetValue(sender)?.ToString();
+        HandleMessage(message, allowRepeat: true);
+    }
+
+    private void HandleMessage(string? value, bool allowRepeat)
+    {
+        var message = (value ?? string.Empty).Trim();
+        if (message.Length == 0 || (!allowRepeat && string.Equals(_lastMessage, message, StringComparison.Ordinal)))
             return;
 
         _lastMessage = message;
@@ -53,7 +97,6 @@ public sealed class StatusMessageTextBlock : TextBlock
             return false;
 
         if (message.StartsWith("Editing ", StringComparison.OrdinalIgnoreCase)
-            || message.StartsWith("New ", StringComparison.OrdinalIgnoreCase)
             || message.StartsWith("Exchange rate refreshed", StringComparison.OrdinalIgnoreCase)
             || message.StartsWith("Quotation currency changed", StringComparison.OrdinalIgnoreCase)
             || message.StartsWith("Quotation repriced", StringComparison.OrdinalIgnoreCase)
