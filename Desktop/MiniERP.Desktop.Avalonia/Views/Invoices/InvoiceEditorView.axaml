@@ -127,9 +127,9 @@
             <TabItem Header="General">
                 <Border Classes="document-section">
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left">
+                        <StackPanel Margin="22,20" Spacing="14" MinWidth="780" HorizontalAlignment="Left">
                             <TextBlock FontSize="17" FontWeight="SemiBold" Text="General" />
-<Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+<Grid ColumnDefinitions="120,280,120,280" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Customer Contact" />
                     <Border Grid.Row="0" Grid.Column="1" Classes="lookup-field">
                         <Grid ColumnDefinitions="*,26">
@@ -150,9 +150,9 @@
             <TabItem Header="Price / Terms">
                 <Border Classes="document-section">
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left">
+                        <StackPanel Margin="22,20" Spacing="14" MinWidth="780" HorizontalAlignment="Left">
                             <TextBlock FontSize="17" FontWeight="SemiBold" Text="Price / Terms" />
-<Grid ColumnDefinitions="140,300,140,300" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+<Grid ColumnDefinitions="120,280,120,280" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Due Date" />
                     <CalendarDatePicker Grid.Row="0" Grid.Column="1" Width="118" HorizontalAlignment="Left" SelectedDate="{Binding DueDate, Mode=TwoWay, Converter={StaticResource DateValueConverter}}" />
                     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Delivery Term" />
@@ -171,7 +171,7 @@
             <TabItem Header="Text">
                 <Border Classes="document-section">
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="22,20" Spacing="14" MinWidth="800" HorizontalAlignment="Left">
+                        <StackPanel Margin="22,20" Spacing="14" MinWidth="780" HorizontalAlignment="Left">
                             <TextBlock FontSize="17" FontWeight="SemiBold" Text="Text" />
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                     <StackPanel Grid.Column="0" Spacing="5"><TextBlock Text="Bank Information" /><TextBox MinHeight="86" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Invoice.BankInformation, Mode=TwoWay}" /></StackPanel>
