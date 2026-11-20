@@ -116,7 +116,6 @@
         </Style>
         <Style Selector="TextBox">
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
-            <Setter Property="PlaceholderForeground" Value="{DynamicResource ErpPlaceholderBrush}" />
         </Style>
         <Style Selector="TextBox.grid-filter">
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
@@ -126,9 +125,6 @@
         </Style>
         <Style Selector="AutoCompleteBox">
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
-        </Style>
-        <Style Selector="AutoCompleteBox /template/ TextBox">
-            <Setter Property="PlaceholderForeground" Value="{DynamicResource ErpPlaceholderBrush}" />
         </Style>
 
         <!-- Default ERP table skin. Views that need an integrated filter row provide their own external header/filter, while every DataGrid shares the same thin SelectLine look. -->
