@@ -17,7 +17,9 @@ public sealed class InvoiceItemRowViewModel : INotifyPropertyChanged
     private string _discountText;
 
     public int Id { get; }
-    public int? SourceArticleId { get; }
+    public int? SourceArticleId { get; private set; }
+
+    public void SetSourceArticle(int? sourceArticleId) => SourceArticleId = sourceArticleId;
     public string Currency { get; }
     public decimal ExchangeRateSnapshot { get; }
 
@@ -61,6 +63,25 @@ public sealed class InvoiceItemRowViewModel : INotifyPropertyChanged
         _unit = "PCS";
         _unitPriceText = ToText(unitPrice);
         _discountText = "0";
+    }
+
+    // Used by the quotation-style position editor. No master Article is required:
+    // manual invoice lines preserve the operator's visible text and price snapshot.
+    public InvoiceItemRowViewModel(
+        string articleName, string? description, string? specification, int? sourceArticleId,
+        string currency, decimal exchangeRateSnapshot,
+        decimal quantity, string unit, decimal unitPrice, decimal discountPercent)
+    {
+        SourceArticleId = sourceArticleId;
+        Currency = currency;
+        ExchangeRateSnapshot = exchangeRateSnapshot;
+        _articleName = articleName;
+        _description = description;
+        _specification = specification;
+        _quantityText = ToText(quantity);
+        _unit = unit;
+        _unitPriceText = ToText(unitPrice);
+        _discountText = ToText(discountPercent);
     }
 
     public bool TryValidate(out string error)
