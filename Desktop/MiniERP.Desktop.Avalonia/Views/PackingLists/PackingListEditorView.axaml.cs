@@ -23,15 +23,19 @@ public partial class PackingListEditorView : UserControl
     {
         InitializeComponent();
         DataContext = new PackingListEditorViewModel(packingList);
+        InitializePackingEditors();
 
         var saveButton = EditorWorkflowSupport.AddGridViewToggle(this, GridView_Click);
         _dirtyMonitor = new EditorDirtyMonitor(saveButton, CaptureEditState);
         AttachedToVisualTree += async (_, _) =>
         {
             // Match the framed section strip used by the Quotation editor.
-            Avalonia.Threading.Dispatcher.UIThread.Post(
-                () => DocumentSectionNavigationFrame.Install(this),
-                Avalonia.Threading.DispatcherPriority.Loaded);
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                DocumentSectionNavigationFrame.Install(this);
+                ConfigurePackingEditors();
+                NormalizePickerButtons();
+            }, Avalonia.Threading.DispatcherPriority.Loaded);
             await ViewModel.LoadLookupsAsync();
             _dirtyMonitor.Start();
         };
@@ -182,7 +186,11 @@ public partial class PackingListEditorView : UserControl
 
     private async void ExportPdf_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePackingEditorsCommitted()) return;
         if (!ViewModel.TryPrepareForExport()) return;
+        if (!await ViewModel.SaveAsync()) return;
+        _dirtyMonitor.MarkClean();
+        Saved?.Invoke(this, EventArgs.Empty);
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel?.StorageProvider is null) { ViewModel.SetStatusMessage("PDF export is not available on this desktop session."); return; }
         var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -205,6 +213,7 @@ public partial class PackingListEditorView : UserControl
 
     private async void Save_Click(object? sender, RoutedEventArgs e)
     {
+        if (!EnsurePackingEditorsCommitted()) return;
         if (!await ViewModel.SaveAsync()) return;
         _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
