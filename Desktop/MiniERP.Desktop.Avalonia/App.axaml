@@ -58,6 +58,62 @@
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
 
+        <!-- The MDI/workspace tabs are created in C#, so style them by
+             class rather than assigning a fixed white Background in code. -->
+        <Style Selector="ContentControl.erp-workspace-content">
+            <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
+        </Style>
+        <Style Selector="Border.erp-workspace-tab">
+            <Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ErpFrameBrush}" />
+        </Style>
+        <Style Selector="Border.erp-workspace-tab:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" />
+        </Style>
+        <Style Selector="Border.erp-workspace-tab.active">
+            <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ErpFrameBrush}" />
+        </Style>
+        <Style Selector="Border.erp-workspace-tab.active:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
+        </Style>
+        <Style Selector="Border.erp-workspace-tab TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+        </Style>
+        <Style Selector="Border.erp-workspace-close:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ErpSelectedSectionBrush}" />
+        </Style>
+
+        <!-- Dark-friendly neutral surfaces and typography for the document shell.
+             These styles do not override the existing input dimensions. -->
+        <Style Selector="Menu.erp-main-menu">
+            <Setter Property="Background" Value="{DynamicResource ErpToolbarBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+        </Style>
+        <Style Selector="TabControl.erp-ribbon">
+            <Setter Property="Background" Value="{DynamicResource ErpToolbarBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+        </Style>
+        <Style Selector="TabControl.document-sections">
+            <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+        </Style>
+        <Style Selector="TabControl.document-sections TabItem">
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+        </Style>
+        <Style Selector="TabControl.document-sections TabItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+        </Style>
+        <Style Selector="TextBox.grid-filter">
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+        </Style>
+        <Style Selector="TextBox.grid-filter /template/ TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ErpMutedBrush}" />
+        </Style>
+        <Style Selector="AutoCompleteBox">
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+        </Style>
+
         <!-- Default ERP table skin. Views that need an integrated filter row provide their own external header/filter, while every DataGrid shares the same thin SelectLine look. -->
         <Style Selector="DataGrid">
             <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
