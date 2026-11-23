@@ -9,7 +9,8 @@
     Height="800"
     MinWidth="900"
     MinHeight="600"
-    Background="{DynamicResource ErpPageBrush}">
+    SystemDecorations="None"
+    Background="{DynamicResource ErpSurfaceBrush}">
 
     <Window.Styles>
         <Style Selector="Button.ribbon">
@@ -24,11 +25,36 @@
         </Style>
         <Style Selector="TextBlock.ribbonIcon"><Setter Property="FontSize" Value="25" /><Setter Property="HorizontalAlignment" Value="Center" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
         <Style Selector="Image.ribbonIcon"><Setter Property="Width" Value="28" /><Setter Property="Height" Value="28" /><Setter Property="Stretch" Value="Uniform" /><Setter Property="HorizontalAlignment" Value="Center" /></Style>
+        <!-- Keep the main ribbon white in Light and theme-matched in Dark. -->
+        <Style Selector="TabControl.erp-ribbon TabItem">
+            <Setter Property="Background" Value="{DynamicResource ErpToolbarBrush}" />
+        </Style>
+        <!-- The native gray OS title bar is replaced by buttons in the existing menu row. -->
+        <Style Selector="Button.window-control">
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.window-control:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" />
+        </Style>
+        <Style Selector="Button.window-control.close:pointerover">
+            <Setter Property="Background" Value="#C42B30" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
         <Style Selector="TextBlock.ribbonText"><Setter Property="FontSize" Value="12" /><Setter Property="HorizontalAlignment" Value="Center" /></Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,Auto,*">
-        <Menu Grid.Row="0" Classes="erp-main-menu" Padding="2">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Background="{DynamicResource ErpToolbarBrush}">
+            <Menu Grid.Column="0" Classes="erp-main-menu" Padding="2">
             <MenuItem Header="File" />
             <MenuItem Header="Edit" />
             <MenuItem Header="View">
@@ -39,7 +65,15 @@
                 </MenuItem>
             </MenuItem>
             <MenuItem Header="About" />
-        </Menu>
+            </Menu>
+            <!-- Dragging here moves the borderless window. Double-click toggles maximization. -->
+            <Border Grid.Column="1" Background="Transparent" PointerPressed="WindowDragArea_PointerPressed" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button Classes="window-control" Content="−" ToolTip.Tip="Minimize" Click="MinimizeWindow_Click" />
+                <Button x:Name="MaximizeRestoreButton" Classes="window-control" Content="□" ToolTip.Tip="Maximize or restore" Click="MaximizeRestoreWindow_Click" />
+                <Button Classes="window-control close" Content="×" ToolTip.Tip="Close" Click="CloseWindow_Click" />
+            </StackPanel>
+        </Grid>
         <TabControl x:Name="MenuTabControl" Classes="erp-ribbon" Grid.Row="1" BorderThickness="1,1,1,0">
             <TabItem Header="General" Padding="10,5">
                 <Border Height="66" Padding="2,1"><StackPanel Orientation="Horizontal">
