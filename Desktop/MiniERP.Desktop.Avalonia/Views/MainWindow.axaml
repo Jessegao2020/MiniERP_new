@@ -66,7 +66,7 @@
             </TabItem>
         </TabControl>
 
-        <Border Grid.Row="2" BorderThickness="1,0,1,1">
+        <Border Grid.Row="2" BorderThickness="1,0,1,1" Background="{DynamicResource ErpSurfaceBrush}">
             <local:WorkspaceTabHost x:Name="ContentTabControl" />
         </Border>
     </Grid>
