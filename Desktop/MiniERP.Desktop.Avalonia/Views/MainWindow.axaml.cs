@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         ContentTabControl.ItemsSource = _workspaceTabs;
+        WindowPlacementPersistence.Attach(this);
     }
 
     private async void ThemeSystem_Click(object? sender, RoutedEventArgs e)
