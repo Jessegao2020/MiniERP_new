@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +29,45 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         ContentTabControl.ItemsSource = _workspaceTabs;
+        UpdateMaximizeRestoreButton();
+        PropertyChanged += (_, args) =>
+        {
+            if (args.Property == WindowStateProperty)
+                UpdateMaximizeRestoreButton();
+        };
     }
+
+    private void WindowDragArea_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            return;
+
+        if (e.ClickCount == 2)
+        {
+            ToggleMaximizeRestore();
+            e.Handled = true;
+            return;
+        }
+
+        BeginMoveDrag(e);
+    }
+
+    private void MinimizeWindow_Click(object? sender, RoutedEventArgs e)
+        => WindowState = WindowState.Minimized;
+
+    private void MaximizeRestoreWindow_Click(object? sender, RoutedEventArgs e)
+        => ToggleMaximizeRestore();
+
+    private void CloseWindow_Click(object? sender, RoutedEventArgs e)
+        => Close();
+
+    private void ToggleMaximizeRestore()
+        => WindowState = WindowState == WindowState.Maximized
+            ? WindowState.Normal
+            : WindowState.Maximized;
+
+    private void UpdateMaximizeRestoreButton()
+        => MaximizeRestoreButton.Content = WindowState == WindowState.Maximized ? "❐" : "□";
 
     private async void ThemeSystem_Click(object? sender, RoutedEventArgs e)
         => await SetThemeModeAsync(ThemeManager.System);
