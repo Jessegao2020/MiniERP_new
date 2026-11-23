@@ -388,6 +388,7 @@ public partial class InvoiceEditorView
             ArticleAutoComplete.SelectedItem = null;
             ViewModel.SelectedArticle = null;
             ArticleAutoComplete.Text = string.Empty;
+            ArticleAutoComplete.CaretIndex = 0;
             PositionQtyTextBox.Value = null;
             PositionQtyTextBox.Text = string.Empty;
             PositionUnitTextBox.Text = string.Empty;
@@ -402,6 +403,29 @@ public partial class InvoiceEditorView
             _loadingPositionEditor = false;
         }
         ScheduleBlankPositionNormalization();
+
+        // AutoCompleteBox can restore its previous search query after SelectedItem
+        // is cleared. Match Quotation's deferred reset so Position Save leaves
+        // the Article field empty after Avalonia finishes selection synchronization.
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_editingPosition is not null || ViewModel.SelectedArticle is not null)
+                return;
+
+            _loadingPositionEditor = true;
+            try
+            {
+                ArticleAutoComplete.IsDropDownOpen = false;
+                ArticleAutoComplete.SelectedItem = null;
+                ArticleAutoComplete.Text = string.Empty;
+                ArticleAutoComplete.CaretIndex = 0;
+                PositionSaveButton.IsEnabled = false;
+            }
+            finally
+            {
+                _loadingPositionEditor = false;
+            }
+        });
     }
 
     private void ScheduleBlankPositionNormalization()
