@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +30,80 @@ public partial class MainWindow : Window
         InitializeComponent();
         ContentTabControl.ItemsSource = _workspaceTabs;
         WindowPlacementPersistence.Attach(this);
+        UpdateMaximizeRestoreButton();
+        PropertyChanged += (_, args) =>
+        {
+            if (args.Property == WindowStateProperty)
+                UpdateMaximizeRestoreButton();
+        };
+        // No native title bar: allow resizing from any six-DIP window edge on X11/Win32.
+        AddHandler(InputElement.PointerPressedEvent, WindowResizeEdge_PointerPressed, RoutingStrategies.Tunnel);
     }
+
+    private void WindowResizeEdge_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (WindowState != WindowState.Normal || !CanResize ||
+            !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            return;
+
+        const double grip = 6;
+        var point = e.GetPosition(this);
+        var left = point.X < grip;
+        var right = point.X >= Bounds.Width - grip;
+        var top = point.Y < grip;
+        var bottom = point.Y >= Bounds.Height - grip;
+
+        WindowEdge? edge = (left, right, top, bottom) switch
+        {
+            (true, _, true, _) => WindowEdge.NorthWest,
+            (_, true, true, _) => WindowEdge.NorthEast,
+            (true, _, _, true) => WindowEdge.SouthWest,
+            (_, true, _, true) => WindowEdge.SouthEast,
+            (_, _, true, _) => WindowEdge.North,
+            (_, _, _, true) => WindowEdge.South,
+            (true, _, _, _) => WindowEdge.West,
+            (_, true, _, _) => WindowEdge.East,
+            _ => null
+        };
+
+        if (edge is not { } direction)
+            return;
+
+        BeginResizeDrag(direction, e);
+        e.Handled = true;
+    }
+
+    private void WindowDragArea_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed || e.Handled)
+            return;
+
+        if (e.ClickCount == 2)
+        {
+            ToggleMaximizeRestore();
+            e.Handled = true;
+            return;
+        }
+
+        BeginMoveDrag(e);
+    }
+
+    private void MinimizeWindow_Click(object? sender, RoutedEventArgs e)
+        => WindowState = WindowState.Minimized;
+
+    private void MaximizeRestoreWindow_Click(object? sender, RoutedEventArgs e)
+        => ToggleMaximizeRestore();
+
+    private void CloseWindow_Click(object? sender, RoutedEventArgs e)
+        => Close();
+
+    private void ToggleMaximizeRestore()
+        => WindowState = WindowState == WindowState.Maximized
+            ? WindowState.Normal
+            : WindowState.Maximized;
+
+    private void UpdateMaximizeRestoreButton()
+        => MaximizeRestoreButton.Content = WindowState == WindowState.Maximized ? "❐" : "□";
 
     private async void ThemeSystem_Click(object? sender, RoutedEventArgs e)
         => await SetThemeModeAsync(ThemeManager.System);
