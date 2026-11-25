@@ -5,6 +5,7 @@ namespace MiniERP.ApplicationLayer.Services;
 public interface IInvoiceService
 {
     Task<IEnumerable<Invoice>> GetAllInvoicesAsync();
+    Task<IEnumerable<Invoice>> GetInvoicesByCustomerIdAsync(int customerId);
     Task<IEnumerable<Invoice>> GetInvoicesByTypeAsync(InvoiceType type);
     Task<Invoice?> GetInvoiceByIdAsync(int id);
     Task<Invoice?> GetInvoiceByNumberAsync(string invoiceNumber);
