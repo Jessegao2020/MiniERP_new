@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Input;
 using Avalonia.VisualTree;
@@ -15,15 +16,18 @@ namespace MiniERP.Desktop.Views.Customers;
 public partial class CustomerEditorView : UserControl
 {
     private readonly EditorDirtyMonitor _dirtyMonitor;
-    private int _quoteHistoryLoadVersion;
-    private bool _openingQuotation;
+    private enum HistoryKind { Quotation, Proforma, Contract, Invoice, PackingList }
+
+    private HistoryKind? _historyKind;
+    private int _historyLoadVersion;
+    private bool _openingDocument;
     private bool _stopped;
     private CustomerEditorViewModel ViewModel => (CustomerEditorViewModel)DataContext!;
 
     public event EventHandler? Saved;
     public event EventHandler? Deleted;
     public event EventHandler? RequestClose;
-    public event Func<Quotation, Task>? OpenQuotationRequested;
+    public event Func<object, Task>? OpenHistoryDocumentRequested;
 
     public int CustomerId => ViewModel.Customer.Id;
 
@@ -38,15 +42,15 @@ public partial class CustomerEditorView : UserControl
         AttachedToVisualTree += async (_, _) =>
         {
             Dispatcher.UIThread.Post(_dirtyMonitor.Start, DispatcherPriority.Loaded);
-            if (QuoteHistoryPanel.IsVisible)
-                await LoadQuoteHistoryAsync();
+            if (DocumentHistoryPanel.IsVisible)
+                await LoadDocumentHistoryAsync();
         };
     }
 
     public void StopTracking()
     {
         _stopped = true;
-        _quoteHistoryLoadVersion++;
+        _historyLoadVersion++;
         _dirtyMonitor.Dispose();
     }
 
@@ -66,8 +70,8 @@ public partial class CustomerEditorView : UserControl
         if (!await ViewModel.SaveAsync()) return;
         _dirtyMonitor.MarkClean();
         Saved?.Invoke(this, EventArgs.Empty);
-        if (QuoteHistoryPanel.IsVisible)
-            await LoadQuoteHistoryAsync();
+        if (DocumentHistoryPanel.IsVisible)
+            await LoadDocumentHistoryAsync();
     }
 
     private void Discard_Click(object? sender, RoutedEventArgs e)
@@ -97,86 +101,207 @@ public partial class CustomerEditorView : UserControl
     private void Address_Click(object? sender, RoutedEventArgs e) => ShowAddress();
     private void Contact_Click(object? sender, RoutedEventArgs e) => ShowContacts();
     private async void QuoteHistory_Click(object? sender, RoutedEventArgs e)
-    {
-        AddressPanel.IsVisible = false;
-        ContactPanel.IsVisible = false;
-        HistoryPanel.IsVisible = false;
-        QuoteHistoryPanel.IsVisible = true;
-        await LoadQuoteHistoryAsync();
-    }
+        => await ShowHistoryAsync(HistoryKind.Quotation);
+    private async void ProformaHistory_Click(object? sender, RoutedEventArgs e)
+        => await ShowHistoryAsync(HistoryKind.Proforma);
+    private async void ContractHistory_Click(object? sender, RoutedEventArgs e)
+        => await ShowHistoryAsync(HistoryKind.Contract);
+    private async void InvoiceHistory_Click(object? sender, RoutedEventArgs e)
+        => await ShowHistoryAsync(HistoryKind.Invoice);
+    private async void PackingListHistory_Click(object? sender, RoutedEventArgs e)
+        => await ShowHistoryAsync(HistoryKind.PackingList);
 
-    private async Task LoadQuoteHistoryAsync()
+    private static string HistoryTitle(HistoryKind kind) => kind switch
+    {
+        HistoryKind.Quotation => "Quotation",
+        HistoryKind.Proforma => "P/I",
+        HistoryKind.Contract => "Contract",
+        HistoryKind.Invoice => "Invoice",
+        HistoryKind.PackingList => "P/L",
+        _ => throw new ArgumentOutOfRangeException(nameof(kind))
+    };
+
+    private async Task ShowHistoryAsync(HistoryKind kind)
     {
         if (_stopped) return;
-        var version = ++_quoteHistoryLoadVersion;
+        AddressPanel.IsVisible = false;
+        ContactPanel.IsVisible = false;
+        DocumentHistoryPanel.IsVisible = true;
+        if (_historyKind != kind)
+        {
+            DocumentHistoryGrid.SelectedItem = null;
+            DocumentHistoryGrid.ItemsSource = Array.Empty<object>();
+            ConfigureHistoryColumns(kind);
+            _historyKind = kind;
+        }
+        DocumentHistoryTitle.Text = HistoryTitle(kind) + " History";
+        await LoadDocumentHistoryAsync();
+    }
+
+    private void ConfigureHistoryColumns(HistoryKind kind)
+    {
+        DocumentHistoryGrid.Columns.Clear();
+        void Add(string header, string path, double width = 1, string? format = null)
+        {
+            var binding = new Binding(path);
+            if (format is not null) binding.StringFormat = format;
+            DocumentHistoryGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = header,
+                Binding = binding,
+                Width = new DataGridLength(width, DataGridLengthUnitType.Star)
+            });
+        }
+
+        var (number, date) = kind switch
+        {
+            HistoryKind.Quotation => ("QuotationNumber", "QuotationDate"),
+            HistoryKind.Proforma or HistoryKind.Invoice => ("InvoiceNumber", "InvoiceDate"),
+            HistoryKind.Contract => ("ContractNumber", "ContractDate"),
+            HistoryKind.PackingList => ("PackingListNumber", "PackingDate"),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind))
+        };
+        Add(HistoryTitle(kind) + " No.", number, 1.6);
+        Add("Date", date, 1, "{0:yyyy-MM-dd}");
+        Add("User", "User.Name", 1.2);
+        if (kind == HistoryKind.PackingList)
+        {
+            Add("Quantity", "TotalQuantity", 1, "{0:0.##}");
+            Add("Cartons", "TotalCartons", 0.8);
+            Add("Net Weight (kg)", "TotalNetWeight", 1.2, "{0:N2}");
+            Add("Gross Weight (kg)", "TotalGrossWeight", 1.2, "{0:N2}");
+            Add("CBM", "TotalCbm", 0.8, "{0:0.####}");
+        }
+        else
+        {
+            Add("Currency", "Currency", 0.7);
+            Add("Total", "TotalAmount", 1, "{0:N2}");
+            if (kind == HistoryKind.Quotation)
+                Add("Valid Until", "ValidUntil", 1, "{0:yyyy-MM-dd}");
+            else
+            {
+                Add("Customer PO", "CustomerPoNumber", 1.2);
+                if (kind is HistoryKind.Proforma or HistoryKind.Invoice)
+                    Add("Due Date", "DueDate", 1, "{0:yyyy-MM-dd}");
+            }
+        }
+        Add("Delivery Term", "DeliveryTerm", 1.2);
+        if (kind is HistoryKind.Quotation or HistoryKind.Contract)
+            Add("Lead Time", "LeadTime", 1.2);
+        if (kind != HistoryKind.PackingList)
+            Add("Payment Term", "PaymentTerm", 1.4);
+        if (kind != HistoryKind.Quotation)
+            Add("Source Document", "SourceDocumentNumber", 1.3);
+    }
+
+    private async Task LoadDocumentHistoryAsync()
+    {
+        if (_stopped || _historyKind is not { } kind || !DocumentHistoryPanel.IsVisible) return;
+        var version = ++_historyLoadVersion;
         var customerId = CustomerId;
-        QuoteHistoryGrid.SelectedItem = null;
-        QuoteHistoryGrid.ItemsSource = Array.Empty<Quotation>();
+        DocumentHistoryGrid.SelectedItem = null;
+        DocumentHistoryGrid.ItemsSource = Array.Empty<object>();
 
         if (customerId <= 0)
         {
-            QuoteHistoryStatus.Text = "Save the customer before viewing quotation history.";
+            DocumentHistoryStatus.Text = "Save the customer before viewing document history.";
             return;
         }
 
-        QuoteHistoryStatus.Text = "Loading quotation history...";
+        DocumentHistoryStatus.Text = "Loading document history...";
         try
         {
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
-            var quotations = (await service.GetQuotationsByCustomerIdAsync(customerId))
-                .OrderByDescending(q => q.QuotationDate).ThenByDescending(q => q.Id).ToList();
-
-            if (_stopped || version != _quoteHistoryLoadVersion || customerId != CustomerId) return;
-            QuoteHistoryGrid.ItemsSource = quotations;
-            QuoteHistoryStatus.Text = quotations.Count == 0
-                ? "No quotations for this customer."
-                : $"{quotations.Count} quotation(s). Double-click a row to open it.";
+            var services = scope.ServiceProvider;
+            IEnumerable<object> rows = kind switch
+            {
+                HistoryKind.Quotation => (await services.GetRequiredService<IQuotationService>()
+                    .GetQuotationsByCustomerIdAsync(customerId))
+                    .OrderByDescending(q => q.QuotationDate).ThenByDescending(q => q.Id),
+                HistoryKind.Proforma or HistoryKind.Invoice => (await services.GetRequiredService<IInvoiceService>()
+                    .GetInvoicesByCustomerIdAsync(customerId))
+                    .Where(i => i.Type == (kind == HistoryKind.Proforma ? InvoiceType.Proforma : InvoiceType.Commercial))
+                    .OrderByDescending(i => i.InvoiceDate).ThenByDescending(i => i.Id),
+                HistoryKind.Contract => (await services.GetRequiredService<IContractService>()
+                    .GetContractsByCustomerIdAsync(customerId))
+                    .OrderByDescending(d => d.ContractDate).ThenByDescending(d => d.Id),
+                HistoryKind.PackingList => (await services.GetRequiredService<IPackingListService>()
+                    .GetPackingListsByCustomerIdAsync(customerId))
+                    .OrderByDescending(d => d.PackingDate).ThenByDescending(d => d.Id),
+                _ => throw new ArgumentOutOfRangeException(nameof(kind))
+            };
+            var documents = rows.ToList();
+            if (_stopped || version != _historyLoadVersion || customerId != CustomerId) return;
+            DocumentHistoryGrid.ItemsSource = documents;
+            DocumentHistoryStatus.Text = documents.Count == 0
+                ? "No documents for this customer in this category."
+                : $"{documents.Count} document(s). Double-click a row to open it.";
         }
         catch (Exception ex)
         {
-            if (!_stopped && version == _quoteHistoryLoadVersion)
-                QuoteHistoryStatus.Text = $"Could not load quotation history: {ex.Message}";
+            if (!_stopped && version == _historyLoadVersion)
+                DocumentHistoryStatus.Text = $"Could not load document history: {ex.Message}";
         }
     }
 
-    private async void QuoteHistoryGrid_DoubleTapped(object? sender, TappedEventArgs e)
+    private async void DocumentHistoryGrid_DoubleTapped(object? sender, TappedEventArgs e)
     {
-        // Only an actual row, not a column header or empty grid area, can open a document.
-        if (_stopped || _openingQuotation || e.Source is not Visual source) return;
+        if (_stopped || _openingDocument || _historyKind is not { } kind || e.Source is not Visual source) return;
         var row = source as DataGridRow ?? source.FindAncestorOfType<DataGridRow>();
-        if (row?.DataContext is not Quotation selected || selected.Id <= 0) return;
-        if (!ReferenceEquals(QuoteHistoryGrid.SelectedItem, selected)) return;
+        var selected = row?.DataContext;
+        if (selected is null || !ReferenceEquals(DocumentHistoryGrid.SelectedItem, selected)) return;
         e.Handled = true;
 
-        _openingQuotation = true;
+        _openingDocument = true;
         try
         {
+            var customerId = CustomerId;
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
-            var quotation = await service.GetQuotationByIdAsync(selected.Id);
-            if (_stopped || !QuoteHistoryPanel.IsVisible) return;
-            if (quotation is null || quotation.CustomerId != CustomerId)
+            var services = scope.ServiceProvider;
+            object? document = selected switch
             {
-                await LoadQuoteHistoryAsync();
-                QuoteHistoryStatus.Text = "This quotation no longer belongs to this customer or has been deleted. History refreshed.";
+                Quotation q when kind == HistoryKind.Quotation =>
+                    await services.GetRequiredService<IQuotationService>().GetQuotationByIdAsync(q.Id),
+                Invoice i when kind is HistoryKind.Proforma or HistoryKind.Invoice =>
+                    await services.GetRequiredService<IInvoiceService>().GetInvoiceByIdAsync(i.Id),
+                Contract d when kind == HistoryKind.Contract =>
+                    await services.GetRequiredService<IContractService>().GetContractByIdAsync(d.Id),
+                PackingList d when kind == HistoryKind.PackingList =>
+                    await services.GetRequiredService<IPackingListService>().GetPackingListByIdAsync(d.Id),
+                _ => null
+            };
+            if (_stopped || !DocumentHistoryPanel.IsVisible || _historyKind != kind
+                || CustomerId != customerId || TopLevel.GetTopLevel(this) is null) return;
+
+            var matches = document switch
+            {
+                Quotation q => kind == HistoryKind.Quotation && q.CustomerId == customerId,
+                Invoice i => (kind == HistoryKind.Proforma || kind == HistoryKind.Invoice)
+                    && i.CustomerId == customerId
+                    && i.Type == (kind == HistoryKind.Proforma ? InvoiceType.Proforma : InvoiceType.Commercial),
+                Contract d => kind == HistoryKind.Contract && d.CustomerId == customerId,
+                PackingList d => kind == HistoryKind.PackingList && d.CustomerId == customerId,
+                _ => false
+            };
+            if (!matches || document is null)
+            {
+                await LoadDocumentHistoryAsync();
                 return;
             }
 
-            if (OpenQuotationRequested is { } open)
-                await open(quotation);
+            if (OpenHistoryDocumentRequested is { } open)
+                await open(document);
         }
         catch (Exception ex)
         {
-            if (!_stopped)
-                QuoteHistoryStatus.Text = $"Could not open quotation: {ex.Message}";
+            if (!_stopped && _historyKind == kind)
+                DocumentHistoryStatus.Text = $"Could not open document: {ex.Message}";
         }
         finally
         {
-            _openingQuotation = false;
+            _openingDocument = false;
         }
     }
-    private void OrderHistory_Click(object? sender, RoutedEventArgs e) => ShowHistory("Order History");
 
     private void NewContact_Click(object? sender, RoutedEventArgs e)
     {
@@ -194,27 +319,15 @@ public partial class CustomerEditorView : UserControl
     {
         AddressPanel.IsVisible = true;
         ContactPanel.IsVisible = false;
-        HistoryPanel.IsVisible = false;
-        QuoteHistoryPanel.IsVisible = false;
-        _quoteHistoryLoadVersion++;
+        DocumentHistoryPanel.IsVisible = false;
+        _historyLoadVersion++;
     }
 
     private void ShowContacts()
     {
         AddressPanel.IsVisible = false;
         ContactPanel.IsVisible = true;
-        HistoryPanel.IsVisible = false;
-        QuoteHistoryPanel.IsVisible = false;
-        _quoteHistoryLoadVersion++;
-    }
-
-    private void ShowHistory(string title)
-    {
-        AddressPanel.IsVisible = false;
-        ContactPanel.IsVisible = false;
-        QuoteHistoryPanel.IsVisible = false;
-        _quoteHistoryLoadVersion++;
-        HistoryPanel.IsVisible = true;
-        HistoryTitle.Text = title;
+        DocumentHistoryPanel.IsVisible = false;
+        _historyLoadVersion++;
     }
 }
