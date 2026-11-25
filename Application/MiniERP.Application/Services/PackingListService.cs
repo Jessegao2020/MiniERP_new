@@ -10,6 +10,7 @@ public sealed class PackingListService : IPackingListService
     public PackingListService(IPackingListRepository repository) => _repository = repository;
 
     public Task<IEnumerable<PackingList>> GetAllPackingListsAsync() => _repository.GetAllAsync();
+    public Task<IEnumerable<PackingList>> GetPackingListsByCustomerIdAsync(int customerId) => _repository.GetByCustomerIdAsync(customerId);
     public Task<PackingList?> GetPackingListByIdAsync(int id) => _repository.GetByIdAsync(id);
     public Task<PackingList?> GetPackingListByNumberAsync(string packingListNumber) => _repository.GetByNumberAsync(packingListNumber);
     public async Task CreatePackingListAsync(PackingList packingList) => await _repository.AddAsync(packingList);
