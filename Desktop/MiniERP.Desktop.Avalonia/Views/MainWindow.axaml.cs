@@ -96,7 +96,7 @@ public partial class MainWindow : Window
     {
         const string key = "customer";
         if (SelectExisting(key)) return;
-        AddWorkspace(key, "Customer", new CustomerWorkspaceView());
+        AddWorkspace(key, "Customer", CreateCustomerWorkspace());
     }
 
     private void OpenCustomerEditor(Customer? customer)
@@ -113,9 +113,41 @@ public partial class MainWindow : Window
         if (_openTabs.TryGetValue(key, out var existing) && existing.Content is CustomerWorkspaceView workspace)
             return workspace;
 
-        var created = new CustomerWorkspaceView();
+        var created = CreateCustomerWorkspace();
         AddWorkspace(key, "Customer", created);
         return created;
+    }
+
+    private CustomerWorkspaceView CreateCustomerWorkspace()
+    {
+        var workspace = new CustomerWorkspaceView();
+        workspace.OpenQuotationRequested += OpenHistoryQuotationAsync;
+        return workspace;
+    }
+
+    private async Task OpenHistoryQuotationAsync(Quotation quotation)
+    {
+        const string key = "quotation";
+        if (_openTabs.TryGetValue(key, out var tab)
+            && tab.Content is QuotationWorkspaceView workspace
+            && workspace.Content is QuotationEditorView editor)
+        {
+            // Reuse the same editor without losing its unsaved changes.
+            if (editor.QuotationId == quotation.Id)
+            {
+                SelectExisting(key);
+                return;
+            }
+
+            // An editor can contain unapplied line-item changes as well as header edits.
+            // Require explicit confirmation before replacing any different open editor.
+            var confirmed = await ConfirmationDialog.ShowAsync(this, "Open Quotation",
+                "Another quotation is open. Switching will discard any unsaved changes in that editor. Continue?",
+                "Open", "Cancel");
+            if (!confirmed) return;
+        }
+
+        OpenQuotationEditor(quotation);
     }
 
     private void OpenQuotationList()
