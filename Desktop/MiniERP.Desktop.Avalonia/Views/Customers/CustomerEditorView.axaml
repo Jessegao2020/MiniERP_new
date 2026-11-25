@@ -15,14 +15,24 @@
 
         <Border Grid.Row="1" Grid.Column="0" Margin="5" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
             <StackPanel Margin="4" Spacing="2">
-                <Button HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="Address_Click" Content="Address" />
-                <Button HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="Contact_Click" Content="Contact" />
-                <TextBlock Margin="8,10,0,2" FontWeight="SemiBold" Opacity="0.65" Text="History" />
-                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="QuoteHistory_Click" Content="Quotation" />
-                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="ProformaHistory_Click" Content="P/I" />
-                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="ContractHistory_Click" Content="Contract" />
-                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="InvoiceHistory_Click" Content="Invoice" />
-                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="PackingListHistory_Click" Content="P/L" />
+                <StackPanel.Styles>
+                    <Style Selector="Button.customer-nav-item">
+                        <Setter Property="Width" Value="120" />
+                        <Setter Property="HorizontalAlignment" Value="Center" />
+                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Padding" Value="6,2" />
+                    </Style>
+                </StackPanel.Styles>
+                <Button Classes="customer-nav-item" Click="Address_Click" Content="Address" />
+                <Button Classes="customer-nav-item" Click="Contact_Click" Content="Contact" />
+                <TextBlock Margin="0,10,0,2" HorizontalAlignment="Center" FontWeight="SemiBold" Opacity="0.65" Text="History" />
+                <Button Classes="customer-nav-item" Click="QuoteHistory_Click" Content="Quotation" />
+                <Button Classes="customer-nav-item" Click="ProformaHistory_Click" Content="P/I" />
+                <Button Classes="customer-nav-item" Click="ContractHistory_Click" Content="Contract" />
+                <Button Classes="customer-nav-item" Click="InvoiceHistory_Click" Content="Invoice" />
+                <Button Classes="customer-nav-item" Click="PackingListHistory_Click" Content="P/L" />
             </StackPanel>
         </Border>
 
