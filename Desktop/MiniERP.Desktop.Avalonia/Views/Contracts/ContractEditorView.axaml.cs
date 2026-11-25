@@ -22,6 +22,8 @@ public partial class ContractEditorView : UserControl
 
     public int ContractId => ViewModel.Contract.Id;
 
+    public bool HasUnsavedChanges => _dirtyMonitor.HasUnsavedChangesNow() || (HasUnappliedPositionChanges());
+
     public ContractEditorView(Contract? contract)
     {
         InitializeComponent();
