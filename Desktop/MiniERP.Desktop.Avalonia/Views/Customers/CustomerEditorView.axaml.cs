@@ -98,6 +98,23 @@ public partial class CustomerEditorView : UserControl
         if (!string.IsNullOrWhiteSpace(selectedCode)) ViewModel.SetCountry(selectedCode);
     }
 
+    private void SetActiveNavigation(Button active)
+    {
+        foreach (var button in new[] { AddressNav, ContactNav, QuoteNav, ProformaNav, ContractNav, InvoiceNav, PackingListNav })
+        {
+            if (ReferenceEquals(button, active))
+                button.Classes.Add("active");
+            else
+                button.Classes.Remove("active");
+        }
+    }
+
+    private void ToggleHistory_Click(object? sender, RoutedEventArgs e)
+    {
+        HistoryNavItems.IsVisible = !HistoryNavItems.IsVisible;
+        HistoryChevron.Text = HistoryNavItems.IsVisible ? "⌄" : "›";
+    }
+
     private void Address_Click(object? sender, RoutedEventArgs e) => ShowAddress();
     private void Contact_Click(object? sender, RoutedEventArgs e) => ShowContacts();
     private async void QuoteHistory_Click(object? sender, RoutedEventArgs e)
@@ -127,6 +144,15 @@ public partial class CustomerEditorView : UserControl
         AddressPanel.IsVisible = false;
         ContactPanel.IsVisible = false;
         DocumentHistoryPanel.IsVisible = true;
+        SetActiveNavigation(kind switch
+        {
+            HistoryKind.Quotation => QuoteNav,
+            HistoryKind.Proforma => ProformaNav,
+            HistoryKind.Contract => ContractNav,
+            HistoryKind.Invoice => InvoiceNav,
+            HistoryKind.PackingList => PackingListNav,
+            _ => throw new ArgumentOutOfRangeException(nameof(kind))
+        });
         if (_historyKind != kind)
         {
             DocumentHistoryGrid.SelectedItem = null;
@@ -321,6 +347,7 @@ public partial class CustomerEditorView : UserControl
 
     private void ShowAddress()
     {
+        SetActiveNavigation(AddressNav);
         AddressPanel.IsVisible = true;
         ContactPanel.IsVisible = false;
         DocumentHistoryPanel.IsVisible = false;
@@ -329,6 +356,7 @@ public partial class CustomerEditorView : UserControl
 
     private void ShowContacts()
     {
+        SetActiveNavigation(ContactNav);
         AddressPanel.IsVisible = false;
         ContactPanel.IsVisible = true;
         DocumentHistoryPanel.IsVisible = false;
