@@ -30,6 +30,8 @@ public partial class QuotationEditorView : UserControl
 
     public int QuotationId => ViewModel.Quotation.Id;
 
+    public bool HasUnsavedChanges => _dirtyMonitor.HasUnsavedChangesNow() || (HasUnappliedPositionChanges() && (_editingPosition is not null || !string.IsNullOrWhiteSpace(ArticleAutoComplete.Text) || !string.IsNullOrWhiteSpace(PositionQtyTextBox.Text) || !string.IsNullOrWhiteSpace(PositionUnitTextBox.Text) || !string.IsNullOrWhiteSpace(PositionUnitPriceTextBox.Text) || !string.IsNullOrWhiteSpace(PositionDiscountTextBox.Text) || !string.IsNullOrWhiteSpace(PositionDescriptionTextBox.Text)));
+
     public QuotationEditorView(Quotation? quotation)
     {
         InitializeComponent();
