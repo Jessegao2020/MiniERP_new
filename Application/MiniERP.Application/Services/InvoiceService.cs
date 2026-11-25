@@ -10,6 +10,7 @@ public sealed class InvoiceService : IInvoiceService
     public InvoiceService(IInvoiceRepository repository) => _repository = repository;
 
     public Task<IEnumerable<Invoice>> GetAllInvoicesAsync() => _repository.GetAllAsync();
+    public Task<IEnumerable<Invoice>> GetInvoicesByCustomerIdAsync(int customerId) => _repository.GetByCustomerIdAsync(customerId);
     public Task<IEnumerable<Invoice>> GetInvoicesByTypeAsync(InvoiceType type) => _repository.GetByTypeAsync(type);
     public Task<Invoice?> GetInvoiceByIdAsync(int id) => _repository.GetByIdAsync(id);
     public Task<Invoice?> GetInvoiceByNumberAsync(string invoiceNumber) => _repository.GetByNumberAsync(invoiceNumber);
