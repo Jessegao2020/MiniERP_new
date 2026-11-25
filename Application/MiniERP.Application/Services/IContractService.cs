@@ -5,6 +5,7 @@ namespace MiniERP.ApplicationLayer.Services;
 public interface IContractService
 {
     Task<IEnumerable<Contract>> GetAllContractsAsync();
+    Task<IEnumerable<Contract>> GetContractsByCustomerIdAsync(int customerId);
     Task<Contract?> GetContractByIdAsync(int id);
     Task<Contract?> GetContractByNumberAsync(string contractNumber);
     Task CreateContractAsync(Contract contract);
