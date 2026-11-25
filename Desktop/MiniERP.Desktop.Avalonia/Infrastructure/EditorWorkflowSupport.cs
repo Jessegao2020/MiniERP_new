@@ -96,6 +96,15 @@ public sealed class EditorDirtyMonitor : IDisposable
 
     public bool IsDirty { get; private set; }
 
+    // Navigation checks the current snapshot synchronously, rather than relying
+    // on the last 120 ms timer tick. Before initialization completes, be conservative.
+    public bool HasUnsavedChangesNow()
+    {
+        if (!_started) return true;
+        try { return !string.Equals(_cleanState, _captureState(), StringComparison.Ordinal); }
+        catch { return true; }
+    }
+
     public void Start()
     {
         // A details view can be detached/re-attached when another workspace tab is
