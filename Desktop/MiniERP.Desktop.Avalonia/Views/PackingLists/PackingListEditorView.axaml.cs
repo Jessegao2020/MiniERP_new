@@ -19,6 +19,8 @@ public partial class PackingListEditorView : UserControl
 
     public int PackingListId => ViewModel.PackingList.Id;
 
+    public bool HasUnsavedChanges => _dirtyMonitor.HasUnsavedChangesNow() || (GoodsEditorDirty() || PackEditorDirty());
+
     public PackingListEditorView(PackingList? packingList)
     {
         InitializeComponent();
