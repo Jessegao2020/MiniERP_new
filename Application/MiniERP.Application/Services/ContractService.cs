@@ -10,6 +10,7 @@ public sealed class ContractService : IContractService
     public ContractService(IContractRepository repository) => _repository = repository;
 
     public Task<IEnumerable<Contract>> GetAllContractsAsync() => _repository.GetAllAsync();
+    public Task<IEnumerable<Contract>> GetContractsByCustomerIdAsync(int customerId) => _repository.GetByCustomerIdAsync(customerId);
     public Task<Contract?> GetContractByIdAsync(int id) => _repository.GetByIdAsync(id);
     public Task<Contract?> GetContractByNumberAsync(string contractNumber) => _repository.GetByNumberAsync(contractNumber);
     public async Task CreateContractAsync(Contract contract) => await _repository.AddAsync(contract);
