@@ -18,8 +18,11 @@
                 <Button HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="Address_Click" Content="Address" />
                 <Button HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="Contact_Click" Content="Contact" />
                 <TextBlock Margin="8,10,0,2" FontWeight="SemiBold" Opacity="0.65" Text="History" />
-                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="QuoteHistory_Click" Content="Quote" />
-                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="OrderHistory_Click" Content="Order" />
+                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="QuoteHistory_Click" Content="Quotation" />
+                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="ProformaHistory_Click" Content="P/I" />
+                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="ContractHistory_Click" Content="Contract" />
+                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="InvoiceHistory_Click" Content="Invoice" />
+                <Button Margin="12,0,0,0" HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Click="PackingListHistory_Click" Content="P/L" />
             </StackPanel>
         </Border>
 
@@ -55,42 +58,24 @@
                     <TextBlock Grid.Row="2" Margin="8,4" Opacity="0.6" Text="Contacts are saved together with the customer. Double-click a cell to edit it." />
                 </Grid>
 
-                <Grid x:Name="QuoteHistoryPanel" IsVisible="False" RowDefinitions="Auto,Auto,*" Margin="8" RowSpacing="6">
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
-                        <TextBlock Text="Quotation History" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
-                        <Button Content="Refresh" Click="QuoteHistory_Click" />
-                    </StackPanel>
-                    <TextBlock x:Name="QuoteHistoryStatus" Grid.Row="1" Opacity="0.7" TextWrapping="Wrap" />
-                    <dg:DataGrid x:Name="QuoteHistoryGrid" Grid.Row="2" AutoGenerateColumns="False"
+                <Grid x:Name="DocumentHistoryPanel" IsVisible="False" RowDefinitions="Auto,Auto,*" Margin="8" RowSpacing="6">
+                    <TextBlock x:Name="DocumentHistoryTitle" Grid.Row="0" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock x:Name="DocumentHistoryStatus" Grid.Row="1" Opacity="0.7" TextWrapping="Wrap" />
+                    <dg:DataGrid x:Name="DocumentHistoryGrid" Grid.Row="2" AutoGenerateColumns="False"
                                  IsReadOnly="True" SelectionMode="Single" CanUserResizeColumns="True"
                                  CanUserSortColumns="True" GridLinesVisibility="All" RowHeight="24"
                                  Background="{DynamicResource ErpSurfaceBrush}"
                                  HorizontalGridLinesBrush="{DynamicResource ErpGridBrush}"
                                  VerticalGridLinesBrush="{DynamicResource ErpGridBrush}"
-                                 LoadingRow="SelectLineGrid_LoadingRow" DoubleTapped="QuoteHistoryGrid_DoubleTapped">
+                                 LoadingRow="SelectLineGrid_LoadingRow" DoubleTapped="DocumentHistoryGrid_DoubleTapped">
                         <dg:DataGrid.Styles>
                             <Style Selector="DataGridRow.alternate"><Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" /></Style>
                             <Style Selector="DataGridRow:pointerover"><Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" /></Style>
                             <Style Selector="DataGridRow:selected"><Setter Property="Background" Value="{DynamicResource ErpSelectedBrush}" /><Setter Property="TextBlock.Foreground" Value="{DynamicResource ErpSelectionTextBrush}" /></Style>
                         </dg:DataGrid.Styles>
-                        <dg:DataGrid.Columns>
-                            <dg:DataGridTextColumn Header="Quotation No." Width="1.6*" Binding="{Binding QuotationNumber}" />
-                            <dg:DataGridTextColumn Header="Date" Width="*" Binding="{Binding QuotationDate, StringFormat='{}{0:yyyy-MM-dd}'}" />
-                            <dg:DataGridTextColumn Header="User" Width="1.2*" Binding="{Binding User.Name}" />
-                            <dg:DataGridTextColumn Header="Currency" Width="0.7*" Binding="{Binding Currency}" />
-                            <dg:DataGridTextColumn Header="Total" Width="*" Binding="{Binding TotalAmount, StringFormat='{}{0:N2}'}" />
-                            <dg:DataGridTextColumn Header="Valid Until" Width="*" Binding="{Binding ValidUntil, StringFormat='{}{0:yyyy-MM-dd}'}" />
-                            <dg:DataGridTextColumn Header="Delivery Term" Width="1.2*" Binding="{Binding DeliveryTerm}" />
-                            <dg:DataGridTextColumn Header="Lead Time" Width="1.2*" Binding="{Binding LeadTime}" />
-                            <dg:DataGridTextColumn Header="Payment Term" Width="1.4*" Binding="{Binding PaymentTerm}" />
-                        </dg:DataGrid.Columns>
                     </dg:DataGrid>
                 </Grid>
 
-                <StackPanel x:Name="HistoryPanel" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
-                    <TextBlock x:Name="HistoryTitle" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" Text="History" />
-                    <TextBlock Opacity="0.55" Text="This history view will be connected when the document modules are migrated." />
-                </StackPanel>
             </Grid>
         </Border>
 
