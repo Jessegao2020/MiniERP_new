@@ -9,7 +9,7 @@ public sealed class CustomerWorkspaceView : UserControl
     private CustomerEditorView? _editorView;
     private bool _deleted;
 
-    public event Func<Quotation, Task>? OpenQuotationRequested;
+    public event Func<object, Task>? OpenHistoryDocumentRequested;
 
     public CustomerWorkspaceView()
     {
@@ -28,8 +28,8 @@ public sealed class CustomerWorkspaceView : UserControl
         var editor = new CustomerEditorView(customer);
         editor.Deleted += (_, _) => _deleted = true;
         editor.RequestClose += Editor_RequestClose;
-        editor.OpenQuotationRequested += quotation =>
-            OpenQuotationRequested?.Invoke(quotation) ?? Task.CompletedTask;
+        editor.OpenHistoryDocumentRequested += document =>
+            OpenHistoryDocumentRequested?.Invoke(document) ?? Task.CompletedTask;
         _editorView = editor;
         Content = editor;
     }
