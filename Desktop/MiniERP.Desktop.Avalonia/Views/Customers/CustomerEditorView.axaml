@@ -55,6 +55,38 @@
                     <TextBlock Grid.Row="2" Margin="8,4" Opacity="0.6" Text="Contacts are saved together with the customer. Double-click a cell to edit it." />
                 </Grid>
 
+                <Grid x:Name="QuoteHistoryPanel" IsVisible="False" RowDefinitions="Auto,Auto,*" Margin="8" RowSpacing="6">
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="Quotation History" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <Button Content="Refresh" Click="QuoteHistory_Click" />
+                    </StackPanel>
+                    <TextBlock x:Name="QuoteHistoryStatus" Grid.Row="1" Opacity="0.7" TextWrapping="Wrap" />
+                    <dg:DataGrid x:Name="QuoteHistoryGrid" Grid.Row="2" AutoGenerateColumns="False"
+                                 IsReadOnly="True" SelectionMode="Single" CanUserResizeColumns="True"
+                                 CanUserSortColumns="True" GridLinesVisibility="All" RowHeight="24"
+                                 Background="{DynamicResource ErpSurfaceBrush}"
+                                 HorizontalGridLinesBrush="{DynamicResource ErpGridBrush}"
+                                 VerticalGridLinesBrush="{DynamicResource ErpGridBrush}"
+                                 LoadingRow="SelectLineGrid_LoadingRow" DoubleTapped="QuoteHistoryGrid_DoubleTapped">
+                        <dg:DataGrid.Styles>
+                            <Style Selector="DataGridRow.alternate"><Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" /></Style>
+                            <Style Selector="DataGridRow:pointerover"><Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" /></Style>
+                            <Style Selector="DataGridRow:selected"><Setter Property="Background" Value="{DynamicResource ErpSelectedBrush}" /><Setter Property="TextBlock.Foreground" Value="{DynamicResource ErpSelectionTextBrush}" /></Style>
+                        </dg:DataGrid.Styles>
+                        <dg:DataGrid.Columns>
+                            <dg:DataGridTextColumn Header="Quotation No." Width="1.6*" Binding="{Binding QuotationNumber}" />
+                            <dg:DataGridTextColumn Header="Date" Width="*" Binding="{Binding QuotationDate, StringFormat='{}{0:yyyy-MM-dd}'}" />
+                            <dg:DataGridTextColumn Header="User" Width="1.2*" Binding="{Binding User.Name}" />
+                            <dg:DataGridTextColumn Header="Currency" Width="0.7*" Binding="{Binding Currency}" />
+                            <dg:DataGridTextColumn Header="Total" Width="*" Binding="{Binding TotalAmount, StringFormat='{}{0:N2}'}" />
+                            <dg:DataGridTextColumn Header="Valid Until" Width="*" Binding="{Binding ValidUntil, StringFormat='{}{0:yyyy-MM-dd}'}" />
+                            <dg:DataGridTextColumn Header="Delivery Term" Width="1.2*" Binding="{Binding DeliveryTerm}" />
+                            <dg:DataGridTextColumn Header="Lead Time" Width="1.2*" Binding="{Binding LeadTime}" />
+                            <dg:DataGridTextColumn Header="Payment Term" Width="1.4*" Binding="{Binding PaymentTerm}" />
+                        </dg:DataGrid.Columns>
+                    </dg:DataGrid>
+                </Grid>
+
                 <StackPanel x:Name="HistoryPanel" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
                     <TextBlock x:Name="HistoryTitle" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" Text="History" />
                     <TextBlock Opacity="0.55" Text="This history view will be connected when the document modules are migrated." />
