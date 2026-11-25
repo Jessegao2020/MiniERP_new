@@ -149,6 +149,7 @@ public partial class CustomerEditorView : UserControl
             {
                 Header = header,
                 Binding = binding,
+                SortMemberPath = path,
                 Width = new DataGridLength(width, DataGridLengthUnitType.Star)
             });
         }
@@ -213,24 +214,23 @@ public partial class CustomerEditorView : UserControl
         {
             using var scope = App.Services.CreateScope();
             var services = scope.ServiceProvider;
-            IEnumerable<object> rows = kind switch
+            System.Collections.IList documents = kind switch
             {
                 HistoryKind.Quotation => (await services.GetRequiredService<IQuotationService>()
                     .GetQuotationsByCustomerIdAsync(customerId))
-                    .OrderByDescending(q => q.QuotationDate).ThenByDescending(q => q.Id),
+                    .OrderByDescending(q => q.QuotationDate).ThenByDescending(q => q.Id).ToList(),
                 HistoryKind.Proforma or HistoryKind.Invoice => (await services.GetRequiredService<IInvoiceService>()
                     .GetInvoicesByCustomerIdAsync(customerId))
                     .Where(i => i.Type == (kind == HistoryKind.Proforma ? InvoiceType.Proforma : InvoiceType.Commercial))
-                    .OrderByDescending(i => i.InvoiceDate).ThenByDescending(i => i.Id),
+                    .OrderByDescending(i => i.InvoiceDate).ThenByDescending(i => i.Id).ToList(),
                 HistoryKind.Contract => (await services.GetRequiredService<IContractService>()
                     .GetContractsByCustomerIdAsync(customerId))
-                    .OrderByDescending(d => d.ContractDate).ThenByDescending(d => d.Id),
+                    .OrderByDescending(d => d.ContractDate).ThenByDescending(d => d.Id).ToList(),
                 HistoryKind.PackingList => (await services.GetRequiredService<IPackingListService>()
                     .GetPackingListsByCustomerIdAsync(customerId))
-                    .OrderByDescending(d => d.PackingDate).ThenByDescending(d => d.Id),
+                    .OrderByDescending(d => d.PackingDate).ThenByDescending(d => d.Id).ToList(),
                 _ => throw new ArgumentOutOfRangeException(nameof(kind))
             };
-            var documents = rows.ToList();
             if (_stopped || version != _historyLoadVersion || customerId != CustomerId) return;
             DocumentHistoryGrid.ItemsSource = documents;
             DocumentHistoryStatus.Text = documents.Count == 0
@@ -256,6 +256,7 @@ public partial class CustomerEditorView : UserControl
         try
         {
             var customerId = CustomerId;
+            var version = _historyLoadVersion;
             using var scope = App.Services.CreateScope();
             var services = scope.ServiceProvider;
             object? document = selected switch
@@ -271,7 +272,8 @@ public partial class CustomerEditorView : UserControl
                 _ => null
             };
             if (_stopped || !DocumentHistoryPanel.IsVisible || _historyKind != kind
-                || CustomerId != customerId || TopLevel.GetTopLevel(this) is null) return;
+                || CustomerId != customerId || version != _historyLoadVersion
+                || TopLevel.GetTopLevel(this) is null) return;
 
             var matches = document switch
             {
@@ -286,6 +288,8 @@ public partial class CustomerEditorView : UserControl
             if (!matches || document is null)
             {
                 await LoadDocumentHistoryAsync();
+                if (!_stopped && _historyKind == kind && DocumentHistoryPanel.IsVisible)
+                    DocumentHistoryStatus.Text += " The selected document was deleted or moved; history reloaded.";
                 return;
             }
 
