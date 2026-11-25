@@ -121,33 +121,50 @@ public partial class MainWindow : Window
     private CustomerWorkspaceView CreateCustomerWorkspace()
     {
         var workspace = new CustomerWorkspaceView();
-        workspace.OpenQuotationRequested += OpenHistoryQuotationAsync;
+        workspace.OpenHistoryDocumentRequested += OpenHistoryDocumentAsync;
         return workspace;
     }
 
-    private async Task OpenHistoryQuotationAsync(Quotation quotation)
+    private Task OpenHistoryDocumentAsync(object document) => document switch
     {
-        const string key = "quotation";
-        if (_openTabs.TryGetValue(key, out var tab)
-            && tab.Content is QuotationWorkspaceView workspace
-            && workspace.Content is QuotationEditorView editor)
+        Quotation q => OpenHistoryEditorAsync("quotation", q.Id, "Quotation", () => OpenQuotationEditor(q)),
+        Invoice i => OpenHistoryEditorAsync(InvoiceWorkspaceKey(i.Type), i.Id,
+            i.Type == InvoiceType.Proforma ? "P/I" : "Invoice", () => OpenInvoiceEditor(i, i.Type)),
+        Contract c => OpenHistoryEditorAsync("contract", c.Id, "Contract", () => OpenContractEditor(c)),
+        PackingList p => OpenHistoryEditorAsync("packing-list", p.Id, "P/L", () => OpenPackingListEditor(p)),
+        _ => throw new ArgumentException("Unsupported history document.", nameof(document))
+    };
+
+    private async Task OpenHistoryEditorAsync(string key, int documentId, string title, Action open)
+    {
+        if (_openTabs.TryGetValue(key, out var tab) && tab.Content is UserControl workspace)
         {
-            // Reuse the same editor without losing its unsaved changes.
-            if (editor.QuotationId == quotation.Id)
+            var (currentId, dirty) = workspace.Content switch
+            {
+                QuotationEditorView e => (e.QuotationId, e.HasUnsavedChanges),
+                InvoiceEditorView e => (e.InvoiceId, e.HasUnsavedChanges),
+                ContractEditorView e => (e.ContractId, e.HasUnsavedChanges),
+                PackingListEditorView e => (e.PackingListId, e.HasUnsavedChanges),
+                _ => (0, false)
+            };
+
+            // The same editor remains intact, even if it has unsaved changes.
+            if (currentId == documentId && documentId > 0)
             {
                 SelectExisting(key);
                 return;
             }
 
-            // An editor can contain unapplied line-item changes as well as header edits.
-            // Require explicit confirmation before replacing any different open editor.
-            var confirmed = await ConfirmationDialog.ShowAsync(this, "Open Quotation",
-                "Another quotation is open. Switching will discard any unsaved changes in that editor. Continue?",
-                "Open", "Cancel");
-            if (!confirmed) return;
+            if (dirty)
+            {
+                var confirmed = await ConfirmationDialog.ShowAsync(this, "Open " + title,
+                    "The current document has unsaved changes. Switching will discard them. Continue?",
+                    "Discard and Open", "Cancel");
+                if (!confirmed) return;
+            }
         }
 
-        OpenQuotationEditor(quotation);
+        open();
     }
 
     private void OpenQuotationList()
