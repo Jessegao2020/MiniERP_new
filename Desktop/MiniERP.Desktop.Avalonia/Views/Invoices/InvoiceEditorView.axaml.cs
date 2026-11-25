@@ -23,6 +23,8 @@ public partial class InvoiceEditorView : UserControl
 
     public int InvoiceId => ViewModel.Invoice.Id;
 
+    public bool HasUnsavedChanges => _dirtyMonitor.HasUnsavedChangesNow() || (HasUnappliedPositionChanges());
+
     public InvoiceEditorView(Invoice? invoice, InvoiceType type)
     {
         InitializeComponent();
