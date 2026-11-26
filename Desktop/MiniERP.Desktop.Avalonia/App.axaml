@@ -114,6 +114,66 @@
         <Style Selector="TabControl.document-sections TabItem:selected">
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
         </Style>
+        <!-- Shared SelectLine-style navigation for the five document editors.
+             The original TabControl selection and TabItem content are retained. -->
+        <Style Selector="TabControl.document-sections.selectline-side-nav">
+            <Setter Property="ItemsPanel">
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical" />
+                </ItemsPanelTemplate>
+            </Setter>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Grid ColumnDefinitions="180,*">
+                        <Border Grid.Column="0" Margin="5"
+                                Background="{DynamicResource ErpSurfaceBrush}"
+                                BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                <ItemsPresenter x:Name="PART_ItemsPresenter" Margin="2"
+                                                ItemsPanel="{TemplateBinding ItemsPanel}" />
+                            </ScrollViewer>
+                        </Border>
+                        <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Column="1"
+                                          Margin="0,5,5,5"
+                                          Content="{TemplateBinding SelectedContent}"
+                                          ContentTemplate="{TemplateBinding SelectedContentTemplate}"
+                                          HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="TabControl.document-sections.selectline-side-nav TabItem">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="20,0,4,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter x:Name="PART_ContentPresenter"
+                                      Background="{TemplateBinding Background}"
+                                      Content="{TemplateBinding Header}"
+                                      ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                      Padding="{TemplateBinding Padding}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="TabControl.document-sections.selectline-side-nav TabItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" />
+        </Style>
+        <Style Selector="TabControl.document-sections.selectline-side-nav TabItem:selected">
+            <Setter Property="Background" Value="{DynamicResource ErpSelectedSectionBrush}" />
+        </Style>
+
         <Style Selector="TextBox">
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
         </Style>
