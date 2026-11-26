@@ -30,7 +30,7 @@ public partial class QuotationEditorView
         Dispatcher.UIThread.Post(() =>
         {
             ApplyCompactQuantitySpinner();
-            InstallSectionNavigationFrame();
+            InstallQuotationCopyButton();
             ConfigureArticleLookup();
         });
     }

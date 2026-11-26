@@ -117,27 +117,35 @@
         <!-- Shared SelectLine-style navigation for the five document editors.
              The original TabControl selection and TabItem content are retained. -->
         <Style Selector="TabControl.document-sections.selectline-side-nav">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="ItemsPanel">
                 <ItemsPanelTemplate>
-                    <StackPanel Orientation="Vertical" />
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Spacing="0" />
                 </ItemsPanelTemplate>
             </Setter>
             <Setter Property="Template">
                 <ControlTemplate>
-                    <Grid ColumnDefinitions="180,*">
+                    <Grid ColumnDefinitions="180,*" Background="{DynamicResource ErpPageBrush}">
                         <Border Grid.Column="0" Margin="5"
                                 Background="{DynamicResource ErpSurfaceBrush}"
                                 BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
-                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
+                                          Padding="0" HorizontalContentAlignment="Stretch">
                                 <ItemsPresenter x:Name="PART_ItemsPresenter" Margin="2"
+                                                HorizontalAlignment="Stretch"
                                                 ItemsPanel="{TemplateBinding ItemsPanel}" />
                             </ScrollViewer>
                         </Border>
-                        <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Column="1"
-                                          Margin="0,5,5,5"
-                                          Content="{TemplateBinding SelectedContent}"
-                                          ContentTemplate="{TemplateBinding SelectedContentTemplate}"
-                                          HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                        <Border Grid.Column="1" Margin="0,5,5,5"
+                                Background="{DynamicResource ErpSurfaceBrush}"
+                                BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
+                            <ContentPresenter x:Name="PART_SelectedContentHost"
+                                              Content="{TemplateBinding SelectedContent}"
+                                              ContentTemplate="{TemplateBinding SelectedContentTemplate}"
+                                              HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                        </Border>
                     </Grid>
                 </ControlTemplate>
             </Setter>
@@ -157,7 +165,12 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Template">
                 <ControlTemplate>
-                    <ContentPresenter x:Name="PART_ContentPresenter"
+                    <!-- Use a dedicated header presenter name: Fluent's left-tab theme
+                         adds an 8 DIP margin to PART_ContentPresenter. This row must
+                         fill the same width as the Customer navigation buttons. -->
+                    <ContentPresenter x:Name="SectionHeaderPresenter"
+                                      Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                      RecognizesAccessKey="True"
                                       Background="{TemplateBinding Background}"
                                       Content="{TemplateBinding Header}"
                                       ContentTemplate="{TemplateBinding HeaderTemplate}"
