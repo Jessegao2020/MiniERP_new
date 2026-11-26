@@ -333,9 +333,26 @@ public partial class CustomerEditorView : UserControl
         }
     }
 
-    private void NewContact_Click(object? sender, RoutedEventArgs e)
+    private async void NewContact_Click(object? sender, RoutedEventArgs e)
+        => await EditContactAsync(null);
+
+    private async void ContactGrid_DoubleTapped(object? sender, TappedEventArgs e)
     {
-        ViewModel.AddContact();
+        if (e.Source is not Visual source) return;
+        var row = source as DataGridRow ?? source.FindAncestorOfType<DataGridRow>();
+        if (row?.DataContext is not CustomerContact contact) return;
+        e.Handled = true;
+        await EditContactAsync(contact);
+    }
+
+    private async Task EditContactAsync(CustomerContact? contact)
+    {
+        if (_stopped || TopLevel.GetTopLevel(this) is not Window owner) return;
+        var dialog = new ContactEditorWindow(contact);
+        var result = await dialog.ShowDialog<ContactEditorWindow.Result?>(owner);
+        if (result is null || _stopped) return;
+
+        ViewModel.SetContact(contact, result.Title, result.Name);
         ShowContacts();
     }
 

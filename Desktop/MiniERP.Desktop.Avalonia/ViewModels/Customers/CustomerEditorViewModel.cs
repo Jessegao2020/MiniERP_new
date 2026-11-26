@@ -76,17 +76,27 @@ public sealed class CustomerEditorViewModel : INotifyPropertyChanged
         Status = $"Country set to {CountryCode}.";
     }
 
-    public void AddContact()
+    public void SetContact(CustomerContact? existing, string title, string name)
     {
-        var contact = new CustomerContact
-        {
-            Name = string.Empty,
-            Title = string.Empty
-        };
+        if (string.IsNullOrWhiteSpace(name)) return;
 
-        Contacts.Add(contact);
+        var contact = existing is null ? new CustomerContact() : CloneContact(existing);
+        contact.Title = title.Trim();
+        contact.Name = name.Trim();
+
+        if (existing is null)
+        {
+            Contacts.Add(contact);
+        }
+        else
+        {
+            var index = Contacts.IndexOf(existing);
+            if (index < 0) return;
+            Contacts[index] = contact;
+        }
+
         SelectedContact = contact;
-        Status = "New contact added. Enter a name before saving.";
+        Status = "Contact updated. Save the customer to persist the change.";
     }
 
     public void DeleteSelectedContact()
