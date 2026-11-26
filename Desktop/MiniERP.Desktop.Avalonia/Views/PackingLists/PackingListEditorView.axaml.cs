@@ -31,10 +31,9 @@ public partial class PackingListEditorView : UserControl
         _dirtyMonitor = new EditorDirtyMonitor(saveButton, CaptureEditState);
         AttachedToVisualTree += async (_, _) =>
         {
-            // Match the framed section strip used by the Quotation editor.
+            // Configure the existing position controls once their templates are available.
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                DocumentSectionNavigationFrame.Install(this);
                 ConfigurePackingEditors();
                 NormalizePickerButtons();
             }, Avalonia.Threading.DispatcherPriority.Loaded);
