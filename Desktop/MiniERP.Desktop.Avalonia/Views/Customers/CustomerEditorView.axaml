@@ -78,16 +78,36 @@
         <Border Grid.Row="1" Grid.Column="1" Margin="0,5,5,5" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
             <Grid>
                 <ScrollViewer x:Name="AddressPanel" IsVisible="True">
-                    <Grid Margin="30,20,30,20" HorizontalAlignment="Left" ColumnDefinitions="Auto,280" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                    <Grid Margin="30,20,30,20" HorizontalAlignment="Left" ColumnDefinitions="Auto,280" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
                         <CheckBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,10" HorizontalAlignment="Right" Content="Active" IsChecked="{Binding Customer.IsActive, Mode=TwoWay}" />
                         <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Name" /><TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{Binding Customer.Name, Mode=TwoWay}" />
                         <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Address Line 1" /><TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{Binding Customer.AddressLine1, Mode=TwoWay}" />
                         <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Address Line 2" /><TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{Binding Customer.AddressLine2, Mode=TwoWay}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Country" />
-                        <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="90,Auto" ColumnSpacing="5"><TextBox Grid.Column="0" Margin="0,2" IsReadOnly="True" Text="{Binding CountryCode, Mode=OneWay}" /><Button Grid.Column="1" Margin="0,2" Padding="8,2" Click="PickCountry_Click" Content="..." /></Grid>
-                        <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Postal Code" /><TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{Binding Customer.PostalCode, Mode=TwoWay}" />
-                        <TextBlock Grid.Row="6" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="City" /><TextBox Grid.Row="6" Grid.Column="1" Margin="0,2" Text="{Binding Customer.City, Mode=TwoWay}" />
-                        <TextBlock Grid.Row="7" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="State" /><TextBox Grid.Row="7" Grid.Column="1" Margin="0,2" Text="{Binding Customer.State, Mode=TwoWay}" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Country / ZIP / City" />
+                        <Grid Grid.Row="4" Grid.Column="1" Margin="0,2" ColumnDefinitions="64,72,*" ColumnSpacing="4">
+                            <Border Grid.Column="0" Background="{DynamicResource ErpSurfaceBrush}"
+                                    BorderBrush="{DynamicResource ErpFrameBrush}" BorderThickness="1"
+                                    CornerRadius="3" ClipToBounds="True">
+                                <Grid ColumnDefinitions="*,24">
+                                    <TextBox Grid.Column="0" MinWidth="0" Padding="4,0"
+                                             Background="Transparent" BorderThickness="0"
+                                             VerticalContentAlignment="Center" IsReadOnly="True"
+                                             Text="{Binding CountryCode, Mode=OneWay}" ToolTip.Tip="Country code" />
+                                    <Button Grid.Column="1" MinWidth="0" MinHeight="0" Padding="0"
+                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            Background="{DynamicResource ErpLookupBrush}"
+                                            BorderBrush="{DynamicResource ErpFrameBrush}" BorderThickness="1,0,0,0"
+                                            CornerRadius="0" Click="PickCountry_Click" Content="..."
+                                            ToolTip.Tip="Select country" />
+                                </Grid>
+                            </Border>
+                            <TextBox Grid.Column="1" MinWidth="0" Padding="5,0" VerticalContentAlignment="Center"
+                                     Text="{Binding Customer.PostalCode, Mode=TwoWay}" Watermark="ZIP" ToolTip.Tip="Postal code" />
+                            <TextBox Grid.Column="2" MinWidth="0" Padding="5,0" VerticalContentAlignment="Center"
+                                     Text="{Binding Customer.City, Mode=TwoWay}" Watermark="City" ToolTip.Tip="City" />
+                        </Grid>
+                        <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,5,8,5" HorizontalAlignment="Right" VerticalAlignment="Center" Text="State" /><TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{Binding Customer.State, Mode=TwoWay}" />
                     </Grid>
                 </ScrollViewer>
 
