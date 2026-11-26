@@ -1,0 +1,81 @@
+<Window
+    x:Class="MiniERP.Desktop.Views.Customers.ContactEditorWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Width="450" SizeToContent="Height" CanResize="False"
+    ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+    Background="{DynamicResource ErpSurfaceBrush}"
+    Foreground="{DynamicResource ErpTextBrush}">
+
+    <Window.Styles>
+        <!-- Keep the dropdown inside the TextBox's own Fluent border, so
+             focus, corners and theme changes are shared with the input. -->
+        <Style Selector="Button.contact-title-toggle">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ErpFrameBrush}" />
+            <Setter Property="BorderThickness" Value="1,0,0,0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="0,3,3,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter x:Name="TitleTogglePresenter"
+                                      Background="{TemplateBinding Background}"
+                                      BorderBrush="{TemplateBinding BorderBrush}"
+                                      BorderThickness="{TemplateBinding BorderThickness}"
+                                      CornerRadius="{TemplateBinding CornerRadius}"
+                                      Content="{TemplateBinding Content}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Button.contact-title-toggle:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" />
+        </Style>
+        <Style Selector="Button.contact-title-toggle:pressed">
+            <Setter Property="Background" Value="{DynamicResource ErpSelectedSectionBrush}" />
+        </Style>
+    </Window.Styles>
+
+    <StackPanel Margin="20" Spacing="16">
+        <Grid ColumnDefinitions="128,*" RowDefinitions="Auto,Auto"
+              ColumnSpacing="12" RowSpacing="4">
+            <TextBlock Text="Title" />
+            <TextBlock Grid.Column="1" Text="Name" />
+
+            <TextBox x:Name="TitleBox" Grid.Row="1" Height="34" MinWidth="0"
+                     VerticalContentAlignment="Center">
+                <TextBox.InnerRightContent>
+                    <Button Classes="contact-title-toggle" ToolTip.Tip="Select title">
+                        <Path Data="M 1,1 L 7,7 L 13,1" Width="14" Height="8"
+                              Stroke="{DynamicResource ErpTextBrush}" StrokeThickness="1.5"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                <MenuItem Header="Mr." Click="TitleChoice_Click" />
+                                <MenuItem Header="Ms." Click="TitleChoice_Click" />
+                                <MenuItem Header="Mrs." Click="TitleChoice_Click" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </TextBox.InnerRightContent>
+            </TextBox>
+            <TextBox x:Name="NameBox" Grid.Row="1" Grid.Column="1"
+                     Height="34" MinWidth="0" VerticalContentAlignment="Center"
+                     TextChanged="NameBox_TextChanged" />
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button x:Name="OkButton" Content="OK" Width="85" IsDefault="True"
+                    HorizontalContentAlignment="Center" IsEnabled="False" Click="Ok_Click" />
+            <Button Content="Cancel" Width="85" IsCancel="True"
+                    HorizontalContentAlignment="Center" Click="Cancel_Click" />
+        </StackPanel>
+    </StackPanel>
+</Window>
