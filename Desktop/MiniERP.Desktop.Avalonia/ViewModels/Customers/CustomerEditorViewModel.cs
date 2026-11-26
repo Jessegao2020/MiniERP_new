@@ -80,7 +80,7 @@ public sealed class CustomerEditorViewModel : INotifyPropertyChanged
     {
         if (string.IsNullOrWhiteSpace(name)) return;
 
-        var contact = existing is null ? new CustomerContact() : CloneContact(existing);
+        var contact = existing is null ? new CustomerContact { Name = name.Trim() } : CloneContact(existing);
         contact.Title = title.Trim();
         contact.Name = name.Trim();
 
