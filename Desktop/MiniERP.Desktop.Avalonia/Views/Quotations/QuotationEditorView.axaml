@@ -10,23 +10,6 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <Style Selector="TabControl.document-sections TabItem">
-            <Setter Property="Width" Value="150" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="Padding" Value="12,0" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-        <Style Selector="TabControl.document-sections TabItem:pointerover">
-            <Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" />
-        </Style>
-        <Style Selector="TabControl.document-sections TabItem:selected">
-            <Setter Property="Background" Value="{DynamicResource ErpSelectedSectionBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
         <Style Selector="Border.section-surface">
             <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource ErpBorderBrush}" />
@@ -118,7 +101,7 @@
             </WrapPanel>
         </Border>
 
-        <TabControl Grid.Row="2" Classes="document-sections" TabStripPlacement="Left" SelectedIndex="3">
+        <TabControl Grid.Row="2" Classes="document-sections selectline-side-nav" TabStripPlacement="Left" SelectedIndex="3">
             <TabItem Header="General">
                 <Border Classes="section-surface">
                     <ScrollViewer HorizontalScrollBarVisibility="Auto">
