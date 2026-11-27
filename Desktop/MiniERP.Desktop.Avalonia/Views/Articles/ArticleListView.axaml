@@ -62,98 +62,18 @@
             </Button>
         </StackPanel>
 
-        <Grid x:Name="ArticleTableLayout"
-              Grid.Row="1"
-              Margin="0,4,0,0"
-              RowDefinitions="24,22,*"
-              SizeChanged="ArticleTableLayout_SizeChanged">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*" MinWidth="90" />
-                <ColumnDefinition Width="*" MinWidth="65" />
-                <ColumnDefinition Width="*" MinWidth="70" />
-                <ColumnDefinition Width="2*" MinWidth="100" />
-                <ColumnDefinition Width="2*" MinWidth="100" />
-                <ColumnDefinition Width="2*" MinWidth="80" />
-                <ColumnDefinition Width="2*" MinWidth="80" />
-            </Grid.ColumnDefinitions>
-
-            <!-- SelectLine-style title row: plain white cells, no Fluent button chrome. -->
-            <Border Grid.Row="0" Grid.ColumnSpan="7" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1,1,0,0" IsHitTestVisible="False" />
-
-            <Border Grid.Row="0" Grid.Column="0" Classes="grid-header" Tag="Name" Tapped="SortHeader_Tapped">
-                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Name" FontSize="11" VerticalAlignment="Center" />
-                    <TextBlock x:Name="NameSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
-                </Grid>
-            </Border>
-            <Border Grid.Row="0" Grid.Column="1" Classes="grid-header" Tag="Price" Tapped="SortHeader_Tapped">
-                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Price" FontSize="11" VerticalAlignment="Center" />
-                    <TextBlock x:Name="PriceSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
-                </Grid>
-            </Border>
-            <Border Grid.Row="0" Grid.Column="2" Classes="grid-header" Tag="MinimumPrice" Tapped="SortHeader_Tapped">
-                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Min. Price" FontSize="11" VerticalAlignment="Center" />
-                    <TextBlock x:Name="MinimumPriceSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
-                </Grid>
-            </Border>
-            <Border Grid.Row="0" Grid.Column="3" Classes="grid-header" Tag="Description" Tapped="SortHeader_Tapped">
-                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Description" FontSize="11" VerticalAlignment="Center" />
-                    <TextBlock x:Name="DescriptionSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
-                </Grid>
-            </Border>
-            <Border Grid.Row="0" Grid.Column="4" Classes="grid-header" Tag="Specification" Tapped="SortHeader_Tapped">
-                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Specification" FontSize="11" VerticalAlignment="Center" />
-                    <TextBlock x:Name="SpecificationSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
-                </Grid>
-            </Border>
-            <Border Grid.Row="0" Grid.Column="5" Classes="grid-header" Tag="Discount" Tapped="SortHeader_Tapped">
-                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Discount" FontSize="11" VerticalAlignment="Center" />
-                    <TextBlock x:Name="DiscountSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
-                </Grid>
-            </Border>
-            <Border Grid.Row="0" Grid.Column="6" Classes="grid-header" Tag="Note" Tapped="SortHeader_Tapped">
-                <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Note" FontSize="11" VerticalAlignment="Center" />
-                    <TextBlock x:Name="NoteSortArrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" />
-                </Grid>
-            </Border>
-
-            <!-- Separate very pale yellow search row, using the same live column definitions. -->
-            <Border Grid.Row="1" Grid.ColumnSpan="7" BorderBrush="{DynamicResource ErpSpecialBrush}" BorderThickness="1,0,0,0" IsHitTestVisible="False" />
-            <TextBox Grid.Row="1" Grid.Column="0" Classes="grid-filter" Tag="Name" TextChanged="Filter_TextChanged" />
-            <TextBox Grid.Row="1" Grid.Column="1" Classes="grid-filter" Tag="Price" TextChanged="Filter_TextChanged" />
-            <TextBox Grid.Row="1" Grid.Column="2" Classes="grid-filter" Tag="MinimumPrice" TextChanged="Filter_TextChanged" />
-            <TextBox Grid.Row="1" Grid.Column="3" Classes="grid-filter" Tag="Description" TextChanged="Filter_TextChanged" />
-            <TextBox Grid.Row="1" Grid.Column="4" Classes="grid-filter" Tag="Specification" TextChanged="Filter_TextChanged" />
-            <TextBox Grid.Row="1" Grid.Column="5" Classes="grid-filter" Tag="Discount" TextChanged="Filter_TextChanged" />
-            <TextBox Grid.Row="1" Grid.Column="6" Classes="grid-filter" Tag="Note" TextChanged="Filter_TextChanged" />
-
-            <!-- Transparent resize handles. Data columns are synchronized on every drag delta. -->
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="3" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="4" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="5" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
-
-            <dg:DataGrid
+        <dg:DataGrid
                 x:Name="ArticleGrid"
-                Grid.Row="2"
-                Grid.ColumnSpan="7"
+                Grid.Row="1" Margin="0,4,0,0"
                 AutoGenerateColumns="False"
                 Background="{DynamicResource ErpSurfaceBrush}"
                 BorderBrush="{DynamicResource ErpBorderBrush}"
-                BorderThickness="1,0,1,1"
-                CanUserResizeColumns="False"
-                CanUserSortColumns="False"
+                BorderThickness="1"
+                CanUserResizeColumns="True" CanUserReorderColumns="False"
+                CanUserSortColumns="True" Sorting="Grid_Sorting"
                 FontSize="12"
                 GridLinesVisibility="All"
-                HeadersVisibility="None"
+                HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid"
                 HorizontalGridLinesBrush="{DynamicResource ErpGridBrush}"
                 VerticalGridLinesBrush="{DynamicResource ErpGridBrush}"
                 RowBackground="{DynamicResource ErpSurfaceBrush}"
@@ -183,16 +103,64 @@
                 </dg:DataGrid.Styles>
 
                 <dg:DataGrid.Columns>
-                    <dg:DataGridTextColumn Width="3*" Binding="{Binding Name}" />
-                    <dg:DataGridTextColumn Width="*" Binding="{Binding Price}" />
-                    <dg:DataGridTextColumn Width="*" Binding="{Binding MinimumPrice}" />
-                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Description}" />
-                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Specification}" />
-                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Discount}" />
-                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Note}" />
+                    <dg:DataGridTextColumn Width="3*" Binding="{Binding Name}" MinWidth="90">
+                        <dg:DataGridTextColumn.Header>
+                            <Grid RowDefinitions="24,22" ClipToBounds="True">
+                                <Border Classes="grid-header" Tag="Name"> <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto"> <TextBlock Text="Name" FontSize="11" VerticalAlignment="Center" /> <TextBlock Classes="grid-sort-arrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" /> </Grid> </Border>
+                                <TextBox Grid.Row="1" Classes="grid-filter" Tag="Name" TextChanged="Filter_TextChanged" />
+                            </Grid>
+                        </dg:DataGridTextColumn.Header>
+                    </dg:DataGridTextColumn>
+                    <dg:DataGridTextColumn Width="*" Binding="{Binding Price}" MinWidth="65">
+                        <dg:DataGridTextColumn.Header>
+                            <Grid RowDefinitions="24,22" ClipToBounds="True">
+                                <Border Classes="grid-header" Tag="Price"> <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto"> <TextBlock Text="Price" FontSize="11" VerticalAlignment="Center" /> <TextBlock Classes="grid-sort-arrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" /> </Grid> </Border>
+                                <TextBox Grid.Row="1" Classes="grid-filter" Tag="Price" TextChanged="Filter_TextChanged" />
+                            </Grid>
+                        </dg:DataGridTextColumn.Header>
+                    </dg:DataGridTextColumn>
+                    <dg:DataGridTextColumn Width="*" Binding="{Binding MinimumPrice}" MinWidth="70">
+                        <dg:DataGridTextColumn.Header>
+                            <Grid RowDefinitions="24,22" ClipToBounds="True">
+                                <Border Classes="grid-header" Tag="MinimumPrice"> <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto"> <TextBlock Text="Min. Price" FontSize="11" VerticalAlignment="Center" /> <TextBlock Classes="grid-sort-arrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" /> </Grid> </Border>
+                                <TextBox Grid.Row="1" Classes="grid-filter" Tag="MinimumPrice" TextChanged="Filter_TextChanged" />
+                            </Grid>
+                        </dg:DataGridTextColumn.Header>
+                    </dg:DataGridTextColumn>
+                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Description}" MinWidth="100">
+                        <dg:DataGridTextColumn.Header>
+                            <Grid RowDefinitions="24,22" ClipToBounds="True">
+                                <Border Classes="grid-header" Tag="Description"> <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto"> <TextBlock Text="Description" FontSize="11" VerticalAlignment="Center" /> <TextBlock Classes="grid-sort-arrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" /> </Grid> </Border>
+                                <TextBox Grid.Row="1" Classes="grid-filter" Tag="Description" TextChanged="Filter_TextChanged" />
+                            </Grid>
+                        </dg:DataGridTextColumn.Header>
+                    </dg:DataGridTextColumn>
+                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Specification}" MinWidth="100">
+                        <dg:DataGridTextColumn.Header>
+                            <Grid RowDefinitions="24,22" ClipToBounds="True">
+                                <Border Classes="grid-header" Tag="Specification"> <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto"> <TextBlock Text="Specification" FontSize="11" VerticalAlignment="Center" /> <TextBlock Classes="grid-sort-arrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" /> </Grid> </Border>
+                                <TextBox Grid.Row="1" Classes="grid-filter" Tag="Specification" TextChanged="Filter_TextChanged" />
+                            </Grid>
+                        </dg:DataGridTextColumn.Header>
+                    </dg:DataGridTextColumn>
+                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Discount}" MinWidth="80">
+                        <dg:DataGridTextColumn.Header>
+                            <Grid RowDefinitions="24,22" ClipToBounds="True">
+                                <Border Classes="grid-header" Tag="Discount"> <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto"> <TextBlock Text="Discount" FontSize="11" VerticalAlignment="Center" /> <TextBlock Classes="grid-sort-arrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" /> </Grid> </Border>
+                                <TextBox Grid.Row="1" Classes="grid-filter" Tag="Discount" TextChanged="Filter_TextChanged" />
+                            </Grid>
+                        </dg:DataGridTextColumn.Header>
+                    </dg:DataGridTextColumn>
+                    <dg:DataGridTextColumn Width="2*" Binding="{Binding Note}" MinWidth="80">
+                        <dg:DataGridTextColumn.Header>
+                            <Grid RowDefinitions="24,22" ClipToBounds="True">
+                                <Border Classes="grid-header" Tag="Note"> <Grid Margin="5,0,5,0" ColumnDefinitions="*,Auto"> <TextBlock Text="Note" FontSize="11" VerticalAlignment="Center" /> <TextBlock Classes="grid-sort-arrow" Grid.Column="1" Margin="4,0,0,0" FontSize="8" VerticalAlignment="Center" /> </Grid> </Border>
+                                <TextBox Grid.Row="1" Classes="grid-filter" Tag="Note" TextChanged="Filter_TextChanged" />
+                            </Grid>
+                        </dg:DataGridTextColumn.Header>
+                    </dg:DataGridTextColumn>
                 </dg:DataGrid.Columns>
             </dg:DataGrid>
-        </Grid>
 
         <Border Grid.Row="2" Padding="6,3" Height="26" ClipToBounds="True" Background="{DynamicResource ErpStatusBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
             <Grid ColumnDefinitions="*,Auto">
