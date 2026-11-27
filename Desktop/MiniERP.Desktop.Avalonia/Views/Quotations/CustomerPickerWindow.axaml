@@ -2,6 +2,7 @@
     x:Class="MiniERP.Desktop.Views.Quotations.CustomerPickerWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:infra="clr-namespace:MiniERP.Desktop.Infrastructure"
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
     Title="Select Customer" Width="980" Height="620" MinWidth="760" MinHeight="420" WindowStartupLocation="CenterOwner">
     <Window.Styles>
@@ -10,7 +11,7 @@
         <Style Selector="TextBox.grid-filter"><Setter Property="Height" Value="22" /><Setter Property="Margin" Value="0" /><Setter Property="Padding" Value="5,0,4,0" /><Setter Property="CornerRadius" Value="0" /><Setter Property="Background" Value="{DynamicResource ErpFilterBrush}" /><Setter Property="BorderThickness" Value="0" /><Setter Property="FontSize" Value="11" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
     </Window.Styles>
     <Grid RowDefinitions="*,Auto,Auto">
-        <dg:DataGrid x:Name="CustomerGrid" Grid.Row="0" Margin="8" AutoGenerateColumns="False" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1" CanUserResizeColumns="True" CanUserReorderColumns="False" CanUserSortColumns="True" Sorting="Grid_Sorting" FontSize="12" GridLinesVisibility="All" HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid" HorizontalGridLinesBrush="{DynamicResource ErpBorderBrush}" VerticalGridLinesBrush="{DynamicResource ErpBorderBrush}" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" DoubleTapped="CustomerGrid_DoubleTapped">
+        <dg:DataGrid x:Name="CustomerGrid" Grid.Row="0" Margin="8" AutoGenerateColumns="False" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1" CanUserResizeColumns="True" CanUserReorderColumns="False" CanUserSortColumns="True" Sorting="Grid_Sorting" FontSize="12" GridLinesVisibility="All" HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid" HorizontalGridLinesBrush="{DynamicResource ErpBorderBrush}" VerticalGridLinesBrush="Transparent" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" DoubleTapped="CustomerGrid_DoubleTapped">
                 <dg:DataGrid.Styles><Style Selector="DataGridCell"><Setter Property="Padding" Value="5,2" /></Style><Style Selector="DataGridRow.alternate"><Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" /></Style><Style Selector="DataGridRow:pointerover"><Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" /></Style><Style Selector="DataGridRow:selected"><Setter Property="Background" Value="{DynamicResource ErpSelectedBrush}" /><Setter Property="TextBlock.Foreground" Value="{DynamicResource ErpSelectionTextBrush}" /></Style></dg:DataGrid.Styles>
                 <dg:DataGrid.Columns><dg:DataGridTextColumn Width="2.5*" Binding="{Binding Name}" MinWidth="120">
                         <dg:DataGridTextColumn.Header>
@@ -61,6 +62,9 @@
                         </dg:DataGridTextColumn.Header>
                     </dg:DataGridTextColumn></dg:DataGrid.Columns>
             </dg:DataGrid>
+        <infra:SelectLineColumnRules Grid.Row="0" Margin="8"
+                                     Target="{Binding #CustomerGrid}" LineBrush="{DynamicResource ErpBorderBrush}"
+                                     IsHitTestVisible="False" ClipToBounds="True" />
         <Border Grid.Row="1" Padding="8,4" Background="{DynamicResource ErpAlternateBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1,1,1,0"><TextBlock x:Name="StatusText" Foreground="{DynamicResource ErpMutedBrush}" /></Border>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" Spacing="8"><Button Width="90" IsDefault="True" Click="Ok_Click" Content="OK" /><Button Width="90" IsCancel="True" Click="Cancel_Click" Content="Cancel" /></StackPanel>
     </Grid>
