@@ -10,19 +10,24 @@
         <Style Selector="TextBox.grid-filter"><Setter Property="Height" Value="22" /><Setter Property="Margin" Value="0" /><Setter Property="Padding" Value="5,0,4,0" /><Setter Property="CornerRadius" Value="0" /><Setter Property="Background" Value="{DynamicResource ErpFilterBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource ErpSpecialBrush}" /><Setter Property="BorderThickness" Value="0,0,1,1" /><Setter Property="FontSize" Value="11" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
     </Window.Styles>
     <Grid RowDefinitions="*,Auto" Margin="10">
-        <Grid x:Name="CountryTableLayout" Grid.Row="0" RowDefinitions="24,22,*" SizeChanged="TableLayout_SizeChanged">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="80" MinWidth="60" /><ColumnDefinition Width="*" MinWidth="160" /></Grid.ColumnDefinitions>
-            <Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1,1,0,0" IsHitTestVisible="False" />
-            <Border Grid.Row="0" Grid.Column="0" Classes="grid-header" Tag="Code" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Code" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="CodeSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
-            <Border Grid.Row="0" Grid.Column="1" Classes="grid-header" Tag="Name" Tapped="SortHeader_Tapped"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Country / Region" FontSize="11" VerticalAlignment="Center" /><TextBlock x:Name="NameSortArrow" Grid.Column="1" FontSize="8" /></Grid></Border>
-            <Border Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource ErpFilterBrush}" BorderBrush="{DynamicResource ErpSpecialBrush}" BorderThickness="1,0,0,0" IsHitTestVisible="False" />
-            <TextBox x:Name="CodeFilterTextBox" Grid.Row="1" Grid.Column="0" Classes="grid-filter" TextChanged="Filter_TextChanged" /><TextBox x:Name="NameFilterTextBox" Grid.Row="1" Grid.Column="1" Classes="grid-filter" TextChanged="Filter_TextChanged" />
-            <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="5" HorizontalAlignment="Right" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="CurrentAndNext" DragDelta="ColumnSplitter_DragDelta" />
-            <dg:DataGrid x:Name="CountryGrid" Grid.Row="2" Grid.ColumnSpan="2" AutoGenerateColumns="False" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1,0,1,1" CanUserResizeColumns="False" CanUserSortColumns="False" FontSize="12" GridLinesVisibility="All" HeadersVisibility="None" HorizontalGridLinesBrush="{DynamicResource ErpGridBrush}" VerticalGridLinesBrush="{DynamicResource ErpGridBrush}" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" DoubleTapped="CountryGrid_DoubleTapped">
+        <dg:DataGrid x:Name="CountryGrid" Grid.Row="0" AutoGenerateColumns="False" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1" CanUserResizeColumns="True" CanUserReorderColumns="False" CanUserSortColumns="True" Sorting="Grid_Sorting" FontSize="12" GridLinesVisibility="All" HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid" HorizontalGridLinesBrush="{DynamicResource ErpGridBrush}" VerticalGridLinesBrush="{DynamicResource ErpGridBrush}" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" DoubleTapped="CountryGrid_DoubleTapped">
                 <dg:DataGrid.Styles><Style Selector="DataGridCell"><Setter Property="Padding" Value="5,2" /></Style><Style Selector="DataGridRow.alternate"><Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" /></Style><Style Selector="DataGridRow:pointerover"><Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" /></Style><Style Selector="DataGridRow:selected"><Setter Property="Background" Value="{DynamicResource ErpSelectedBrush}" /><Setter Property="TextBlock.Foreground" Value="{DynamicResource ErpSelectionTextBrush}" /></Style></dg:DataGrid.Styles>
-                <dg:DataGrid.Columns><dg:DataGridTextColumn Width="80" Binding="{Binding Code}" /><dg:DataGridTextColumn Width="*" Binding="{Binding Name}" /></dg:DataGrid.Columns>
+                <dg:DataGrid.Columns><dg:DataGridTextColumn Width="80" Binding="{Binding Code}" MinWidth="60">
+                        <dg:DataGridTextColumn.Header>
+                            <Grid RowDefinitions="24,22" ClipToBounds="True">
+                                <Border Classes="grid-header" Tag="Code"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Code" FontSize="11" VerticalAlignment="Center" /><TextBlock Classes="grid-sort-arrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+                                <TextBox Tag="Code" Grid.Row="1" Classes="grid-filter" TextChanged="Filter_TextChanged" />
+                            </Grid>
+                        </dg:DataGridTextColumn.Header>
+                    </dg:DataGridTextColumn><dg:DataGridTextColumn Width="*" Binding="{Binding Name}" MinWidth="160">
+                        <dg:DataGridTextColumn.Header>
+                            <Grid RowDefinitions="24,22" ClipToBounds="True">
+                                <Border Classes="grid-header" Tag="Name"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Country / Region" FontSize="11" VerticalAlignment="Center" /><TextBlock Classes="grid-sort-arrow" Grid.Column="1" FontSize="8" /></Grid></Border>
+                                <TextBox Tag="Name" Grid.Row="1" Classes="grid-filter" TextChanged="Filter_TextChanged" />
+                            </Grid>
+                        </dg:DataGridTextColumn.Header>
+                    </dg:DataGridTextColumn></dg:DataGrid.Columns>
             </dg:DataGrid>
-        </Grid>
         <StackPanel Grid.Row="1" Margin="0,10,0,0" HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8"><Button Width="90" Click="Ok_Click" Content="OK" /><Button Width="90" Click="Cancel_Click" Content="Cancel" /></StackPanel>
     </Grid>
 </Window>
