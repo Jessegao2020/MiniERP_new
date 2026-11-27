@@ -78,7 +78,7 @@
                         <dg:DataGridTextColumn.Header>
                             <Grid RowDefinitions="24,22" ClipToBounds="True">
                                 <Border Classes="grid-header" Tag="TotalCartons"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Cartons" FontSize="11" VerticalAlignment="Center" /><TextBlock Classes="grid-sort-arrow" Grid.Column="1" FontSize="8" /></Grid></Border>
-                                <Border Grid.Row="1" Background="{DynamicResource ErpFilterBrush}" />
+                                <TextBox Grid.Row="1" Classes="grid-filter" Tag="TotalCartons" TextChanged="Filter_TextChanged" />
                                 <Rectangle Grid.RowSpan="2" Classes="selectline-column-separator" />
                             </Grid>
                         </dg:DataGridTextColumn.Header>
@@ -86,7 +86,7 @@
                         <dg:DataGridTextColumn.Header>
                             <Grid RowDefinitions="24,22" ClipToBounds="True">
                                 <Border Classes="grid-header" Tag="TotalGrossWeight"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="G.W. kg" FontSize="11" VerticalAlignment="Center" /><TextBlock Classes="grid-sort-arrow" Grid.Column="1" FontSize="8" /></Grid></Border>
-                                <Border Grid.Row="1" Background="{DynamicResource ErpFilterBrush}" />
+                                <TextBox Grid.Row="1" Classes="grid-filter" Tag="TotalGrossWeight" TextChanged="Filter_TextChanged" />
                                 <Rectangle Grid.RowSpan="2" Classes="selectline-column-separator" />
                             </Grid>
                         </dg:DataGridTextColumn.Header>
@@ -94,7 +94,7 @@
                         <dg:DataGridTextColumn.Header>
                             <Grid RowDefinitions="24,22" ClipToBounds="True">
                                 <Border Classes="grid-header" Tag="TotalCbm"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="CBM" FontSize="11" VerticalAlignment="Center" /><TextBlock Classes="grid-sort-arrow" Grid.Column="1" FontSize="8" /></Grid></Border>
-                                <Border Grid.Row="1" Background="{DynamicResource ErpFilterBrush}" />
+                                <TextBox Grid.Row="1" Classes="grid-filter" Tag="TotalCbm" TextChanged="Filter_TextChanged" />
                                 <Rectangle Grid.RowSpan="2" Classes="selectline-column-separator" />
                             </Grid>
                         </dg:DataGridTextColumn.Header>
