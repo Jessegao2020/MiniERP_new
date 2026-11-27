@@ -79,8 +79,8 @@ public sealed class QuotationListViewModel : INotifyPropertyChanged
         {
             var id = SelectedQuotation.Id;
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
-            await service.DeleteQuotationAsync(id);
+            var workflow = scope.ServiceProvider.GetRequiredService<IQuotationWorkflow>();
+            await workflow.DeleteAsync(id);
             await LoadAsync();
             Status = $"Quotation {id} deleted.";
         }

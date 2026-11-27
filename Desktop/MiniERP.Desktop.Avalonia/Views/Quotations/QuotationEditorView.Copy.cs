@@ -86,11 +86,9 @@ public partial class QuotationEditorView
         try
         {
             var snapshot = BuildCurrentQuotationSnapshotForCopy();
-            var copy = QuotationCopySupport.CreateCopy(snapshot);
-
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
-            await QuotationNumberSupport.CreateAsync(service, copy, ViewModel.SelectedUser!.Code);
+            var workflow = scope.ServiceProvider.GetRequiredService<IQuotationWorkflow>();
+            var copy = await workflow.DuplicatePreparedAsync(snapshot, ViewModel.SelectedCustomerContact?.Id);
 
             CopyCreated?.Invoke(copy);
         }

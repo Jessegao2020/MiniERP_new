@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MiniERP.ApplicationLayer.Services;
 
 namespace MiniERP.Desktop.Infrastructure;
 
@@ -9,6 +10,8 @@ public sealed class AppSettings
     public int DefaultValidityDays { get; set; } = 30;
     // System follows Windows/Linux appearance, with optional Light/Dark override.
     public string ThemeMode { get; set; } = "System";
+    // Optional company defaults; old settings.json files keep legacy behavior.
+    public QuotationPolicy? QuotationPolicy { get; set; }
 }
 
 public sealed class AppSettingsService
@@ -24,6 +27,12 @@ public sealed class AppSettingsService
         Current = Load(settingsPath);
     }
 
+    public QuotationPolicy GetQuotationPolicy() => (Current.QuotationPolicy ?? new QuotationPolicy()) with
+    {
+        DefaultValidityDays = QuotationRules.NormalizeValidityDays(Current.DefaultValidityDays),
+        CnyPerUsd = Current.CnyPerUsd is > 0m ? Current.CnyPerUsd : null
+    };
+
     public Task SaveExchangeRateAsync(decimal cnyPerUsd)
         => SaveSettingsAsync(cnyPerUsd, Current.DefaultValidityDays);
 
@@ -37,6 +46,7 @@ public sealed class AppSettingsService
             {
                 CnyPerUsd = Current.CnyPerUsd,
                 DefaultValidityDays = Current.DefaultValidityDays,
+                QuotationPolicy = Current.QuotationPolicy,
                 ThemeMode = normalized
             };
             await WriteSettingsAsync(updated);
@@ -77,6 +87,7 @@ public sealed class AppSettingsService
             {
                 CnyPerUsd = cnyPerUsd,
                 DefaultValidityDays = defaultValidityDays,
+                QuotationPolicy = Current.QuotationPolicy,
                 ThemeMode = NormalizeThemeMode(themeMode ?? Current.ThemeMode)
             };
             await WriteSettingsAsync(updated);

@@ -203,11 +203,12 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
     public QuotationEditorViewModel(Quotation? source, AppSettingsService settings)
     {
         _settings = settings;
-        _defaultValidityDays = QuotationRules.NormalizeValidityDays(settings.Current.DefaultValidityDays);
+        var policy = settings.GetQuotationPolicy();
+        _defaultValidityDays = policy.DefaultValidityDays;
         IsNew = source is null;
         var currentRate = settings.Current.CnyPerUsd ?? 0m;
         Quotation = source is null
-            ? QuotationRules.CreateDraft(DateTime.Now, _defaultValidityDays, currentRate)
+            ? QuotationRules.CreateDraft(DateTime.Now, policy)
             : QuotationRules.Clone(source);
         _currency = QuotationRules.NormalizeCurrency(Quotation.Currency);
         ExchangeRateSnapshot = QuotationRules.ResolveExchangeRate(source, currentRate);
@@ -236,8 +237,8 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         try
         {
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
-            var number = await QuotationNumberSupport.PreviewNextAsync(service, user.Code, DateTime.Now);
+            var workflow = scope.ServiceProvider.GetRequiredService<IQuotationWorkflow>();
+            var number = await workflow.PreviewNumberAsync(user.Id, DateTime.Now);
 
             if (!IsNew || _quotationNumberManuallyEdited || version != _numberPreviewVersion || !ReferenceEquals(user, SelectedUser))
                 return;
@@ -425,11 +426,11 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         try
         {
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
+            var workflow = scope.ServiceProvider.GetRequiredService<IQuotationWorkflow>();
 
             if (IsNew) ++_numberPreviewVersion;
-            var error = await QuotationWorkflow.SaveAsync(service, Quotation, IsNew,
-                _quotationNumberManuallyEdited, SelectedUser!.Code);
+            var error = await workflow.SavePreparedAsync(Quotation, IsNew,
+                _quotationNumberManuallyEdited, SelectedCustomerContact?.Id);
             if (error is not null)
             {
                 Status = error;
@@ -441,6 +442,10 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
                 OnPropertyChanged(nameof(QuotationNumber));
             }
 
+            // Persisted line identities must survive another edit/save in the same window.
+            var savedItems = Quotation.Items.OrderBy(item => item.SortOrder).ToList();
+            for (var index = 0; index < Items.Count; index++)
+                Items[index].AcceptSavedIdentity(savedItems[index].Id);
             Status = "Saved.";
             return true;
         }
@@ -459,8 +464,8 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
         try
         {
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IQuotationService>();
-            await service.DeleteQuotationAsync(Quotation.Id);
+            var workflow = scope.ServiceProvider.GetRequiredService<IQuotationWorkflow>();
+            await workflow.DeleteAsync(Quotation.Id);
             Status = "Deleted.";
             return true;
         }

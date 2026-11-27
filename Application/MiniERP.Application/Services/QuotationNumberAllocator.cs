@@ -12,9 +12,11 @@ public static class QuotationNumberAllocator
     private static readonly SemaphoreSlim CreateGate = new(1, 1);
 
     public static async Task<string> PreviewNextAsync(
-        IQuotationService service, int userCode, DateTime date)
+        IQuotationService service, int userCode, DateTime date, QuotationPolicy? policy = null)
     {
-        var prefix = GetPrefix(userCode, date);
+        policy ??= new QuotationPolicy();
+        policy.Validate();
+        var prefix = GetPrefix(userCode, date, policy.NumberCode);
         var numbers = await service.GetQuotationNumbersByPrefixAsync(prefix);
         var lastSequence = 0;
 
@@ -44,15 +46,15 @@ public static class QuotationNumberAllocator
         return prefix + (lastSequence + 1).ToString("D2", CultureInfo.InvariantCulture);
     }
 
-    public static async Task CreateAsync(
-        IQuotationService service, Quotation quotation, int userCode)
+    internal static async Task CreateAsync(
+        IQuotationService service, Quotation quotation, int userCode, QuotationPolicy policy)
     {
         // All new/copy flows in this process use this shared gate,
         // so opening several drafts does not issue the same saved number.
         await CreateGate.WaitAsync();
         try
         {
-            quotation.QuotationNumber = await PreviewNextAsync(service, userCode, DateTime.Now);
+            quotation.QuotationNumber = await PreviewNextAsync(service, userCode, DateTime.Now, policy);
             await service.CreateQuotationAsync(quotation);
         }
         finally
@@ -61,14 +63,14 @@ public static class QuotationNumberAllocator
         }
     }
 
-    private static string GetPrefix(int userCode, DateTime date)
+    private static string GetPrefix(int userCode, DateTime date, string numberCode)
     {
         if (userCode is < 1 or > 99)
             throw new InvalidOperationException(
                 "Set the selected user's Code to a one- or two-digit number (1-99) in Settings > User.");
 
         return date.ToString("yy", CultureInfo.InvariantCulture)
-            + "INTPAN"
+            + numberCode
             + date.ToString("MMdd", CultureInfo.InvariantCulture)
             + userCode.ToString(CultureInfo.InvariantCulture);
     }

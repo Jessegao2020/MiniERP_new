@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Microsoft.Extensions.DependencyInjection;
 using MiniERP.Desktop.Infrastructure;
+using MiniERP.ApplicationLayer.Services;
 using MiniERP.Desktop.Views;
 using MiniERP.Infrastructure;
 using MiniERP.Infrastructure.Data;
@@ -73,6 +74,7 @@ public partial class App : Application
         services.AddInfrastructure($"Data Source={DatabasePath}", $"Data Source={CatalogDatabasePath}");
         services.AddApplication();
         services.AddSingleton(new AppSettingsService(AppDataPaths.GetSettingsPath()));
+        services.AddScoped<QuotationPolicy>(sp => sp.GetRequiredService<AppSettingsService>().GetQuotationPolicy());
 
         Services = services.BuildServiceProvider();
         using var scope = Services.CreateScope();

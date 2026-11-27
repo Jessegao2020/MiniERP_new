@@ -20,7 +20,9 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
     private string _currency;
     private decimal _exchangeRateSnapshot;
 
-    public int Id { get; }
+    public int Id { get; private set; }
+
+    internal void AcceptSavedIdentity(int id) => Id = id;
     public int? SourceArticleId { get; private set; }
 
     public string Currency

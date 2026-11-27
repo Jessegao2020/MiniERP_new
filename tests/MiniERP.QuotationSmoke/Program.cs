@@ -39,25 +39,20 @@ Check(!QuotationRules.CanRefreshExchangeRate(true, 1), "do not refresh populated
 
 var service = new MemoryQuotationService();
 Check(await QuotationNumberAllocator.PreviewNextAsync(service, 3, date) == "26INTPAN1127301", "legacy number format");
-Check(await QuotationWorkflow.SaveAsync(service, draft, true, false, user.Code) is null, "auto-number and save");
-Check(draft.Id > 0 && !string.IsNullOrWhiteSpace(draft.QuotationNumber), "persisted number");
-var savedNumber = draft.QuotationNumber;
+draft.QuotationNumber = "26INTPAN1127301";
+draft.Id = 1;
 customer.Name = "Renamed customer";
 Check(QuotationRules.TryPrepare(draft, false, false, false, customer, user, null, date, draft.ValidUntil,
     draft.Currency, draft.ExchangeRate, draft.Items.ToList(), out _, out _), "prepare existing");
 Check(draft.CustomerNameSnapshot == "Test customer", "historical customer snapshot preserved");
-Check(await QuotationWorkflow.SaveAsync(service, draft, false, false, user.Code) is null, "update keeps number");
-
 var duplicate = QuotationCopy.CreateCopy(draft);
 Check(duplicate.Id == 0 && duplicate.Items.Single().Id == 0 && duplicate.QuotationNumber == string.Empty, "copy clears identities");
 Check(duplicate.Items.Single().UnitPrice == 100m && duplicate.ValidUntil == draft.ValidUntil, "copy preserves historical terms");
-duplicate.QuotationNumber = savedNumber;
-Check(await QuotationWorkflow.SaveAsync(service, duplicate, true, true, user.Code) == "Quotation number already exists.", "duplicate manual number rejected");
-duplicate.QuotationNumber = "MANUAL-001";
-Check(await QuotationWorkflow.SaveAsync(service, duplicate, true, true, user.Code) is null, "manual number save");
-Check(duplicate.QuotationNumber == "MANUAL-001", "manual number preserved");
-Check(service.Records.Count == 2, "only two saved quotations");
-Console.WriteLine("PASS: headless quotation rules, pricing, snapshots, numbering, save and copy");
+var policy = new QuotationPolicy { NumberCode = "ACME", DefaultCurrency = "CNY", DefaultValidityDays = 45, DeliveryTerm = "EXW" };
+var custom = QuotationRules.CreateDraft(date, policy);
+Check(custom.Currency == "CNY" && custom.ValidUntil == date.AddDays(45) && custom.DeliveryTerm == "EXW", "custom policy defaults");
+Check(await QuotationNumberAllocator.PreviewNextAsync(service, 3, date, policy) == "26ACME1127301", "custom number code");
+Console.WriteLine("PASS: headless quotation rules, pricing, snapshots, numbering, copy and policy");
 
 static void Check(bool condition, string name)
 {

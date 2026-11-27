@@ -13,17 +13,27 @@ public static class QuotationRules
     public static bool IsSupportedCurrency(string currency) => currency is "USD" or "CNY";
 
     public static Quotation CreateDraft(DateTime now, int validityDays, decimal exchangeRate)
-        => new()
+        => CreateDraft(now, new QuotationPolicy
+        {
+            DefaultValidityDays = NormalizeValidityDays(validityDays),
+            CnyPerUsd = exchangeRate > 0m ? exchangeRate : null
+        });
+
+    public static Quotation CreateDraft(DateTime now, QuotationPolicy policy)
+    {
+        policy.Validate();
+        return new Quotation
         {
             QuotationNumber = string.Empty,
-            DeliveryTerm = "FCA Baoding",
-            PaymentTerm = "100% prepayment",
-            LeadTime = "2 business days",
+            DeliveryTerm = policy.DeliveryTerm,
+            PaymentTerm = policy.PaymentTerm,
+            LeadTime = policy.LeadTime,
             QuotationDate = now,
-            ValidUntil = now.Date.AddDays(NormalizeValidityDays(validityDays)),
-            Currency = "USD",
-            ExchangeRate = exchangeRate
+            ValidUntil = now.Date.AddDays(policy.DefaultValidityDays),
+            Currency = policy.DefaultCurrency,
+            ExchangeRate = policy.CnyPerUsd ?? 0m
         };
+    }
 
     public static decimal ResolveExchangeRate(Quotation? source, decimal currentRate)
     {
@@ -177,6 +187,8 @@ public static class QuotationRules
             error = "Customer is required.";
         else if (user is null)
             error = "User is required. Create one in Settings > User if necessary.";
+        else if (contact is not null && !customer.Contacts.Any(c => c.Id == contact.Id))
+            error = "Contact does not belong to the selected customer.";
         else if (date is null)
             error = "Quotation date is required.";
         else if (requireItems && items.Count == 0)

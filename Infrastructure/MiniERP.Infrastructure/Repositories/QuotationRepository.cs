@@ -61,6 +61,7 @@ namespace MiniERP.Infrastructure.Repositories
             foreach (var oldItem in existing.Items.Where(item => !incomingIds.Contains(item.Id)).ToList())
                 _context.QuotationItems.Remove(oldItem);
 
+            var inserted = new List<(QuotationItem Incoming, QuotationItem Stored)>();
             foreach (var incoming in incomingItems)
             {
                 var tracked = incoming.Id > 0 ? existing.Items.FirstOrDefault(item => item.Id == incoming.Id) : null;
@@ -71,7 +72,7 @@ namespace MiniERP.Infrastructure.Repositories
                     continue;
                 }
 
-                existing.Items.Add(new QuotationItem
+                var newItem = new QuotationItem
                 {
                     SortOrder = incoming.SortOrder,
                     SourceArticleId = incoming.SourceArticleId,
@@ -88,10 +89,17 @@ namespace MiniERP.Infrastructure.Repositories
                     CreatedAt = incoming.CreatedAt ?? DateTime.Now,
                     LastModifiedBy = incoming.LastModifiedBy,
                     LastModifiedAt = DateTime.Now
-                });
+                };
+                existing.Items.Add(newItem);
+                inserted.Add((incoming, newItem));
             }
 
             await _context.SaveChangesAsync();
+            foreach (var (incoming, stored) in inserted)
+            {
+                incoming.Id = stored.Id;
+                incoming.QuotationId = stored.QuotationId;
+            }
         }
 
         public override async Task DeleteAsync(int id)
