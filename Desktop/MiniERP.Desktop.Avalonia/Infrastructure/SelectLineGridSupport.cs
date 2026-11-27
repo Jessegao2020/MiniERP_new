@@ -28,16 +28,76 @@ public sealed class SelectLineSortState
 
 public static class SelectLineGridSupport
 {
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Grid, DataGrid> SynchronizedLayouts = new();
+
     public static void SyncColumnWidths(Grid layout, DataGrid grid)
     {
-        if (grid.Columns.Count != layout.ColumnDefinitions.Count)
+        if (!SynchronizedLayouts.TryGetValue(layout, out _))
+        {
+            SynchronizedLayouts.Add(layout, grid);
+
+            // A splitter can change the column boundaries without changing the
+            // outer Grid's size. Read the final header bounds after arrange.
+            layout.LayoutUpdated += (_, _) => ApplyColumnWidths(layout, grid);
+        }
+
+        ApplyColumnWidths(layout, grid);
+    }
+
+    private static void ApplyColumnWidths(Grid layout, DataGrid grid)
+    {
+        var count = layout.ColumnDefinitions.Count;
+        if (count == 0 || grid.Columns.Count != count ||
+            !layout.IsArrangeValid || !grid.IsArrangeValid)
             return;
 
-        for (var i = 0; i < grid.Columns.Count; i++)
+        var headers = layout.Children.OfType<Border>()
+            .Where(border => Grid.GetRow(border) == 0 &&
+                             border.Classes.Contains("grid-header"))
+            .OrderBy(border => Grid.GetColumn(border))
+            .ToArray();
+
+        if (headers.Length != count || headers.Any(header => header.Bounds.Width <= 0))
+            return;
+
+        var scale = TopLevel.GetTopLevel(layout)?.RenderScaling ?? 1d;
+        double Snap(double value) => layout.UseLayoutRounding
+            ? Math.Round(value * scale) / scale
+            : value;
+        double BorderInset(double value) => grid.UseLayoutRounding
+            ? Math.Round(value * scale) / scale
+            : value;
+
+        // The header and filter share the same Grid. Use their arranged
+        // boundaries instead of independent star widths or rounded widths.
+        // The DataGrid's outer border consumes space inside its first and
+        // last columns, so account for it without changing its appearance.
+        var left = grid.Bounds.X + BorderInset(grid.BorderThickness.Left);
+        var widths = new double[count];
+
+        for (var i = 0; i < count; i++)
         {
-            var width = layout.ColumnDefinitions[i].ActualWidth;
-            if (width > 0)
-                grid.Columns[i].Width = new DataGridLength(width);
+            if (Grid.GetColumn(headers[i]) != i)
+                return;
+
+            var right = Snap(headers[i].Bounds.Right);
+            if (i == count - 1)
+                right -= BorderInset(grid.BorderThickness.Right);
+
+            widths[i] = right - left;
+            if (!double.IsFinite(widths[i]) || widths[i] <= 0)
+                return;
+
+            left = right;
+        }
+
+        // Do not invalidate layout on every LayoutUpdated notification.
+        // Once the columns are fixed, only a real boundary change needs a write.
+        for (var i = 0; i < count; i++)
+        {
+            var width = grid.Columns[i].Width;
+            if (!width.IsAbsolute || Math.Abs(width.Value - widths[i]) > 0.0001)
+                grid.Columns[i].Width = new DataGridLength(widths[i]);
         }
     }
 
