@@ -81,6 +81,7 @@ public sealed class InvoiceListViewModel : INotifyPropertyChanged
                 "Date" => Matches(i.InvoiceDate.ToString("yyyy-MM-dd"), pair.Value),
                 "PO" => Matches(i.CustomerPoNumber, pair.Value),
                 "Currency" => Matches(i.Currency, pair.Value),
+                "TotalAmount" => Matches(i.TotalAmount.ToString("N2"), pair.Value) || Matches(i.TotalAmount.ToString("0.00"), pair.Value),
                 "Source" => Matches(i.SourceDocumentNumber, pair.Value),
                 _ => true
             });
