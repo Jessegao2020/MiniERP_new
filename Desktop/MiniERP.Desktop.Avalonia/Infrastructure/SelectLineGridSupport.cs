@@ -30,14 +30,30 @@ public static class SelectLineGridSupport
 {
     public static void SyncColumnWidths(Grid layout, DataGrid grid)
     {
+        // Diagnostic escape hatch: isolate custom width synchronization from
+        // Avalonia's native DataGrid layout without changing the document views.
+        if (Environment.GetEnvironmentVariable("MINIERP_DISABLE_COLUMN_WIDTH_SYNC") == "1")
+            return;
+
         if (grid.Columns.Count != layout.ColumnDefinitions.Count)
             return;
 
         for (var i = 0; i < grid.Columns.Count; i++)
         {
             var width = layout.ColumnDefinitions[i].ActualWidth;
-            if (width > 0)
-                grid.Columns[i].Width = new DataGridLength(width);
+            if (!double.IsFinite(width) || width <= 0)
+                continue;
+
+            var column = grid.Columns[i];
+            var current = column.Width;
+
+            // Avoid invalidating the DataGrid layout for unchanged widths or
+            // insignificant floating-point jitter during DPI-dependent layout.
+            // Always convert star/auto widths on the first synchronization.
+            if (current.IsAbsolute && Math.Abs(current.Value - width) < 0.1)
+                continue;
+
+            column.Width = new DataGridLength(width);
         }
     }
 
