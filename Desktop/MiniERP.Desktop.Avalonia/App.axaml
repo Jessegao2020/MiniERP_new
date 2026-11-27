@@ -59,25 +59,22 @@
             <ControlTheme x:Key="SelectLineFilterColumnHeader" TargetType="DataGridColumnHeader">
                 <Setter Property="Template">
                     <ControlTemplate>
-                        <Grid Background="{TemplateBinding Background}" ClipToBounds="True">
+                        <Grid Background="{TemplateBinding Background}" ClipToBounds="True" UseLayoutRounding="True">
                             <ContentPresenter x:Name="PART_ContentPresenter"
                                               Content="{TemplateBinding Content}"
                                               ContentTemplate="{TemplateBinding ContentTemplate}"
                                               HorizontalContentAlignment="Stretch"
                                               VerticalContentAlignment="Stretch" />
 
-                            <!-- Paint separators above the content, not inside the
-                                 TextBox template. The native column owns the width;
-                                 these lines never participate in column sizing. -->
+                            <!-- Shared horizontal rules, painted once over the content.
+                                 Interior vertical rules are painted on the following
+                                 column's left edge, avoiding overlap at fractional widths. -->
                             <Grid RowDefinitions="24,22" IsHitTestVisible="False">
                                 <Rectangle Grid.Row="0" Height="1"
                                            VerticalAlignment="Bottom"
                                            Fill="{DynamicResource ErpBorderBrush}" />
                                 <Rectangle Grid.Row="1" Height="1"
                                            VerticalAlignment="Bottom"
-                                           Fill="{DynamicResource ErpBorderBrush}" />
-                                <Rectangle Grid.RowSpan="2" Width="1"
-                                           HorizontalAlignment="Right"
                                            Fill="{DynamicResource ErpBorderBrush}" />
                             </Grid>
                         </Grid>
@@ -253,6 +250,16 @@
         </Style>
         <Style Selector="DataGrid DataGridColumnHeader:pointerover">
             <Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" />
+        </Style>
+        <Style Selector="DataGrid.selectline-filter-grid">
+            <Setter Property="UseLayoutRounding" Value="True" />
+        </Style>
+        <Style Selector="Rectangle.selectline-column-separator">
+            <Setter Property="Width" Value="1" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="Fill" Value="{DynamicResource ErpBorderBrush}" />
+            <Setter Property="IsHitTestVisible" Value="False" />
         </Style>
         <Style Selector="DataGrid.selectline-filter-grid DataGridColumnHeader">
             <Setter Property="Padding" Value="0" />
