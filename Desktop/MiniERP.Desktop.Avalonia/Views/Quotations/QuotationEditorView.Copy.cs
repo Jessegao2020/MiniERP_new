@@ -107,59 +107,11 @@ public partial class QuotationEditorView
         var user = ViewModel.SelectedUser!;
         var contact = ViewModel.SelectedCustomerContact;
 
-        return new Quotation
-        {
-            QuotationNumber = quotation.QuotationNumber,
-            CustomerId = customer.Id,
-            UserId = user.Id,
-            DeliveryTerm = quotation.DeliveryTerm,
-            LeadTime = quotation.LeadTime,
-            PaymentTerm = quotation.PaymentTerm,
-            Remarks = quotation.Remarks,
-            QuotationDate = ViewModel.QuotationDate?.DateTime ?? quotation.QuotationDate,
-            ValidUntil = ViewModel.ValidUntil?.DateTime,
-            Currency = ViewModel.Currency,
-            ExchangeRate = ViewModel.ExchangeRateSnapshot,
-            CustomerNameSnapshot = customer.Name.Trim(),
-            CustomerAddressSnapshot = BuildCopyCustomerAddress(customer),
-            CustomerContactSnapshot = contact is null
-                ? customer.Id == quotation.CustomerId ? quotation.CustomerContactSnapshot : null
-                : BuildCopyContactName(contact),
-            SalesContactNameSnapshot = user.Name.Trim(),
-            SalesContactPhoneSnapshot = user.Phone,
-            SalesContactEmailSnapshot = user.Email,
-            Items = ViewModel.Items.Select((item, index) => item.ToEntity(index)).ToList()
-        };
+        return QuotationRules.BuildCopySnapshot(quotation, customer, user, contact,
+            ViewModel.QuotationDate?.DateTime ?? quotation.QuotationDate, ViewModel.ValidUntil?.DateTime,
+            ViewModel.Currency, ViewModel.ExchangeRateSnapshot,
+            ViewModel.Items.Select((item, index) => item.ToEntity(index)).ToList(),
+            CountryRegionNames.GetDisplayName(customer.Country));
     }
 
-    private static string BuildCopyContactName(CustomerContact contact)
-    {
-        var title = contact.Title?.Trim();
-        var name = contact.Name.Trim();
-        return string.IsNullOrWhiteSpace(title) ? name : $"{title} {name}".Trim();
-    }
-
-    private static string? BuildCopyCustomerAddress(Customer customer)
-    {
-        var lines = new List<string>();
-        AddCopyAddressLine(lines, customer.AddressLine1);
-        AddCopyAddressLine(lines, customer.AddressLine2);
-
-        var cityLine = string.Join(" ", new[]
-        {
-            customer.PostalCode?.Trim(),
-            customer.City?.Trim(),
-            customer.State?.Trim()
-        }.Where(value => !string.IsNullOrWhiteSpace(value)));
-        AddCopyAddressLine(lines, cityLine);
-        AddCopyAddressLine(lines, CountryRegionNames.GetDisplayName(customer.Country));
-
-        return lines.Count == 0 ? null : string.Join("\n", lines);
-    }
-
-    private static void AddCopyAddressLine(ICollection<string> lines, string? value)
-    {
-        if (!string.IsNullOrWhiteSpace(value))
-            lines.Add(value.Trim());
-    }
 }

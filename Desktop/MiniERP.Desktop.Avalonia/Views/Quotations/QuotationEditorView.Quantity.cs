@@ -12,6 +12,7 @@ using Avalonia.VisualTree;
 using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Quotations;
 using MiniERP.Domain;
+using MiniERP.ApplicationLayer.Services;
 
 namespace MiniERP.Desktop.Views.Quotations;
 
@@ -510,11 +511,11 @@ public partial class QuotationEditorView
         var unitPriceText = NormalizeDecimalInput(PositionUnitPriceTextBox.Text);
         var discountText = NormalizeDecimalInput(PositionDiscountTextBox.Text);
 
-        var isValid = !string.IsNullOrWhiteSpace(articleName)
-            && TryParseDecimal(quantityText, out var quantity) && quantity > 0
-            && !string.IsNullOrWhiteSpace(unit)
-            && TryParseDecimal(unitPriceText, out var unitPrice) && unitPrice >= 0
-            && TryParseDecimal(discountText, out var discount) && discount >= 0 && discount <= 100;
+        var quantityValid = TryParseDecimal(quantityText, out var quantity);
+        var priceValid = TryParseDecimal(unitPriceText, out var unitPrice);
+        var discountValid = TryParseDecimal(discountText, out var discount);
+        var isValid = QuotationRules.TryValidatePosition(articleName, quantityValid ? quantity : null, unit,
+            priceValid ? unitPrice : null, discountValid ? discount : null, out _);
 
         PositionSaveButton.IsEnabled = isValid
             && (_editingPosition is null || !PositionEditorMatchesCurrentItemStable());
@@ -545,33 +546,14 @@ public partial class QuotationEditorView
         var discountText = NormalizeDecimalInput(PositionDiscountTextBox.Text);
         var description = PositionDescriptionTextBox.Text;
 
-        if (string.IsNullOrWhiteSpace(articleName))
+        var quantityValid = TryParseDecimal(quantityText, out var quantity);
+        var priceValid = TryParseDecimal(unitPriceText, out var unitPrice);
+        var discountValid = TryParseDecimal(discountText, out var discount);
+        if (!QuotationRules.TryValidatePosition(articleName, quantityValid ? quantity : null, unit,
+            priceValid ? unitPrice : null, discountValid ? discount : null, out var error))
         {
-            ViewModel.SetStatusMessage("The position article name is required.");
-            return;
-        }
-
-        if (!TryParseDecimal(quantityText, out var quantity) || quantity <= 0)
-        {
-            ViewModel.SetStatusMessage($"Quantity for '{articleName}' must be greater than zero.");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(unit))
-        {
-            ViewModel.SetStatusMessage($"Unit for '{articleName}' is required.");
-            return;
-        }
-
-        if (!TryParseDecimal(unitPriceText, out var unitPrice) || unitPrice < 0)
-        {
-            ViewModel.SetStatusMessage($"Unit price for '{articleName}' cannot be negative.");
-            return;
-        }
-
-        if (!TryParseDecimal(discountText, out var discount) || discount < 0 || discount > 100)
-        {
-            ViewModel.SetStatusMessage($"Discount for '{articleName}' must be between 0 and 100%.");
+            ViewModel.SetStatusMessage(string.IsNullOrWhiteSpace(articleName)
+                ? "The position article name is required." : error);
             return;
         }
 

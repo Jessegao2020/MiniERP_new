@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Quotations;
 using MiniERP.Domain;
+using MiniERP.ApplicationLayer.Services;
 
 namespace MiniERP.Desktop.Views.Quotations;
 
@@ -262,29 +263,10 @@ public partial class QuotationEditorView : UserControl
 
     private bool TryGetArticleUnitPrice(Article article, out decimal unitPrice)
     {
-        unitPrice = 0m;
-        if (article.Price is null)
-        {
-            ViewModel.SetStatusMessage($"Article '{article.Name}' does not have a CNY price.");
-            return false;
-        }
-
-        if (ViewModel.Currency == "USD")
-        {
-            if (ViewModel.ExchangeRateSnapshot <= 0)
-            {
-                ViewModel.SetStatusMessage("Set the USD exchange rate in Settings > System before adding USD items.");
-                return false;
-            }
-
-            unitPrice = decimal.Round(article.Price.Value / ViewModel.ExchangeRateSnapshot, 2, MidpointRounding.AwayFromZero);
-        }
-        else
-        {
-            unitPrice = article.Price.Value;
-        }
-
-        return true;
+        if (QuotationRules.TryGetArticleUnitPrice(article, ViewModel.Currency, ViewModel.ExchangeRateSnapshot, out unitPrice, out var error))
+            return true;
+        ViewModel.SetStatusMessage(error);
+        return false;
     }
 
     private void LoadPositionEditor(QuotationItemRowViewModel item)
@@ -410,33 +392,14 @@ public partial class QuotationEditorView : UserControl
         var unitPriceText = NormalizeDecimalInput(PositionUnitPriceTextBox.Text);
         var discountText = NormalizeDecimalInput(PositionDiscountTextBox.Text);
 
-        if (string.IsNullOrWhiteSpace(articleName))
+        var quantityValid = TryParseDecimal(quantityText, out var quantity);
+        var priceValid = TryParseDecimal(unitPriceText, out var unitPrice);
+        var discountValid = TryParseDecimal(discountText, out var discount);
+        if (!QuotationRules.TryValidatePosition(articleName, quantityValid ? quantity : null, unit,
+            priceValid ? unitPrice : null, discountValid ? discount : null, out var error))
         {
-            ViewModel.SetStatusMessage("The position article name is required.");
-            return;
-        }
-
-        if (!TryParseDecimal(quantityText, out var quantity) || quantity <= 0)
-        {
-            ViewModel.SetStatusMessage($"Quantity for '{articleName}' must be greater than zero.");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(unit))
-        {
-            ViewModel.SetStatusMessage($"Unit for '{articleName}' is required.");
-            return;
-        }
-
-        if (!TryParseDecimal(unitPriceText, out var unitPrice) || unitPrice < 0)
-        {
-            ViewModel.SetStatusMessage($"Unit price for '{articleName}' cannot be negative.");
-            return;
-        }
-
-        if (!TryParseDecimal(discountText, out var discount) || discount < 0 || discount > 100)
-        {
-            ViewModel.SetStatusMessage($"Discount for '{articleName}' must be between 0 and 100%.");
+            ViewModel.SetStatusMessage(string.IsNullOrWhiteSpace(articleName)
+                ? "The position article name is required." : error);
             return;
         }
 
@@ -476,7 +439,7 @@ public partial class QuotationEditorView : UserControl
         var quantity = ParseDecimalOrZero(PositionQtyTextBox.Text);
         var unitPrice = ParseDecimalOrZero(PositionUnitPriceTextBox.Text);
         var discount = ParseDecimalOrZero(PositionDiscountTextBox.Text);
-        var amount = decimal.Round(quantity * unitPrice * (1m - discount / 100m), 2, MidpointRounding.AwayFromZero);
+        var amount = QuotationItem.CalculateLineTotal(quantity, unitPrice, discount);
         PositionAmountText.Text = amount.ToString("N2", CultureInfo.InvariantCulture);
     }
 

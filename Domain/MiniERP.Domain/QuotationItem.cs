@@ -29,5 +29,8 @@ public class QuotationItem : AuditableEntity
 
     [NotMapped]
     public decimal LineTotal
-        => decimal.Round(Quantity * UnitPrice * (1m - DiscountPercent / 100m), 2, MidpointRounding.AwayFromZero);
+        => CalculateLineTotal(Quantity, UnitPrice, DiscountPercent);
+
+    public static decimal CalculateLineTotal(decimal quantity, decimal unitPrice, decimal discountPercent)
+        => decimal.Round(quantity * unitPrice * (1m - discountPercent / 100m), 2, MidpointRounding.AwayFromZero);
 }

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using MiniERP.Domain;
+using MiniERP.ApplicationLayer.Services;
 
 namespace MiniERP.Desktop.ViewModels.Quotations;
 
@@ -89,7 +90,7 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
     public decimal DiscountPercent => ParseDecimal(DiscountText);
 
     public decimal LineTotal
-        => decimal.Round(Quantity * UnitPrice * (1m - DiscountPercent / 100m), 2, MidpointRounding.AwayFromZero);
+        => QuotationItem.CalculateLineTotal(Quantity, UnitPrice, DiscountPercent);
 
     public QuotationItemRowViewModel(QuotationItem source)
     {
@@ -107,20 +108,8 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
     }
 
     public QuotationItemRowViewModel(Article source, string currency, decimal exchangeRateSnapshot, decimal unitPrice)
+        : this(QuotationRules.CreateItemSnapshot(source, currency, exchangeRateSnapshot, unitPrice))
     {
-        SourceArticleId = source.Id;
-        _currency = currency;
-        _exchangeRateSnapshot = exchangeRateSnapshot;
-        _articleName = FirstNonEmpty(source.Name_EN, source.Name) ?? $"Article {source.Id}";
-
-        // Quotation template rule: the small text printed below the bold product
-        // name is specifically Article.Description_EN. Do not fall back to Chinese.
-        _description = source.Description_EN;
-        _specification = FirstNonEmpty(source.Specs_EN, source.Specification);
-        _quantityText = "1";
-        _unit = "PCS";
-        _unitPriceText = ToText(unitPrice);
-        _discountText = "0";
     }
 
     public void SetSourceArticle(int? sourceArticleId)
@@ -138,40 +127,7 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
     }
 
     public bool TryValidate(out string error)
-    {
-        if (string.IsNullOrWhiteSpace(ArticleName))
-        {
-            error = "Every quotation item needs an article name.";
-            return false;
-        }
-
-        if (Quantity <= 0)
-        {
-            error = $"Quantity for '{ArticleName}' must be greater than zero.";
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(Unit))
-        {
-            error = $"Unit for '{ArticleName}' is required.";
-            return false;
-        }
-
-        if (UnitPrice < 0)
-        {
-            error = $"Unit price for '{ArticleName}' cannot be negative.";
-            return false;
-        }
-
-        if (DiscountPercent < 0 || DiscountPercent > 100)
-        {
-            error = $"Discount for '{ArticleName}' must be between 0 and 100%.";
-            return false;
-        }
-
-        error = string.Empty;
-        return true;
-    }
+        => QuotationRules.TryValidatePosition(ArticleName, Quantity, Unit, UnitPrice, DiscountPercent, out error);
 
     public QuotationItem ToEntity(int sortOrder) => new()
     {
@@ -242,9 +198,6 @@ public sealed class QuotationItemRowViewModel : INotifyPropertyChanged
 
     private static string ToText(decimal value)
         => value.ToString("0.####", CultureInfo.InvariantCulture);
-
-    private static string? FirstNonEmpty(string? preferred, string? fallback)
-        => !string.IsNullOrWhiteSpace(preferred) ? preferred : fallback;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
