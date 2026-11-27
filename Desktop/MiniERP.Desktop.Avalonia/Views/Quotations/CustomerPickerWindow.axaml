@@ -5,12 +5,12 @@
     xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
     Title="Select Customer" Width="980" Height="620" MinWidth="760" MinHeight="420" WindowStartupLocation="CenterOwner">
     <Window.Styles>
-        <Style Selector="Border.grid-header"><Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource ErpBorderBrush}" /><Setter Property="BorderThickness" Value="0,0,1,1" /></Style>
+        <Style Selector="Border.grid-header"><Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" /><Setter Property="BorderThickness" Value="0" /></Style>
         <Style Selector="Border.grid-header:pointerover"><Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" /></Style>
-        <Style Selector="TextBox.grid-filter"><Setter Property="Height" Value="22" /><Setter Property="Margin" Value="0" /><Setter Property="Padding" Value="5,0,4,0" /><Setter Property="CornerRadius" Value="0" /><Setter Property="Background" Value="{DynamicResource ErpFilterBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource ErpSpecialBrush}" /><Setter Property="BorderThickness" Value="0,0,1,1" /><Setter Property="FontSize" Value="11" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+        <Style Selector="TextBox.grid-filter"><Setter Property="Height" Value="22" /><Setter Property="Margin" Value="0" /><Setter Property="Padding" Value="5,0,4,0" /><Setter Property="CornerRadius" Value="0" /><Setter Property="Background" Value="{DynamicResource ErpFilterBrush}" /><Setter Property="BorderThickness" Value="0" /><Setter Property="FontSize" Value="11" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
     </Window.Styles>
     <Grid RowDefinitions="*,Auto,Auto">
-        <dg:DataGrid x:Name="CustomerGrid" Grid.Row="0" Margin="8" AutoGenerateColumns="False" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1" CanUserResizeColumns="True" CanUserReorderColumns="False" CanUserSortColumns="True" Sorting="Grid_Sorting" FontSize="12" GridLinesVisibility="All" HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid" HorizontalGridLinesBrush="{DynamicResource ErpGridBrush}" VerticalGridLinesBrush="{DynamicResource ErpGridBrush}" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" DoubleTapped="CustomerGrid_DoubleTapped">
+        <dg:DataGrid x:Name="CustomerGrid" Grid.Row="0" Margin="8" AutoGenerateColumns="False" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1" CanUserResizeColumns="True" CanUserReorderColumns="False" CanUserSortColumns="True" Sorting="Grid_Sorting" FontSize="12" GridLinesVisibility="All" HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid" HorizontalGridLinesBrush="{DynamicResource ErpBorderBrush}" VerticalGridLinesBrush="{DynamicResource ErpBorderBrush}" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" DoubleTapped="CustomerGrid_DoubleTapped">
                 <dg:DataGrid.Styles><Style Selector="DataGridCell"><Setter Property="Padding" Value="5,2" /></Style><Style Selector="DataGridRow.alternate"><Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" /></Style><Style Selector="DataGridRow:pointerover"><Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" /></Style><Style Selector="DataGridRow:selected"><Setter Property="Background" Value="{DynamicResource ErpSelectedBrush}" /><Setter Property="TextBlock.Foreground" Value="{DynamicResource ErpSelectionTextBrush}" /></Style></dg:DataGrid.Styles>
                 <dg:DataGrid.Columns><dg:DataGridTextColumn Width="2.5*" Binding="{Binding Name}" MinWidth="120">
                         <dg:DataGridTextColumn.Header>
@@ -24,6 +24,7 @@
                             <Grid RowDefinitions="24,22" ClipToBounds="True">
                                 <Border Classes="grid-header" Tag="AddressLine1"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Address" FontSize="11" VerticalAlignment="Center" /><TextBlock Classes="grid-sort-arrow" Grid.Column="1" FontSize="8" /></Grid></Border>
                                 <TextBox Grid.Row="1" Classes="grid-filter" Tag="AddressLine1" TextChanged="Filter_TextChanged" />
+                                <Rectangle Grid.RowSpan="2" Classes="selectline-column-separator" />
                             </Grid>
                         </dg:DataGridTextColumn.Header>
                     </dg:DataGridTextColumn><dg:DataGridTextColumn Width="*" Binding="{Binding PostalCode}" MinWidth="65">
@@ -31,6 +32,7 @@
                             <Grid RowDefinitions="24,22" ClipToBounds="True">
                                 <Border Classes="grid-header" Tag="PostalCode"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Postal" FontSize="11" VerticalAlignment="Center" /><TextBlock Classes="grid-sort-arrow" Grid.Column="1" FontSize="8" /></Grid></Border>
                                 <TextBox Grid.Row="1" Classes="grid-filter" Tag="PostalCode" TextChanged="Filter_TextChanged" />
+                                <Rectangle Grid.RowSpan="2" Classes="selectline-column-separator" />
                             </Grid>
                         </dg:DataGridTextColumn.Header>
                     </dg:DataGridTextColumn><dg:DataGridTextColumn Width="1.2*" Binding="{Binding City}" MinWidth="75">
@@ -38,6 +40,7 @@
                             <Grid RowDefinitions="24,22" ClipToBounds="True">
                                 <Border Classes="grid-header" Tag="City"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="City" FontSize="11" VerticalAlignment="Center" /><TextBlock Classes="grid-sort-arrow" Grid.Column="1" FontSize="8" /></Grid></Border>
                                 <TextBox Grid.Row="1" Classes="grid-filter" Tag="City" TextChanged="Filter_TextChanged" />
+                                <Rectangle Grid.RowSpan="2" Classes="selectline-column-separator" />
                             </Grid>
                         </dg:DataGridTextColumn.Header>
                     </dg:DataGridTextColumn><dg:DataGridTextColumn Width="1.2*" Binding="{Binding State}" MinWidth="75">
@@ -45,6 +48,7 @@
                             <Grid RowDefinitions="24,22" ClipToBounds="True">
                                 <Border Classes="grid-header" Tag="State"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="State" FontSize="11" VerticalAlignment="Center" /><TextBlock Classes="grid-sort-arrow" Grid.Column="1" FontSize="8" /></Grid></Border>
                                 <TextBox Grid.Row="1" Classes="grid-filter" Tag="State" TextChanged="Filter_TextChanged" />
+                                <Rectangle Grid.RowSpan="2" Classes="selectline-column-separator" />
                             </Grid>
                         </dg:DataGridTextColumn.Header>
                     </dg:DataGridTextColumn><dg:DataGridTextColumn Width="*" Binding="{Binding Country}" MinWidth="65">
@@ -52,6 +56,7 @@
                             <Grid RowDefinitions="24,22" ClipToBounds="True">
                                 <Border Classes="grid-header" Tag="Country"><Grid Margin="5,0" ColumnDefinitions="*,Auto"><TextBlock Text="Country" FontSize="11" VerticalAlignment="Center" /><TextBlock Classes="grid-sort-arrow" Grid.Column="1" FontSize="8" /></Grid></Border>
                                 <TextBox Grid.Row="1" Classes="grid-filter" Tag="Country" TextChanged="Filter_TextChanged" />
+                                <Rectangle Grid.RowSpan="2" Classes="selectline-column-separator" />
                             </Grid>
                         </dg:DataGridTextColumn.Header>
                     </dg:DataGridTextColumn></dg:DataGrid.Columns>
