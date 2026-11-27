@@ -23,7 +23,6 @@ public partial class ContractListView : UserControl
         {
             await ViewModel.LoadAsync();
             ApplySort();
-            Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Loaded);
         };
     }
 
@@ -71,9 +70,10 @@ public partial class ContractListView : UserControl
         }
     }
 
-    private void SortHeader_Tapped(object? sender, TappedEventArgs e)
+    private void Grid_Sorting(object? sender, DataGridColumnEventArgs e)
     {
-        if (sender is not Border border || border.Tag is not string field) return;
+        e.Handled = true;
+        if (SelectLineGridSupport.GetSortField(e.Column) is not string field) return;
         _sortState.Toggle(field);
         ApplySort();
         UpdateSortIndicators();
@@ -86,31 +86,14 @@ public partial class ContractListView : UserControl
     }
 
     private void UpdateSortIndicators()
-    {
-        NumberSortArrow.Text = _sortState.Arrow("ContractNumber");
-        CustomerSortArrow.Text = _sortState.Arrow("CustomerNameSnapshot");
-        UserSortArrow.Text = _sortState.Arrow("SalesContactNameSnapshot");
-        DateSortArrow.Text = _sortState.Arrow("ContractDate");
-        PoSortArrow.Text = _sortState.Arrow("CustomerPoNumber");
-        CurrencySortArrow.Text = _sortState.Arrow("Currency");
-        TotalSortArrow.Text = _sortState.Arrow("TotalAmount");
-        SourceSortArrow.Text = _sortState.Arrow("SourceDocumentNumber");
-    }
-
-    private void TableLayout_SizeChanged(object? sender, SizeChangedEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void ColumnSplitter_DragDelta(object? sender, VectorEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void SyncDataGridColumnWidths()
-        => SelectLineGridSupport.SyncColumnWidths(ContractTableLayout, ContractGrid);
+        => SelectLineGridSupport.UpdateSortIndicators(ContractGrid, _sortState.Arrow);
 
     private void Grid_LoadingRow(object? sender, DataGridRowEventArgs e)
         => SelectLineGridSupport.ApplyAlternateRow(e);
 
     private void ContractGrid_DoubleTapped(object? sender, TappedEventArgs e)
     {
+        if (!SelectLineGridSupport.IsDataRowEvent(e)) return;
         if (ViewModel.SelectedContract is not null) OpenContractRequested?.Invoke(ViewModel.SelectedContract);
     }
 }
