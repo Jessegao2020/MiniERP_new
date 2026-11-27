@@ -33,7 +33,7 @@
             </Button>
             <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="{Binding DocumentTitle}" />
         </StackPanel>
-        <dg:DataGrid x:Name="InvoiceGrid" Grid.Row="1" Margin="0,4,0,0" AutoGenerateColumns="False" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1" CanUserResizeColumns="True" CanUserReorderColumns="False" CanUserSortColumns="True" Sorting="Grid_Sorting" FontSize="12" GridLinesVisibility="All" HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid" HorizontalGridLinesBrush="{DynamicResource ErpBorderBrush}" VerticalGridLinesBrush="{DynamicResource ErpBorderBrush}" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" ItemsSource="{Binding Invoices}" SelectedItem="{Binding SelectedInvoice, Mode=TwoWay}" DoubleTapped="InvoiceGrid_DoubleTapped">
+        <dg:DataGrid x:Name="InvoiceGrid" Grid.Row="1" Margin="0,4,0,0" AutoGenerateColumns="False" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1" CanUserResizeColumns="True" CanUserReorderColumns="False" CanUserSortColumns="True" Sorting="Grid_Sorting" FontSize="12" GridLinesVisibility="All" HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid" HorizontalGridLinesBrush="{DynamicResource ErpBorderBrush}" VerticalGridLinesBrush="Transparent" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" ItemsSource="{Binding Invoices}" SelectedItem="{Binding SelectedInvoice, Mode=TwoWay}" DoubleTapped="InvoiceGrid_DoubleTapped">
                 <dg:DataGrid.Styles><Style Selector="DataGridCell"><Setter Property="Padding" Value="5,2" /></Style><Style Selector="DataGridRow.alternate"><Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" /></Style><Style Selector="DataGridRow:pointerover"><Setter Property="Background" Value="{DynamicResource ErpHoverBrush}" /></Style><Style Selector="DataGridRow:selected"><Setter Property="Background" Value="{DynamicResource ErpSelectedBrush}" /><Setter Property="TextBlock.Foreground" Value="{DynamicResource ErpSelectionTextBrush}" /></Style></dg:DataGrid.Styles>
                 <dg:DataGrid.Columns><dg:DataGridTextColumn Width="1.5*" Binding="{Binding InvoiceNumber}" MinWidth="100">
                         <dg:DataGridTextColumn.Header>
@@ -100,6 +100,9 @@
                         </dg:DataGridTextColumn.Header>
                     </dg:DataGridTextColumn></dg:DataGrid.Columns>
             </dg:DataGrid>
+        <infra:SelectLineColumnRules Grid.Row="1" Margin="0,4,0,0"
+                                     Target="{Binding #InvoiceGrid}" LineBrush="{DynamicResource ErpBorderBrush}"
+                                     IsHitTestVisible="False" ClipToBounds="True" />
         <Border Grid.Row="2" Padding="6,3" Height="26" ClipToBounds="True" Background="{DynamicResource ErpStatusBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1"><Grid ColumnDefinitions="*,Auto"><infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" /><TextBlock Grid.Column="1" Foreground="{DynamicResource ErpFooterAccentBrush}" Text="Double-click a row to edit" /></Grid></Border>
     </Grid>
 </UserControl>
