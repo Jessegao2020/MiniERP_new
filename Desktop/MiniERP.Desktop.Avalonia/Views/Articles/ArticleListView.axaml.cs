@@ -101,7 +101,6 @@ public partial class ArticleListView : UserControl
     {
         Dispatcher.UIThread.Post(() =>
         {
-            SyncDataGridColumnWidths();
 
             if (_articleToReveal is int id)
             {
@@ -171,9 +170,10 @@ public partial class ArticleListView : UserControl
         ViewModel.SetFilter(field, textBox.Text);
     }
 
-    private void SortHeader_Tapped(object? sender, TappedEventArgs e)
+    private void Grid_Sorting(object? sender, DataGridColumnEventArgs e)
     {
-        if (sender is not Border border || border.Tag is not string field)
+        e.Handled = true;
+        if (SelectLineGridSupport.GetSortField(e.Column) is not string field)
             return;
 
         ViewModel.SortBy(field);
@@ -181,15 +181,7 @@ public partial class ArticleListView : UserControl
     }
 
     private void UpdateSortIndicators()
-    {
-        NameSortArrow.Text = SortArrow("Name");
-        PriceSortArrow.Text = SortArrow("Price");
-        MinimumPriceSortArrow.Text = SortArrow("MinimumPrice");
-        DescriptionSortArrow.Text = SortArrow("Description");
-        SpecificationSortArrow.Text = SortArrow("Specification");
-        DiscountSortArrow.Text = SortArrow("Discount");
-        NoteSortArrow.Text = SortArrow("Note");
-    }
+        => SelectLineGridSupport.UpdateSortIndicators(ArticleGrid, SortArrow);
 
     private string SortArrow(string field)
     {
@@ -197,25 +189,6 @@ public partial class ArticleListView : UserControl
             return string.Empty;
 
         return ViewModel.SortAscending ? "▲" : "▼";
-    }
-
-    private void ArticleTableLayout_SizeChanged(object? sender, SizeChangedEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void ColumnSplitter_DragDelta(object? sender, VectorEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void SyncDataGridColumnWidths()
-    {
-        if (ArticleGrid.Columns.Count != ArticleTableLayout.ColumnDefinitions.Count)
-            return;
-
-        for (var i = 0; i < ArticleGrid.Columns.Count; i++)
-        {
-            var width = ArticleTableLayout.ColumnDefinitions[i].ActualWidth;
-            if (width > 0)
-                ArticleGrid.Columns[i].Width = new DataGridLength(width);
-        }
     }
 
     private void ArticleGrid_LoadingRow(object? sender, DataGridRowEventArgs e)
@@ -235,6 +208,7 @@ public partial class ArticleListView : UserControl
 
     private void ArticleGrid_DoubleTapped(object? sender, TappedEventArgs e)
     {
+        if (!SelectLineGridSupport.IsDataRowEvent(e)) return;
         if (ViewModel.SelectedArticle is not null)
         {
             RememberListViewport();
