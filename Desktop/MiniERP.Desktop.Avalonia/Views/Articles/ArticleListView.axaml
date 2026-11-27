@@ -73,7 +73,7 @@
                 GridLinesVisibility="All"
                 HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid"
                 HorizontalGridLinesBrush="{DynamicResource ErpBorderBrush}"
-                VerticalGridLinesBrush="{DynamicResource ErpBorderBrush}"
+                VerticalGridLinesBrush="Transparent"
                 RowBackground="{DynamicResource ErpSurfaceBrush}"
                 RowHeight="24"
                 IsReadOnly="True"
@@ -165,6 +165,9 @@
                     </dg:DataGridTextColumn>
                 </dg:DataGrid.Columns>
             </dg:DataGrid>
+        <infra:SelectLineColumnRules Grid.Row="1" Margin="0,4,0,0"
+                                     Target="{Binding #ArticleGrid}" LineBrush="{DynamicResource ErpBorderBrush}"
+                                     IsHitTestVisible="False" ClipToBounds="True" />
 
         <Border Grid.Row="2" Padding="6,3" Height="26" ClipToBounds="True" Background="{DynamicResource ErpStatusBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1">
             <Grid ColumnDefinitions="*,Auto">
