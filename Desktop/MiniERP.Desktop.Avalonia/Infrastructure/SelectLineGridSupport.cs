@@ -30,9 +30,14 @@ public static class SelectLineGridSupport
 {
     public static void SyncColumnWidths(Grid layout, DataGrid grid)
     {
-        // Diagnostic escape hatch: isolate custom width synchronization from
-        // Avalonia's native DataGrid layout without changing the document views.
-        if (Environment.GetEnvironmentVariable("MINIERP_DISABLE_COLUMN_WIDTH_SYNC") == "1")
+        // Windows can hang while applying custom DataGrid column widths at
+        // certain maximized window sizes (confirmed by the diagnostic bypass).
+        // Keep Avalonia's native column sizing by default on Windows until the
+        // synchronization can be replaced and verified on a real Windows host.
+        // The explicit opt-in is for developer diagnostics only.
+        if (Environment.GetEnvironmentVariable("MINIERP_DISABLE_COLUMN_WIDTH_SYNC") == "1"
+            || (OperatingSystem.IsWindows()
+                && Environment.GetEnvironmentVariable("MINIERP_ENABLE_COLUMN_WIDTH_SYNC") != "1"))
             return;
 
         if (grid.Columns.Count != layout.ColumnDefinitions.Count)
