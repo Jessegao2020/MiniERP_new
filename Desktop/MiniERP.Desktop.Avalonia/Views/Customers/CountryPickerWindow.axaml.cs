@@ -270,13 +270,14 @@ public partial class CountryPickerWindow : Window
 
     private readonly ObservableCollection<CountryOption> _countries = new();
     private readonly SelectLineSortState _sortState = new();
+    private string _codeFilter = string.Empty;
+    private string _nameFilter = string.Empty;
 
     public CountryPickerWindow(string? currentCode = null)
     {
         InitializeComponent();
         CountryGrid.ItemsSource = _countries;
         ApplyFilter();
-        Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Loaded);
 
         if (!string.IsNullOrWhiteSpace(currentCode))
         {
@@ -295,12 +296,19 @@ public partial class CountryPickerWindow : Window
         }
     }
 
-    private void Filter_TextChanged(object? sender, TextChangedEventArgs e) => ApplyFilter();
+    private void Filter_TextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (sender is not TextBox box) return;
+        if (box.Tag is "Code") _codeFilter = box.Text?.Trim() ?? string.Empty;
+        else if (box.Tag is "Name") _nameFilter = box.Text?.Trim() ?? string.Empty;
+        else return;
+        ApplyFilter();
+    }
 
     private void ApplyFilter()
     {
-        var codeFilter = CodeFilterTextBox.Text?.Trim() ?? string.Empty;
-        var nameFilter = NameFilterTextBox.Text?.Trim() ?? string.Empty;
+        var codeFilter = _codeFilter;
+        var nameFilter = _nameFilter;
 
         _countries.Clear();
         foreach (var country in AllCountries
@@ -315,13 +323,13 @@ public partial class CountryPickerWindow : Window
         ApplySort();
     }
 
-    private void SortHeader_Tapped(object? sender, TappedEventArgs e)
+    private void Grid_Sorting(object? sender, DataGridColumnEventArgs e)
     {
-        if (sender is not Border border || border.Tag is not string field) return;
+        e.Handled = true;
+        if (SelectLineGridSupport.GetSortField(e.Column) is not string field) return;
         _sortState.Toggle(field);
         ApplySort();
-        CodeSortArrow.Text = _sortState.Arrow("Code");
-        NameSortArrow.Text = _sortState.Arrow("Name");
+        SelectLineGridSupport.UpdateSortIndicators(CountryGrid, _sortState.Arrow);
     }
 
     private void ApplySort()
@@ -330,19 +338,13 @@ public partial class CountryPickerWindow : Window
             SelectLineGridSupport.SortInPlace(_countries, field, _sortState.Ascending);
     }
 
-    private void TableLayout_SizeChanged(object? sender, SizeChangedEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void ColumnSplitter_DragDelta(object? sender, VectorEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void SyncDataGridColumnWidths()
-        => SelectLineGridSupport.SyncColumnWidths(CountryTableLayout, CountryGrid);
-
     private void Grid_LoadingRow(object? sender, DataGridRowEventArgs e)
         => SelectLineGridSupport.ApplyAlternateRow(e);
 
-    private void CountryGrid_DoubleTapped(object? sender, TappedEventArgs e) => CloseSelected();
+    private void CountryGrid_DoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (SelectLineGridSupport.IsDataRowEvent(e)) CloseSelected();
+    }
     private void Ok_Click(object? sender, RoutedEventArgs e) => CloseSelected();
     private void Cancel_Click(object? sender, RoutedEventArgs e) => Close(null);
 
