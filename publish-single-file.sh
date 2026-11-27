@@ -29,6 +29,8 @@ for rid in "${targets[@]}"; do
         --self-contained true \
         -p:PublishSingleFile=true \
         -p:IncludeNativeLibrariesForSelfExtract=true \
+        -p:PublishReadyToRun=true \
+        -p:PublishReadyToRunComposite=true \
         -p:PublishTrimmed=false \
         -p:DebugType=None \
         -p:DebugSymbols=false \
