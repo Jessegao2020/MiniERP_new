@@ -23,7 +23,6 @@ public partial class CustomerListView : UserControl
         {
             await ViewModel.LoadAsync();
             ApplySort();
-            Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Loaded);
         };
     }
 
@@ -84,9 +83,10 @@ public partial class CustomerListView : UserControl
         ApplySort();
     }
 
-    private void SortHeader_Tapped(object? sender, TappedEventArgs e)
+    private void Grid_Sorting(object? sender, DataGridColumnEventArgs e)
     {
-        if (sender is not Border border || border.Tag is not string field)
+        e.Handled = true;
+        if (SelectLineGridSupport.GetSortField(e.Column) is not string field)
             return;
 
         _sortState.Toggle(field);
@@ -101,29 +101,14 @@ public partial class CustomerListView : UserControl
     }
 
     private void UpdateSortIndicators()
-    {
-        NameSortArrow.Text = _sortState.Arrow("Name");
-        AddressSortArrow.Text = _sortState.Arrow("AddressLine1");
-        CitySortArrow.Text = _sortState.Arrow("City");
-        StateSortArrow.Text = _sortState.Arrow("State");
-        PostalSortArrow.Text = _sortState.Arrow("PostalCode");
-        CountrySortArrow.Text = _sortState.Arrow("Country");
-    }
-
-    private void TableLayout_SizeChanged(object? sender, SizeChangedEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void ColumnSplitter_DragDelta(object? sender, VectorEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void SyncDataGridColumnWidths()
-        => SelectLineGridSupport.SyncColumnWidths(CustomerTableLayout, CustomerGrid);
+        => SelectLineGridSupport.UpdateSortIndicators(CustomerGrid, _sortState.Arrow);
 
     private void Grid_LoadingRow(object? sender, DataGridRowEventArgs e)
         => SelectLineGridSupport.ApplyAlternateRow(e);
 
     private void CustomerGrid_DoubleTapped(object? sender, TappedEventArgs e)
     {
+        if (!SelectLineGridSupport.IsDataRowEvent(e)) return;
         if (ViewModel.SelectedCustomer is not null)
             OpenCustomerRequested?.Invoke(ViewModel.SelectedCustomer);
     }
