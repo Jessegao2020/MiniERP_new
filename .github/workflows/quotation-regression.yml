@@ -1,0 +1,41 @@
+name: Quotation Regression
+
+on:
+  push:
+    branches:
+      - master
+      - 'feature/**'
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quotation-regression:
+    name: Quotation regression (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Pure quotation business rules
+        run: dotnet run --project tests/MiniERP.QuotationSmoke -c Release
+
+      - name: Real SQLite quotation integration
+        run: dotnet run --project tests/MiniERP.QuotationIntegration -c Release
+
+      - name: Avalonia desktop build
+        run: dotnet build Desktop/MiniERP.Desktop.Avalonia -c Release
+
+      - name: Read-only MCP server build
+        run: dotnet build Infrastructure/MiniERP.McpServer -c Release
