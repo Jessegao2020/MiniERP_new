@@ -24,7 +24,6 @@ public partial class ArticlePickerWindow : Window
         _currentArticleId = currentArticleId;
         ArticleGrid.ItemsSource = _visibleArticles;
         ApplyFilters();
-        Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Loaded);
     }
 
     private void Filter_TextChanged(object? sender, TextChangedEventArgs e)
@@ -64,16 +63,13 @@ public partial class ArticlePickerWindow : Window
         StatusText.Text = _filters.Count == 0 ? $"{_visibleArticles.Count} article(s)" : $"{_visibleArticles.Count} of {_allArticles.Count} article(s)";
     }
 
-    private void SortHeader_Tapped(object? sender, TappedEventArgs e)
+    private void Grid_Sorting(object? sender, DataGridColumnEventArgs e)
     {
-        if (sender is not Border border || border.Tag is not string field) return;
+        e.Handled = true;
+        if (SelectLineGridSupport.GetSortField(e.Column) is not string field) return;
         _sortState.Toggle(field);
         ApplySort();
-        NameSortArrow.Text = _sortState.Arrow("Name");
-        NameEnSortArrow.Text = _sortState.Arrow("Name_EN");
-        PriceSortArrow.Text = _sortState.Arrow("Price");
-        DescriptionSortArrow.Text = _sortState.Arrow("Description_EN");
-        CategorySortArrow.Text = _sortState.Arrow("Category");
+        SelectLineGridSupport.UpdateSortIndicators(ArticleGrid, _sortState.Arrow);
     }
 
     private void ApplySort()
@@ -81,15 +77,6 @@ public partial class ArticlePickerWindow : Window
         if (_sortState.Field is { } field)
             SelectLineGridSupport.SortInPlace(_visibleArticles, field, _sortState.Ascending);
     }
-
-    private void TableLayout_SizeChanged(object? sender, SizeChangedEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void ColumnSplitter_DragDelta(object? sender, VectorEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void SyncDataGridColumnWidths()
-        => SelectLineGridSupport.SyncColumnWidths(ArticleTableLayout, ArticleGrid);
 
     private void Grid_LoadingRow(object? sender, DataGridRowEventArgs e)
         => SelectLineGridSupport.ApplyAlternateRow(e);
@@ -100,7 +87,10 @@ public partial class ArticlePickerWindow : Window
     private static bool Matches(string? value, string filter)
         => (value ?? string.Empty).Contains(filter, StringComparison.OrdinalIgnoreCase);
 
-    private void ArticleGrid_DoubleTapped(object? sender, TappedEventArgs e) => CloseSelected();
+    private void ArticleGrid_DoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (SelectLineGridSupport.IsDataRowEvent(e)) CloseSelected();
+    }
     private void Ok_Click(object? sender, RoutedEventArgs e) => CloseSelected();
     private void Cancel_Click(object? sender, RoutedEventArgs e) => Close(null);
     private void CloseSelected()
