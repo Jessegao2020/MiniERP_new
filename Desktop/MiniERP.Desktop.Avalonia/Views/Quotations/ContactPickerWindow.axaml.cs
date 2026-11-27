@@ -23,7 +23,6 @@ public partial class ContactPickerWindow : Window
         _currentContactId = currentContactId;
         ContactGrid.ItemsSource = _visibleContacts;
         ApplyFilters();
-        Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Loaded);
     }
 
     private void Filter_TextChanged(object? sender, TextChangedEventArgs e)
@@ -60,13 +59,13 @@ public partial class ContactPickerWindow : Window
         StatusText.Text = _filters.Count == 0 ? $"{_visibleContacts.Count} contact(s)" : $"{_visibleContacts.Count} of {_allContacts.Count} contact(s)";
     }
 
-    private void SortHeader_Tapped(object? sender, TappedEventArgs e)
+    private void Grid_Sorting(object? sender, DataGridColumnEventArgs e)
     {
-        if (sender is not Border border || border.Tag is not string field) return;
+        e.Handled = true;
+        if (SelectLineGridSupport.GetSortField(e.Column) is not string field) return;
         _sortState.Toggle(field);
         ApplySort();
-        TitleSortArrow.Text = _sortState.Arrow("Title");
-        NameSortArrow.Text = _sortState.Arrow("Name");
+        SelectLineGridSupport.UpdateSortIndicators(ContactGrid, _sortState.Arrow);
     }
 
     private void ApplySort()
@@ -75,22 +74,16 @@ public partial class ContactPickerWindow : Window
             SelectLineGridSupport.SortInPlace(_visibleContacts, field, _sortState.Ascending);
     }
 
-    private void TableLayout_SizeChanged(object? sender, SizeChangedEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void ColumnSplitter_DragDelta(object? sender, VectorEventArgs e)
-        => Dispatcher.UIThread.Post(SyncDataGridColumnWidths, DispatcherPriority.Render);
-
-    private void SyncDataGridColumnWidths()
-        => SelectLineGridSupport.SyncColumnWidths(ContactTableLayout, ContactGrid);
-
     private void Grid_LoadingRow(object? sender, DataGridRowEventArgs e)
         => SelectLineGridSupport.ApplyAlternateRow(e);
 
     private static bool Matches(string? value, string filter)
         => (value ?? string.Empty).Contains(filter, StringComparison.OrdinalIgnoreCase);
 
-    private void ContactGrid_DoubleTapped(object? sender, TappedEventArgs e) => CloseSelected();
+    private void ContactGrid_DoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (SelectLineGridSupport.IsDataRowEvent(e)) CloseSelected();
+    }
     private void Ok_Click(object? sender, RoutedEventArgs e) => CloseSelected();
     private void Cancel_Click(object? sender, RoutedEventArgs e) => Close(null);
     private void CloseSelected()
