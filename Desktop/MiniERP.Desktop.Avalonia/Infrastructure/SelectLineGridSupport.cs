@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Reflection;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 
 namespace MiniERP.Desktop.Infrastructure;
 
@@ -28,39 +31,32 @@ public sealed class SelectLineSortState
 
 public static class SelectLineGridSupport
 {
-    public static void SyncColumnWidths(Grid layout, DataGrid grid)
+    // Headers, filter inputs and data cells all belong to the same native
+    // DataGrid column. Never write column widths from a layout callback.
+    public static string? GetSortField(DataGridColumn column)
+        => FindTitle(column)?.Tag as string;
+
+    public static void UpdateSortIndicators(DataGrid grid, Func<string, string> arrowForField)
     {
-        // Windows can hang while applying custom DataGrid column widths at
-        // certain maximized window sizes (confirmed by the diagnostic bypass).
-        // Keep Avalonia's native column sizing by default on Windows until the
-        // synchronization can be replaced and verified on a real Windows host.
-        // The explicit opt-in is for developer diagnostics only.
-        if (Environment.GetEnvironmentVariable("MINIERP_DISABLE_COLUMN_WIDTH_SYNC") == "1"
-            || (OperatingSystem.IsWindows()
-                && Environment.GetEnvironmentVariable("MINIERP_ENABLE_COLUMN_WIDTH_SYNC") != "1"))
-            return;
-
-        if (grid.Columns.Count != layout.ColumnDefinitions.Count)
-            return;
-
-        for (var i = 0; i < grid.Columns.Count; i++)
+        foreach (var column in grid.Columns)
         {
-            var width = layout.ColumnDefinitions[i].ActualWidth;
-            if (!double.IsFinite(width) || width <= 0)
+            if (FindTitle(column) is not { Tag: string field, Child: Grid title })
                 continue;
 
-            var column = grid.Columns[i];
-            var current = column.Width;
-
-            // Avoid invalidating the DataGrid layout for unchanged widths or
-            // insignificant floating-point jitter during DPI-dependent layout.
-            // Always convert star/auto widths on the first synchronization.
-            if (current.IsAbsolute && Math.Abs(current.Value - width) < 0.1)
-                continue;
-
-            column.Width = new DataGridLength(width);
+            var arrow = title.Children.OfType<TextBlock>()
+                .FirstOrDefault(text => text.Classes.Contains("grid-sort-arrow"));
+            if (arrow is not null)
+                arrow.Text = arrowForField(field);
         }
     }
+
+    private static Border? FindTitle(DataGridColumn column)
+        => (column.Header as Grid)?.Children.OfType<Border>()
+            .FirstOrDefault(border => border.Classes.Contains("grid-header"));
+
+    public static bool IsDataRowEvent(RoutedEventArgs e)
+        => e.Source is Visual source
+            && (source is DataGridRow || source.GetVisualAncestors().OfType<DataGridRow>().Any());
 
     public static void ApplyAlternateRow(DataGridRowEventArgs e)
     {
