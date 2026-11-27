@@ -55,6 +55,20 @@
                     <x:Double x:Key="TextControlPlaceholderOpacity">0.85</x:Double>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
+            <!-- Native filtered column headers: no separate width calculations. -->
+            <ControlTheme x:Key="SelectLineFilterColumnHeader" TargetType="DataGridColumnHeader">
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <Border Background="{TemplateBinding Background}" ClipToBounds="True">
+                            <ContentPresenter x:Name="PART_ContentPresenter"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                              HorizontalContentAlignment="Stretch"
+                                              VerticalContentAlignment="Stretch" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter>
+            </ControlTheme>
         </ResourceDictionary>
     </Application.Resources>
 
@@ -200,7 +214,7 @@
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
         </Style>
 
-        <!-- Default ERP table skin. Views that need an integrated filter row provide their own external header/filter, while every DataGrid shares the same thin SelectLine look. -->
+        <!-- Default ERP table skin. Filtered lists use native two-row column headers, while every DataGrid shares the same thin SelectLine look. -->
         <Style Selector="DataGrid">
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
             <Setter Property="Background" Value="{DynamicResource ErpSurfaceBrush}" />
@@ -224,6 +238,14 @@
         </Style>
         <Style Selector="DataGrid DataGridColumnHeader:pointerover">
             <Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" />
+        </Style>
+        <Style Selector="DataGrid.selectline-filter-grid DataGridColumnHeader">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Height" Value="46" />
+            <Setter Property="MinHeight" Value="46" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
         </Style>
         <Style Selector="DataGrid DataGridCell">
             <Setter Property="Foreground" Value="{DynamicResource ErpTextBrush}" />
