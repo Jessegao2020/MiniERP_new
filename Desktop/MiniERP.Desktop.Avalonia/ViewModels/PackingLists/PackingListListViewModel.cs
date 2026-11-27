@@ -74,6 +74,9 @@ public sealed class PackingListListViewModel : INotifyPropertyChanged
                 "User" => Matches(p.SalesContactNameSnapshot ?? p.User?.Name, pair.Value),
                 "Date" => Matches(p.PackingDate.ToString("yyyy-MM-dd"), pair.Value),
                 "PO" => Matches(p.CustomerPoNumber, pair.Value),
+                "TotalCartons" => Matches(p.TotalCartons.ToString(), pair.Value),
+                "TotalGrossWeight" => Matches(p.TotalGrossWeight.ToString("0.###"), pair.Value),
+                "TotalCbm" => Matches(p.TotalCbm.ToString("0.####"), pair.Value),
                 "Source" => Matches(p.SourceDocumentNumber, pair.Value),
                 _ => true
             });
