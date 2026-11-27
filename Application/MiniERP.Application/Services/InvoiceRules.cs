@@ -23,6 +23,12 @@ public static class InvoiceRules
             DeliveryTerm = policy.DeliveryTerm, PaymentTerm = policy.PaymentTerm
         };
 
+    // Zero is a valid unused rate for a CNY document. Never replace a rate
+    // snapshot on a populated document just because settings have changed.
+    public static decimal ResolveExchangeRate(Invoice invoice, decimal currentRate)
+        => invoice.Items.Count > 0 || invoice.ExchangeRate > 0m
+            ? invoice.ExchangeRate : currentRate;
+
     public static void ApplyDraftDefaults(Invoice invoice, InvoicePolicy policy)
     {
         if (string.IsNullOrWhiteSpace(invoice.DeliveryTerm)) invoice.DeliveryTerm = policy.DeliveryTerm;

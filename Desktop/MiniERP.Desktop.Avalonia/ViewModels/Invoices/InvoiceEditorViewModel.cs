@@ -134,7 +134,7 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
 
         Invoice.Type = type;
         _currency = string.IsNullOrWhiteSpace(Invoice.Currency) ? "USD" : Invoice.Currency.ToUpperInvariant();
-        ExchangeRateSnapshot = Invoice.ExchangeRate > 0 ? Invoice.ExchangeRate : currentRate;
+        ExchangeRateSnapshot = InvoiceRules.ResolveExchangeRate(Invoice, currentRate);
         Invoice.Currency = _currency;
         Invoice.ExchangeRate = ExchangeRateSnapshot;
         InvoiceDate = new DateTimeOffset(Invoice.InvoiceDate);

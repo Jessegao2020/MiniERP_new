@@ -33,13 +33,14 @@ public sealed class InvoiceWorkflow : IInvoiceWorkflow
         if (previous is not null && request.Type != previous.Type)
             throw new InvalidOperationException("Use conversion to change document type.");
         var invoice = previous is null
-            ? InvoiceRules.CreateDraft(request.Type, request.Date ?? DateTime.Now, _policy)
+            ? InvoiceRules.CreateDraft(request.Type, DateTime.Now, _policy)
             : InvoiceRules.Clone(previous);
         var customer = await RequireCustomerAsync(request.CustomerId);
         var user = await RequireUserAsync(request.UserId);
         var contact = ResolveContact(customer, request.ContactId);
         invoice.InvoiceNumber = request.Number?.Trim() ?? invoice.InvoiceNumber;
         invoice.InvoiceDate = request.Date ?? invoice.InvoiceDate;
+        invoice.ExchangeRate = InvoiceRules.ResolveExchangeRate(invoice, _policy.CnyPerUsd ?? 0m);
         invoice.DueDate = request.DueDate;
         invoice.Currency = request.Currency is null ? invoice.Currency : QuotationRules.NormalizeCurrency(request.Currency);
         invoice.DeliveryTerm = previous is null ? request.DeliveryTerm ?? invoice.DeliveryTerm : request.DeliveryTerm;
