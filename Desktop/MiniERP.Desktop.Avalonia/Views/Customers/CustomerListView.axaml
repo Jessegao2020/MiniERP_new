@@ -41,7 +41,7 @@
             </Button>
         </StackPanel>
 
-        <dg:DataGrid x:Name="CustomerGrid" Grid.Row="1" Margin="0,4,0,0" AutoGenerateColumns="False" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1" CanUserResizeColumns="True" CanUserReorderColumns="False" CanUserSortColumns="True" Sorting="Grid_Sorting" FontSize="12" GridLinesVisibility="All" HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid" HorizontalGridLinesBrush="{DynamicResource ErpBorderBrush}" VerticalGridLinesBrush="{DynamicResource ErpBorderBrush}" RowBackground="{DynamicResource ErpSurfaceBrush}" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" DoubleTapped="CustomerGrid_DoubleTapped">
+        <dg:DataGrid x:Name="CustomerGrid" Grid.Row="1" Margin="0,4,0,0" AutoGenerateColumns="False" Background="{DynamicResource ErpSurfaceBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1" CanUserResizeColumns="True" CanUserReorderColumns="False" CanUserSortColumns="True" Sorting="Grid_Sorting" FontSize="12" GridLinesVisibility="All" HeadersVisibility="Column" ColumnHeaderHeight="46" ColumnHeaderTheme="{StaticResource SelectLineFilterColumnHeader}" Classes="selectline-filter-grid" HorizontalGridLinesBrush="{DynamicResource ErpBorderBrush}" VerticalGridLinesBrush="Transparent" RowBackground="{DynamicResource ErpSurfaceBrush}" RowHeight="24" IsReadOnly="True" SelectionMode="Single" LoadingRow="Grid_LoadingRow" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" DoubleTapped="CustomerGrid_DoubleTapped">
                 <dg:DataGrid.Styles>
                     <Style Selector="DataGridCell"><Setter Property="Padding" Value="5,2" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
                     <Style Selector="DataGridRow.alternate"><Setter Property="Background" Value="{DynamicResource ErpAlternateBrush}" /></Style>
@@ -104,6 +104,9 @@
                     </dg:DataGridTextColumn>
                 </dg:DataGrid.Columns>
             </dg:DataGrid>
+        <infra:SelectLineColumnRules Grid.Row="1" Margin="0,4,0,0"
+                                     Target="{Binding #CustomerGrid}" LineBrush="{DynamicResource ErpBorderBrush}"
+                                     IsHitTestVisible="False" ClipToBounds="True" />
 
         <Border Grid.Row="2" Padding="6,3" Height="26" ClipToBounds="True" Background="{DynamicResource ErpStatusBrush}" BorderBrush="{DynamicResource ErpBorderBrush}" BorderThickness="1"><Grid ColumnDefinitions="*,Auto"><infra:StatusMessageTextBlock Text="{Binding Status}" Opacity="0" IsHitTestVisible="False" /><TextBlock Grid.Column="1" Foreground="{DynamicResource ErpFooterAccentBrush}" Text="Double-click a row to edit" /></Grid></Border>
     </Grid>
