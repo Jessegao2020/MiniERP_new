@@ -38,6 +38,8 @@ namespace MiniERP.Infrastructure
             services.AddSingleton(new QuotationPolicy());
             services.AddScoped<IQuotationWorkflow, QuotationWorkflow>();
             services.AddScoped<IInvoiceService, InvoiceService>();
+            services.AddSingleton(new InvoicePolicy());
+            services.AddScoped<IInvoiceWorkflow, InvoiceWorkflow>();
             services.AddScoped<IPackingListService, PackingListService>();
             services.AddScoped<IContractService, ContractService>();
             services.AddScoped<ISalesDocumentCopyService, SalesDocumentCopyService>();

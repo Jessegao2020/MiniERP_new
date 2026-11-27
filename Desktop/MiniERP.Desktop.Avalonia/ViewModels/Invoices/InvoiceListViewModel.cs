@@ -60,8 +60,8 @@ public sealed class InvoiceListViewModel : INotifyPropertyChanged
         {
             var id = SelectedInvoice.Id;
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
-            await service.DeleteInvoiceAsync(id);
+            var workflow = scope.ServiceProvider.GetRequiredService<IInvoiceWorkflow>();
+            await workflow.DeleteAsync(id);
             await LoadAsync();
             Status = $"{DocumentTitle} deleted.";
         }

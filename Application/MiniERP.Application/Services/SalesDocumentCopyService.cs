@@ -7,15 +7,17 @@ public sealed class SalesDocumentCopyService : ISalesDocumentCopyService
     private readonly IQuotationService _quotations;
     private readonly IInvoiceService _invoices;
     private readonly IContractService _contracts;
+    private readonly InvoicePolicy _invoicePolicy;
 
     public SalesDocumentCopyService(
         IQuotationService quotations,
         IInvoiceService invoices,
-        IContractService contracts)
+        IContractService contracts, InvoicePolicy? invoicePolicy = null)
     {
         _quotations = quotations;
         _invoices = invoices;
         _contracts = contracts;
+        _invoicePolicy = invoicePolicy ?? new InvoicePolicy();
     }
 
     public async Task<Invoice> CreateInvoiceFromQuotationAsync(int quotationId, InvoiceType targetType)
@@ -391,8 +393,8 @@ public sealed class SalesDocumentCopyService : ISalesDocumentCopyService
             ? DocumentSourceType.ProformaInvoice
             : DocumentSourceType.CommercialInvoice;
 
-    private static string NewInvoiceNumber(InvoiceType type)
-        => $"{(type == InvoiceType.Proforma ? "PI" : "INV")}-{DateTime.Now:yyyyMMdd-HHmmssfff}";
+    private string NewInvoiceNumber(InvoiceType type)
+        => InvoiceRules.NewNumber(type, DateTime.Now, _invoicePolicy);
 
     private static string NewPackingListNumber()
         => $"PL-{DateTime.Now:yyyyMMdd-HHmmssfff}";

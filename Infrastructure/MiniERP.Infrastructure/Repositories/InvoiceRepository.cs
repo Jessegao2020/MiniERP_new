@@ -30,8 +30,13 @@ public sealed class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
             ?? throw new InvalidOperationException($"Invoice {invoice.Id} no longer exists.");
 
         CopyHeader(invoice, existing);
-        SyncItems(invoice, existing);
+        var inserted = SyncItems(invoice, existing);
         await _context.SaveChangesAsync();
+        foreach (var (incoming, stored) in inserted)
+        {
+            incoming.Id = stored.Id;
+            incoming.InvoiceId = stored.InvoiceId;
+        }
     }
 
     public override async Task DeleteAsync(int id)
@@ -59,8 +64,9 @@ public sealed class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
     private IQueryable<Invoice> Query()
         => _dbSet.AsNoTracking().Include(i => i.Customer).Include(i => i.User).Include(i => i.Items);
 
-    private void SyncItems(Invoice source, Invoice target)
+    private List<(InvoiceItem Incoming, InvoiceItem Stored)> SyncItems(Invoice source, Invoice target)
     {
+        var inserted = new List<(InvoiceItem Incoming, InvoiceItem Stored)>();
         var incoming = source.Items.ToList();
         var incomingIds = incoming.Where(i => i.Id > 0).Select(i => i.Id).ToHashSet();
 
@@ -72,12 +78,15 @@ public sealed class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
             var tracked = item.Id > 0 ? target.Items.FirstOrDefault(i => i.Id == item.Id) : null;
             if (tracked is null)
             {
-                target.Items.Add(CloneItem(item));
+                var stored = CloneItem(item);
+                target.Items.Add(stored);
+                inserted.Add((item, stored));
                 continue;
             }
             CopyItem(item, tracked);
             tracked.LastModifiedAt = DateTime.Now;
         }
+        return inserted;
     }
 
     private static void CopyHeader(Invoice source, Invoice target)

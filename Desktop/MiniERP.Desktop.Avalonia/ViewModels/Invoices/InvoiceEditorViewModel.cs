@@ -56,11 +56,11 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
         get => _currency;
         set
         {
-            var normalized = string.IsNullOrWhiteSpace(value) ? "USD" : value.Trim().ToUpperInvariant();
+            var normalized = QuotationRules.NormalizeCurrency(value);
             if (_currency == normalized) return;
-            if (Items.Count > 0)
+            if (!InvoiceRules.TryChangeCurrency(normalized, Items.Count, out var error))
             {
-                Status = "Remove invoice items before changing currency.";
+                Status = error;
                 OnPropertyChanged();
                 return;
             }
@@ -125,30 +125,12 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
     {
         _settings = settings;
         IsNew = source is null || source.Id == 0;
-        var currentRate = settings.Current.CnyPerUsd ?? 0m;
-
+        var policy = settings.GetInvoicePolicy();
+        var currentRate = policy.CnyPerUsd ?? 0m;
         Invoice = source is null
-            ? new Invoice
-            {
-                Type = type,
-                InvoiceNumber = $"{(type == InvoiceType.Proforma ? "PI" : "INV")}-{DateTime.Now:yyyyMMdd-HHmmssfff}",
-                InvoiceDate = DateTime.Now,
-                DeliveryTerm = "FCA Baoding",
-                PaymentTerm = "100% prepayment",
-                Currency = "USD",
-                ExchangeRate = currentRate
-            }
-            : Clone(source);
-
-        // Converted new documents can arrive with empty terms; apply defaults
-        // only when the document is new and the source supplied no value.
-        if (IsNew)
-        {
-            if (string.IsNullOrWhiteSpace(Invoice.DeliveryTerm))
-                Invoice.DeliveryTerm = "FCA Baoding";
-            if (string.IsNullOrWhiteSpace(Invoice.PaymentTerm))
-                Invoice.PaymentTerm = "100% prepayment";
-        }
+            ? InvoiceRules.CreateDraft(type, DateTime.Now, policy)
+            : InvoiceRules.Clone(source);
+        if (IsNew) InvoiceRules.ApplyDraftDefaults(Invoice, policy);
 
         Invoice.Type = type;
         _currency = string.IsNullOrWhiteSpace(Invoice.Currency) ? "USD" : Invoice.Currency.ToUpperInvariant();
@@ -202,13 +184,12 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
     public void AddSelectedArticle()
     {
         if (SelectedArticle is null) { Status = "Select an Article first."; return; }
-        if (SelectedArticle.Price is null) { Status = $"Article '{SelectedArticle.Name}' does not have a CNY price."; return; }
-        if (Currency == "USD" && ExchangeRateSnapshot <= 0) { Status = "Set the USD exchange rate in Settings > System first."; return; }
-
-        var unitPrice = Currency == "USD"
-            ? decimal.Round(SelectedArticle.Price.Value / ExchangeRateSnapshot, 2, MidpointRounding.AwayFromZero)
-            : SelectedArticle.Price.Value;
-        var row = new InvoiceItemRowViewModel(SelectedArticle, Currency, ExchangeRateSnapshot, unitPrice);
+        if (!InvoiceRules.TryGetArticleUnitPrice(SelectedArticle, Currency, ExchangeRateSnapshot, out var price, out var error))
+        {
+            Status = error;
+            return;
+        }
+        var row = new InvoiceItemRowViewModel(InvoiceRules.CreateItemSnapshot(SelectedArticle, Currency, ExchangeRateSnapshot, price));
         AddRow(row);
         SelectedItem = row;
         Status = $"Added '{row.ArticleName}'.";
@@ -245,11 +226,13 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
         try
         {
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
-            var sameNumber = await service.GetInvoiceByNumberAsync(Invoice.InvoiceNumber);
-            if (sameNumber is not null && sameNumber.Id != Invoice.Id) { Status = "Document number already exists."; return false; }
-            if (IsNew) { await service.CreateInvoiceAsync(Invoice); IsNew = false; }
-            else await service.UpdateInvoiceAsync(Invoice);
+            var workflow = scope.ServiceProvider.GetRequiredService<IInvoiceWorkflow>();
+            var error = await workflow.SavePreparedAsync(Invoice, IsNew, SelectedCustomerContact?.Id);
+            if (error is not null) { Status = error; return false; }
+            IsNew = false;
+            var savedItems = Invoice.Items.OrderBy(item => item.SortOrder).ToList();
+            for (var index = 0; index < Items.Count; index++)
+                Items[index].AcceptSavedIdentity(savedItems[index].Id);
             Status = "Saved.";
             return true;
         }
@@ -262,8 +245,8 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
         try
         {
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
-            await service.DeleteInvoiceAsync(Invoice.Id);
+            var workflow = scope.ServiceProvider.GetRequiredService<IInvoiceWorkflow>();
+            await workflow.DeleteAsync(Invoice.Id);
             Status = "Deleted.";
             return true;
         }
@@ -274,57 +257,14 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
 
     private bool TryPrepareDocument(bool requireItems)
     {
-        if (string.IsNullOrWhiteSpace(Invoice.InvoiceNumber)) { Status = "Document number is required."; return false; }
-        if (SelectedCustomer is null) { Status = "Customer is required."; return false; }
-        if (SelectedUser is null) { Status = "User is required."; return false; }
-        if (InvoiceDate is null) { Status = "Date is required."; return false; }
-        if (requireItems && Items.Count == 0) { Status = "Add at least one item before exporting PDF."; return false; }
-        if (Currency == "USD" && Items.Count > 0 && ExchangeRateSnapshot <= 0) { Status = "A valid USD exchange-rate snapshot is required."; return false; }
-
-        foreach (var item in Items)
-        {
-            if (!item.TryValidate(out var error)) { SelectedItem = item; Status = error; return false; }
-        }
-
-        var customerChanged = Invoice.CustomerId != 0 && Invoice.CustomerId != SelectedCustomer.Id;
-        var userChanged = Invoice.UserId != 0 && Invoice.UserId != SelectedUser.Id;
-
-        Invoice.InvoiceNumber = Invoice.InvoiceNumber.Trim();
-        Invoice.InvoiceDate = InvoiceDate.Value.DateTime;
-        Invoice.DueDate = DueDate?.DateTime;
-        Invoice.CustomerPoDate = CustomerPoDate?.DateTime;
-        Invoice.Currency = Currency;
-        Invoice.ExchangeRate = ExchangeRateSnapshot;
-
-        // A converted document already carries the source document's historical snapshot.
-        // Preserve it unless the user deliberately switches the referenced customer/user.
-        if (customerChanged || string.IsNullOrWhiteSpace(Invoice.CustomerNameSnapshot))
-        {
-            Invoice.CustomerNameSnapshot = SelectedCustomer.Name.Trim();
-            Invoice.CustomerAddressSnapshot = BuildCustomerAddress(SelectedCustomer);
-            Invoice.CustomerContactSnapshot = SelectedCustomerContact is null ? null : BuildContactName(SelectedCustomerContact);
-        }
-        else if (SelectedCustomerContact is not null)
-        {
-            var selectedContact = BuildContactName(SelectedCustomerContact);
-            if (string.IsNullOrWhiteSpace(Invoice.CustomerContactSnapshot) ||
-                !string.Equals(selectedContact, Invoice.CustomerContactSnapshot, StringComparison.OrdinalIgnoreCase))
-                Invoice.CustomerContactSnapshot = selectedContact;
-        }
-
-        if (userChanged || string.IsNullOrWhiteSpace(Invoice.SalesContactNameSnapshot))
-        {
-            Invoice.SalesContactNameSnapshot = SelectedUser.Name.Trim();
-            Invoice.SalesContactPhoneSnapshot = SelectedUser.Phone;
-            Invoice.SalesContactEmailSnapshot = SelectedUser.Email;
-        }
-
-        Invoice.CustomerId = SelectedCustomer.Id;
-        Invoice.UserId = SelectedUser.Id;
-        Invoice.Customer = null;
-        Invoice.User = null;
-        Invoice.Items = Items.Select((item, index) => item.ToEntity(index)).ToList();
-        return true;
+        if (InvoiceRules.TryPrepare(Invoice, requireItems, SelectedCustomer, SelectedUser,
+            SelectedCustomerContact, InvoiceDate?.DateTime, DueDate?.DateTime, CustomerPoDate?.DateTime,
+            Currency, ExchangeRateSnapshot, Items.Select((item, index) => item.ToEntity(index)).ToList(),
+            out var error, out var invalidIndex))
+            return true;
+        if (invalidIndex >= 0) SelectedItem = Items[invalidIndex];
+        Status = error;
+        return false;
     }
 
     private void RefreshCustomerContacts()
@@ -334,7 +274,7 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
         if (SelectedCustomer is null) return;
         foreach (var contact in SelectedCustomer.Contacts.OrderBy(c => c.Name)) CustomerContacts.Add(contact);
         if (SelectedCustomer.Id == Invoice.CustomerId && !string.IsNullOrWhiteSpace(Invoice.CustomerContactSnapshot))
-            SelectedCustomerContact = CustomerContacts.FirstOrDefault(c => string.Equals(BuildContactName(c), Invoice.CustomerContactSnapshot, StringComparison.OrdinalIgnoreCase));
+            SelectedCustomerContact = CustomerContacts.FirstOrDefault(c => string.Equals(InvoiceRules.BuildContactName(c), Invoice.CustomerContactSnapshot, StringComparison.OrdinalIgnoreCase));
         if (IsNew && Invoice.SourceDocumentType == DocumentSourceType.None && SelectedCustomerContact is null && CustomerContacts.Count == 1)
             SelectedCustomerContact = CustomerContacts[0];
     }
@@ -348,67 +288,6 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
 
     private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e) => NotifyTotals();
     private void NotifyTotals() { OnPropertyChanged(nameof(TotalAmount)); OnPropertyChanged(nameof(TotalText)); }
-
-    private static string BuildCustomerAddress(Customer customer)
-    {
-        var lines = new List<string>();
-        if (!string.IsNullOrWhiteSpace(customer.AddressLine1)) lines.Add(customer.AddressLine1.Trim());
-        if (!string.IsNullOrWhiteSpace(customer.AddressLine2)) lines.Add(customer.AddressLine2.Trim());
-        var cityLine = string.Join(" ", new[] { customer.PostalCode, customer.City, customer.State }.Where(v => !string.IsNullOrWhiteSpace(v)).Select(v => v!.Trim()));
-        if (!string.IsNullOrWhiteSpace(cityLine)) lines.Add(cityLine);
-        if (!string.IsNullOrWhiteSpace(customer.Country)) lines.Add(customer.Country.Trim());
-        return string.Join(Environment.NewLine, lines);
-    }
-
-    private static string BuildContactName(CustomerContact contact)
-        => string.IsNullOrWhiteSpace(contact.Title) ? contact.Name.Trim() : $"{contact.Title.Trim()} {contact.Name.Trim()}";
-
-    private static Invoice Clone(Invoice source) => new()
-    {
-        Id = source.Id,
-        Type = source.Type,
-        InvoiceNumber = source.InvoiceNumber,
-        InvoiceDate = source.InvoiceDate,
-        DueDate = source.DueDate,
-        CustomerId = source.CustomerId,
-        UserId = source.UserId,
-        Currency = source.Currency,
-        ExchangeRate = source.ExchangeRate,
-        DeliveryTerm = source.DeliveryTerm,
-        PaymentTerm = source.PaymentTerm,
-        BankInformation = source.BankInformation,
-        Remarks = source.Remarks,
-        CustomerPoNumber = source.CustomerPoNumber,
-        CustomerPoDate = source.CustomerPoDate,
-        CustomerNameSnapshot = source.CustomerNameSnapshot,
-        CustomerAddressSnapshot = source.CustomerAddressSnapshot,
-        CustomerContactSnapshot = source.CustomerContactSnapshot,
-        SalesContactNameSnapshot = source.SalesContactNameSnapshot,
-        SalesContactPhoneSnapshot = source.SalesContactPhoneSnapshot,
-        SalesContactEmailSnapshot = source.SalesContactEmailSnapshot,
-        SourceDocumentType = source.SourceDocumentType,
-        SourceDocumentId = source.SourceDocumentId,
-        SourceDocumentNumber = source.SourceDocumentNumber,
-        CreatedBy = source.CreatedBy,
-        CreatedAt = source.CreatedAt,
-        LastModifiedBy = source.LastModifiedBy,
-        LastModifiedAt = source.LastModifiedAt,
-        Items = source.Items.Select(i => new InvoiceItem
-        {
-            Id = i.Id,
-            SortOrder = i.SortOrder,
-            SourceArticleId = i.SourceArticleId,
-            ArticleName = i.ArticleName,
-            Description = i.Description,
-            Specification = i.Specification,
-            Quantity = i.Quantity,
-            Unit = i.Unit,
-            UnitPrice = i.UnitPrice,
-            DiscountPercent = i.DiscountPercent,
-            Currency = i.Currency,
-            ExchangeRateSnapshot = i.ExchangeRateSnapshot
-        }).ToList()
-    };
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

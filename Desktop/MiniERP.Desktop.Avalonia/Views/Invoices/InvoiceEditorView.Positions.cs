@@ -13,6 +13,7 @@ using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Invoices;
 using MiniERP.Desktop.Views.Quotations;
 using MiniERP.Domain;
+using MiniERP.ApplicationLayer.Services;
 
 namespace MiniERP.Desktop.Views.Invoices;
 
@@ -242,23 +243,10 @@ public partial class InvoiceEditorView
 
     private bool TryGetArticleUnitPrice(Article article, out decimal unitPrice)
     {
-        unitPrice = 0m;
-        if (article.Price is null)
-        {
-            ViewModel.SetStatusMessage($"Article '{article.Name}' does not have a CNY price.");
-            return false;
-        }
-        if (ViewModel.Currency == "USD" && ViewModel.ExchangeRateSnapshot <= 0m)
-        {
-            ViewModel.SetStatusMessage("Set the USD exchange rate in Settings > System first.");
-            return false;
-        }
-
-        unitPrice = ViewModel.Currency == "USD"
-            ? decimal.Round(article.Price.Value / ViewModel.ExchangeRateSnapshot, 2,
-                MidpointRounding.AwayFromZero)
-            : article.Price.Value;
-        return true;
+        if (InvoiceRules.TryGetArticleUnitPrice(article, ViewModel.Currency, ViewModel.ExchangeRateSnapshot, out unitPrice, out var error))
+            return true;
+        ViewModel.SetStatusMessage(error);
+        return false;
     }
 
     private void PositionEditor_TextChanged(object? sender, TextChangedEventArgs e)
@@ -300,8 +288,7 @@ public partial class InvoiceEditorView
             && TryParsePositionDecimal(PositionUnitPriceTextBox.Text, out var price)
             && TryParsePositionDecimal(PositionDiscountTextBox.Text, out var discount))
         {
-            var amount = decimal.Round(qty * price * (1m - discount / 100m),
-                2, MidpointRounding.AwayFromZero);
+            var amount = SalesLineAmounts.Calculate(qty, price, discount);
             PositionAmountText.Text = amount.ToString("N2", CultureInfo.InvariantCulture);
         }
         else
@@ -364,12 +351,12 @@ public partial class InvoiceEditorView
         if (_loadingPositionEditor)
             return;
 
-        var isValid = !string.IsNullOrWhiteSpace(ArticleAutoComplete.Text)
-            && !string.IsNullOrWhiteSpace(PositionUnitTextBox.Text)
-            && TryParsePositionDecimal(PositionQtyTextBox.Text, out var qty) && qty > 0
-            && TryParsePositionDecimal(PositionUnitPriceTextBox.Text, out var price) && price >= 0
-            && TryParsePositionDecimal(PositionDiscountTextBox.Text, out var discount)
-            && discount is >= 0 and <= 100;
+        var quantityValid = TryParsePositionDecimal(PositionQtyTextBox.Text, out var qty);
+        var priceValid = TryParsePositionDecimal(PositionUnitPriceTextBox.Text, out var price);
+        var discountValid = TryParsePositionDecimal(PositionDiscountTextBox.Text, out var discount);
+        var isValid = InvoiceRules.TryValidatePosition(ArticleAutoComplete.Text ?? string.Empty,
+            quantityValid ? qty : null, PositionUnitTextBox.Text ?? string.Empty,
+            priceValid ? price : null, discountValid ? discount : null, out _);
 
         PositionSaveButton.IsEnabled = isValid
             && (_editingPosition is null || !PositionMatchesCurrent());
@@ -512,29 +499,13 @@ public partial class InvoiceEditorView
         var unit = (PositionUnitTextBox.Text ?? string.Empty).Trim();
         var description = PositionDescriptionTextBox.Text;
 
-        if (string.IsNullOrWhiteSpace(name))
+        var quantityValid = TryParsePositionDecimal(PositionQtyTextBox.Text, out var qty);
+        var priceValid = TryParsePositionDecimal(PositionUnitPriceTextBox.Text, out var price);
+        var discountValid = TryParsePositionDecimal(PositionDiscountTextBox.Text, out var discount);
+        if (!InvoiceRules.TryValidatePosition(name, quantityValid ? qty : null, unit,
+            priceValid ? price : null, discountValid ? discount : null, out var error))
         {
-            ViewModel.SetStatusMessage("Article name is required.");
-            return;
-        }
-        if (!TryParsePositionDecimal(PositionQtyTextBox.Text, out var qty) || qty <= 0)
-        {
-            ViewModel.SetStatusMessage("Quantity must be greater than zero.");
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(unit))
-        {
-            ViewModel.SetStatusMessage("Unit is required.");
-            return;
-        }
-        if (!TryParsePositionDecimal(PositionUnitPriceTextBox.Text, out var price) || price < 0)
-        {
-            ViewModel.SetStatusMessage("Unit price must be a non-negative number.");
-            return;
-        }
-        if (!TryParsePositionDecimal(PositionDiscountTextBox.Text, out var discount) || discount is < 0 or > 100)
-        {
-            ViewModel.SetStatusMessage("Discount must be between 0 and 100%.");
+            ViewModel.SetStatusMessage(error);
             return;
         }
 
