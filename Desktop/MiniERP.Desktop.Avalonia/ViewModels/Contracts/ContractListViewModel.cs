@@ -77,6 +77,7 @@ public sealed class ContractListViewModel : INotifyPropertyChanged
                 "Date" => Matches(c.ContractDate.ToString("yyyy-MM-dd"), pair.Value),
                 "PO" => Matches(c.CustomerPoNumber, pair.Value),
                 "Currency" => Matches(c.Currency, pair.Value),
+                "TotalAmount" => Matches(c.TotalAmount.ToString("N2"), pair.Value) || Matches(c.TotalAmount.ToString("0.00"), pair.Value),
                 "Source" => Matches(c.SourceDocumentNumber, pair.Value),
                 _ => true
             });
