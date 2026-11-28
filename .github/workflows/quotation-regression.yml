@@ -37,6 +37,9 @@ jobs:
       - name: PI and commercial invoice SQLite integration
         run: dotnet run --project tests/MiniERP.InvoiceIntegration -c Release
 
+      - name: Contract SQLite integration
+        run: dotnet run --project tests/MiniERP.ContractIntegration -c Release
+
       - name: Avalonia desktop build
         run: dotnet build Desktop/MiniERP.Desktop.Avalonia -c Release
 
