@@ -57,6 +57,9 @@ public partial class QuotationEditorView : UserControl
         var settings = App.Services.GetRequiredService<AppSettingsService>();
         DataContext = new QuotationEditorViewModel(quotation, settings);
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        CurrencySelector.ItemsSource = ViewModel.Currencies;
+        CurrencySelector.SelectedItem = ViewModel.Currency;
+        CurrencySelector.SelectionChanged += CurrencySelector_SelectionChanged;
 
         // Use the DataGrid's narrow row-header area as the sequence-number column.
         // Each header binds to PositionNumber, so reordering keeps the visible numbers
@@ -96,6 +99,54 @@ public partial class QuotationEditorView : UserControl
             ViewModel.ExchangeRateSnapshot,
             Items = ViewModel.Items.ToArray()
         });
+
+    private bool _currencyChangeInProgress;
+
+    private async void CurrencySelector_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_currencyChangeInProgress || DataContext is not QuotationEditorViewModel vm ||
+            CurrencySelector.SelectedItem is not string target || target == vm.Currency) return;
+        _currencyChangeInProgress = true;
+        try
+        {
+            // Keep the displayed selection unchanged while the decision is pending.
+            CurrencySelector.SelectedItem = vm.Currency;
+            CurrencySelector.IsEnabled = false;
+            if (!EnsurePositionEditApplied()) return;
+            using var scope = App.Services.CreateScope();
+            var guard = scope.ServiceProvider.GetRequiredService<IDocumentCurrencyGuard>();
+            if (!vm.IsNew && await guard.HasDownstreamAsync(DocumentSourceType.Quotation, vm.Quotation.Id))
+            {
+                vm.SetStatusMessage("Cannot change currency: this document has downstream sales documents. Create a new document or revision instead.");
+                return;
+            }
+            var lines = vm.GetCurrencyConversionLines();
+            var rate = vm.CurrencyConversionRate;
+            CurrencyConversionPlan? plan;
+            if (lines.Count == 0)
+            {
+                if (!CurrencyConversionService.TryPlan(vm.Currency, target, rate,
+                    CurrencyConversionMode.ConvertExistingPrices, lines, Array.Empty<Article>(), out plan, out var error))
+                { vm.SetStatusMessage(error); return; }
+            }
+            else
+            {
+                // Fresh catalog values are needed only for the optional catalog mode.
+                var catalog = (await scope.ServiceProvider.GetRequiredService<IArticleService>().GetAllArticlesAsync()).ToList();
+                plan = await CurrencyConversionDialog.ShowAsync(this, vm.Currency, target, rate, lines, catalog, !vm.IsNew);
+            }
+            if (plan is null) return;
+            vm.ApplyCurrencyConversion(plan);
+            if (_editingPosition is not null) LoadPositionEditor(_editingPosition);
+        }
+        catch (Exception ex) { vm.SetStatusMessage($"Currency change failed: {ex.Message}"); }
+        finally
+        {
+            CurrencySelector.SelectedItem = vm.Currency;
+            CurrencySelector.IsEnabled = true;
+            _currencyChangeInProgress = false;
+        }
+    }
 
     private void GridView_Click(object? sender, RoutedEventArgs e)
         => RequestClose?.Invoke(this, EventArgs.Empty);

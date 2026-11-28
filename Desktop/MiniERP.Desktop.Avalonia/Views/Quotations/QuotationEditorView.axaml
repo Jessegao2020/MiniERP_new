@@ -139,7 +139,7 @@
                                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Lead Time" />
                                 <ComboBox Grid.Row="1" Grid.Column="1" Width="280" MinWidth="280" MaxWidth="280" HorizontalAlignment="Left" IsEditable="True" Text="{Binding Quotation.LeadTime, Mode=TwoWay}" ItemsSource="{Binding LeadTimeOptions}" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" Classes="field-label" Text="Currency" />
-                                <ComboBox Grid.Row="1" Grid.Column="3" Width="130" HorizontalAlignment="Left" ItemsSource="{Binding Currencies}" SelectedItem="{Binding Currency, Mode=TwoWay}" />
+                                <ComboBox Grid.Row="1" Grid.Column="3" Width="130" HorizontalAlignment="Left" x:Name="CurrencySelector" ItemsSource="{Binding Currencies}" />
 
                                 <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="Rate Snapshot" />
                                 <TextBox Grid.Row="2" Grid.Column="1" IsReadOnly="True" Text="{Binding ExchangeRateDisplay}" />

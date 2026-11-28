@@ -6,6 +6,7 @@ using MiniERP.Desktop.Infrastructure;
 using MiniERP.Desktop.ViewModels.Invoices;
 using MiniERP.Desktop.Views.Quotations;
 using MiniERP.Domain;
+using MiniERP.ApplicationLayer.Services;
 
 namespace MiniERP.Desktop.Views.Invoices;
 
@@ -31,6 +32,9 @@ public partial class InvoiceEditorView : UserControl
         var settings = App.Services.GetRequiredService<AppSettingsService>();
         DataContext = new InvoiceEditorViewModel(invoice, type, settings);
         CreateCommercialButton.IsVisible = type == InvoiceType.Proforma;
+        CurrencySelector.ItemsSource = ViewModel.Currencies;
+        CurrencySelector.SelectedItem = ViewModel.Currency;
+        CurrencySelector.SelectionChanged += CurrencySelector_SelectionChanged;
         InitializePositionEditor();
 
         var saveButton = EditorWorkflowSupport.AddGridViewToggle(this, GridView_Click);
@@ -64,6 +68,54 @@ public partial class InvoiceEditorView : UserControl
             ViewModel.ExchangeRateSnapshot,
             Items = ViewModel.Items.ToArray()
         });
+
+    private bool _currencyChangeInProgress;
+
+    private async void CurrencySelector_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_currencyChangeInProgress || DataContext is not InvoiceEditorViewModel vm ||
+            CurrencySelector.SelectedItem is not string target || target == vm.Currency) return;
+        _currencyChangeInProgress = true;
+        try
+        {
+            // Keep the displayed selection unchanged while the decision is pending.
+            CurrencySelector.SelectedItem = vm.Currency;
+            CurrencySelector.IsEnabled = false;
+            if (!EnsurePositionEditorCommitted()) return;
+            using var scope = App.Services.CreateScope();
+            var guard = scope.ServiceProvider.GetRequiredService<IDocumentCurrencyGuard>();
+            if (!vm.IsNew && await guard.HasDownstreamAsync(ViewModel.Invoice.Type == InvoiceType.Proforma ? DocumentSourceType.ProformaInvoice : DocumentSourceType.CommercialInvoice, vm.Invoice.Id))
+            {
+                vm.SetStatusMessage("Cannot change currency: this document has downstream sales documents. Create a new document or revision instead.");
+                return;
+            }
+            var lines = vm.GetCurrencyConversionLines();
+            var rate = vm.CurrencyConversionRate;
+            CurrencyConversionPlan? plan;
+            if (lines.Count == 0)
+            {
+                if (!CurrencyConversionService.TryPlan(vm.Currency, target, rate,
+                    CurrencyConversionMode.ConvertExistingPrices, lines, Array.Empty<Article>(), out plan, out var error))
+                { vm.SetStatusMessage(error); return; }
+            }
+            else
+            {
+                // Fresh catalog values are needed only for the optional catalog mode.
+                var catalog = (await scope.ServiceProvider.GetRequiredService<IArticleService>().GetAllArticlesAsync()).ToList();
+                plan = await CurrencyConversionDialog.ShowAsync(this, vm.Currency, target, rate, lines, catalog, !vm.IsNew);
+            }
+            if (plan is null) return;
+            vm.ApplyCurrencyConversion(plan);
+            if (_editingPosition is not null) LoadPositionEditor(_editingPosition);
+        }
+        catch (Exception ex) { vm.SetStatusMessage($"Currency change failed: {ex.Message}"); }
+        finally
+        {
+            CurrencySelector.SelectedItem = vm.Currency;
+            CurrencySelector.IsEnabled = true;
+            _currencyChangeInProgress = false;
+        }
+    }
 
     private void GridView_Click(object? sender, RoutedEventArgs e)
         => RequestClose?.Invoke(this, EventArgs.Empty);

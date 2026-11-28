@@ -22,8 +22,17 @@ public sealed class InvoiceItemRowViewModel : INotifyPropertyChanged
     public int? SourceArticleId { get; private set; }
 
     public void SetSourceArticle(int? sourceArticleId) => SourceArticleId = sourceArticleId;
-    public string Currency { get; }
-    public decimal ExchangeRateSnapshot { get; }
+    public string Currency { get; private set; }
+    public decimal ExchangeRateSnapshot { get; private set; }
+
+    public void Reprice(string currency, decimal rate, decimal price)
+    {
+        Currency = currency;
+        ExchangeRateSnapshot = rate;
+        UnitPriceText = ToText(price);
+        OnPropertyChanged(nameof(Currency));
+        OnPropertyChanged(nameof(ExchangeRateSnapshot));
+    }
 
     public string ArticleName { get => _articleName; set => SetField(ref _articleName, value ?? string.Empty); }
     public string? Description { get => _description; set => SetField(ref _description, value); }

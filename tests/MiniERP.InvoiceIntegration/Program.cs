@@ -111,7 +111,7 @@ try
     var repeated = await WithInvoice(w => w.UpdateAsync(id, repeat));
     Check(repeated.Items.Select(i => i.Id).SequenceEqual(new[] { firstId, addedId }), "stable line IDs across repeated saves");
     await Reject("type change", () => WithInvoice(w => w.UpdateAsync(id, repeat with { Type = InvoiceType.Commercial })), "conversion");
-    await Reject("currency change with lines", () => WithInvoice(w => w.UpdateAsync(id, repeat with { Currency = "CNY" })), "Remove invoice items");
+    await Reject("currency change without explicit prices", () => WithInvoice(w => w.UpdateAsync(id, repeat with { Currency = "CNY" })), "explicit unit price");
     await Reject("duplicate line ID", () => WithInvoice(w => w.UpdateAsync(id, repeat with { Items = new[] { repeat.Items[0], repeat.Items[0] } })), "duplicate");
 
     // Actual quotation -> PI -> commercial invoice chain. Conversion must use

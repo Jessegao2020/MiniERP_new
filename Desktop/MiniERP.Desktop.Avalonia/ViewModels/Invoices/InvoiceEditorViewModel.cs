@@ -51,24 +51,36 @@ public sealed class InvoiceEditorViewModel : INotifyPropertyChanged
         }
     }
 
-    public string Currency
+    public string Currency => _currency;
+
+    public decimal CurrencyConversionRate => CurrencyConversionService.ResolveRate(
+        ExchangeRateSnapshot, _settings.Current.CnyPerUsd ?? 0m);
+
+    public IReadOnlyList<CurrencyConversionLine> GetCurrencyConversionLines()
+        => Items.Select((row, index) => CurrencyConversionService.From(row.ToEntity(index))).ToList();
+
+    public void ApplyCurrencyConversion(CurrencyConversionPlan plan)
     {
-        get => _currency;
-        set
+        if (plan.SourceCurrency != Currency || plan.Lines.Count != Items.Count)
+            throw new InvalidOperationException("Currency conversion preview is no longer current.");
+        for (var index = 0; index < Items.Count; index++)
         {
-            var normalized = QuotationRules.NormalizeCurrency(value);
-            if (_currency == normalized) return;
-            if (!InvoiceRules.TryChangeCurrency(normalized, Items.Count, out var error))
-            {
-                Status = error;
-                OnPropertyChanged();
-                return;
-            }
-            _currency = normalized;
-            Invoice.Currency = normalized;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(TotalText));
+            var line = Items[index];
+            var preview = plan.Lines[index];
+            if (line.ArticleName != preview.Name || line.UnitPrice != preview.OldUnitPrice ||
+                line.Quantity != preview.Quantity || line.DiscountPercent != preview.DiscountPercent)
+                throw new InvalidOperationException("Currency conversion preview is no longer current.");
         }
+        // Only mutate once every line has been checked.
+        for (var index = 0; index < Items.Count; index++)
+            Items[index].Reprice(plan.TargetCurrency, plan.Rate, plan.Lines[index].NewUnitPrice);
+        _currency = plan.TargetCurrency;
+        ExchangeRateSnapshot = plan.Rate;
+        Invoice.Currency = _currency;
+        Invoice.ExchangeRate = plan.Rate;
+        OnPropertyChanged(nameof(Currency));
+        NotifyTotals();
+        Status = $"Currency changed to {_currency}. Save to persist the change.";
     }
 
     public string ExchangeRateDisplay => ExchangeRateSnapshot > 0 ? $"1 USD = {ExchangeRateSnapshot:0.####} CNY" : "Not configured";

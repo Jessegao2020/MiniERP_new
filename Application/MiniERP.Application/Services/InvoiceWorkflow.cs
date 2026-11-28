@@ -49,8 +49,8 @@ public sealed class InvoiceWorkflow : IInvoiceWorkflow
         invoice.Remarks = request.Remarks;
         invoice.CustomerPoNumber = request.CustomerPoNumber;
         invoice.CustomerPoDate = request.CustomerPoDate;
-        if (previous is not null && invoice.Currency != previous.Currency && previous.Items.Count > 0)
-            throw new InvalidOperationException("Remove invoice items before changing currency.");
+        // Existing lines require explicit target-currency prices on a DTO currency
+        // change. Desktop applies a confirmed shared conversion plan before saving.
         var items = await BuildItemsAsync(request.Items, invoice, previous);
         if (!InvoiceRules.TryPrepare(invoice, false, customer, user, contact, invoice.InvoiceDate, invoice.DueDate,
             invoice.CustomerPoDate, invoice.Currency, invoice.ExchangeRate, items, out var error, out _))

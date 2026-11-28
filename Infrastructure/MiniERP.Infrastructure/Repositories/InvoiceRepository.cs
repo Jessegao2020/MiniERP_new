@@ -29,6 +29,12 @@ public sealed class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
         var existing = await _dbSet.Include(i => i.Items).FirstOrDefaultAsync(i => i.Id == invoice.Id)
             ?? throw new InvalidOperationException($"Invoice {invoice.Id} no longer exists.");
 
+        if (existing.Currency != invoice.Currency &&
+            await new DocumentCurrencyGuard(_context).HasDownstreamAsync(
+                existing.Type == InvoiceType.Proforma ? DocumentSourceType.ProformaInvoice : DocumentSourceType.CommercialInvoice,
+                invoice.Id))
+            throw new InvalidOperationException("Cannot change currency: this invoice has downstream sales documents.");
+
         CopyHeader(invoice, existing);
         var inserted = SyncItems(invoice, existing);
         await _context.SaveChangesAsync();

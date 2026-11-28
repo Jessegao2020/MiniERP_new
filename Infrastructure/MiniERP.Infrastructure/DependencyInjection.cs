@@ -23,6 +23,7 @@ namespace MiniERP.Infrastructure
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IQuotationRepository, QuotationRepository>();
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+            services.AddScoped<IDocumentCurrencyGuard, DocumentCurrencyGuard>();
             services.AddScoped<IPackingListRepository, PackingListRepository>();
             services.AddScoped<IContractRepository, ContractRepository>();
             services.AddScoped<IUserRepository, UserRepository>();

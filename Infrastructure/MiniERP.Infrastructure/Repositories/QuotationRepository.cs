@@ -36,6 +36,10 @@ namespace MiniERP.Infrastructure.Repositories
             var existing = await _dbSet.Include(item => item.Items).FirstOrDefaultAsync(item => item.Id == quotation.Id)
                 ?? throw new InvalidOperationException($"Quotation {quotation.Id} no longer exists.");
 
+            if (existing.Currency != quotation.Currency &&
+                await new DocumentCurrencyGuard(_context).HasDownstreamAsync(DocumentSourceType.Quotation, quotation.Id))
+                throw new InvalidOperationException("Cannot change currency: this quotation has downstream sales documents.");
+
             existing.QuotationNumber = quotation.QuotationNumber;
             existing.CustomerId = quotation.CustomerId;
             existing.UserId = quotation.UserId;

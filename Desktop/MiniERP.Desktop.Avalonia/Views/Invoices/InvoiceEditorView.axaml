@@ -142,7 +142,7 @@
                     <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Payment Term" />
                     <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding Invoice.PaymentTerm, Mode=TwoWay}" />
                     <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Currency" />
-                    <ComboBox Grid.Row="2" Grid.Column="1" Width="120" HorizontalAlignment="Left" ItemsSource="{Binding Currencies}" SelectedItem="{Binding Currency, Mode=TwoWay}" />
+                    <ComboBox Grid.Row="2" Grid.Column="1" Width="120" HorizontalAlignment="Left" x:Name="CurrencySelector" ItemsSource="{Binding Currencies}" />
                     <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="Rate Snapshot" />
                     <TextBox Grid.Row="2" Grid.Column="3" IsReadOnly="True" Text="{Binding ExchangeRateDisplay}" />
 </Grid>
