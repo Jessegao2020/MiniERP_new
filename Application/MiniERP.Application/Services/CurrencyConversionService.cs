@@ -79,6 +79,9 @@ public static class CurrencyConversionService
     public static CurrencyConversionLine From(QuotationItem line)
         => new(line.ArticleName, line.SourceArticleId, line.Quantity, line.Unit, line.UnitPrice,
             line.DiscountPercent, line.Currency, line.ExchangeRateSnapshot);
+    public static CurrencyConversionLine From(ContractItem line)
+        => new(line.ArticleName, line.SourceArticleId, line.Quantity, line.Unit, line.UnitPrice,
+            line.DiscountPercent, line.Currency, line.ExchangeRateSnapshot);
     public static CurrencyConversionLine From(InvoiceItem line)
         => new(line.ArticleName, line.SourceArticleId, line.Quantity, line.Unit, line.UnitPrice,
             line.DiscountPercent, line.Currency, line.ExchangeRateSnapshot);

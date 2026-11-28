@@ -26,9 +26,18 @@ public sealed class ContractRepository : Repository<Contract>, IContractReposito
         var existing = await _dbSet.Include(c => c.Items).FirstOrDefaultAsync(c => c.Id == contract.Id)
             ?? throw new InvalidOperationException($"Contract {contract.Id} no longer exists.");
 
+        if (existing.Currency != contract.Currency &&
+            await new DocumentCurrencyGuard(_context).HasDownstreamAsync(DocumentSourceType.Contract, contract.Id))
+            throw new InvalidOperationException("Cannot change currency: this contract has downstream sales documents.");
+
         CopyHeader(contract, existing);
-        SyncItems(contract, existing);
+        var inserted = SyncItems(contract, existing);
         await _context.SaveChangesAsync();
+        foreach (var (incoming, stored) in inserted)
+        {
+            incoming.Id = stored.Id;
+            incoming.ContractId = stored.ContractId;
+        }
     }
 
     public override async Task DeleteAsync(int id)
@@ -48,8 +57,9 @@ public sealed class ContractRepository : Repository<Contract>, IContractReposito
     private IQueryable<Contract> Query()
         => _dbSet.AsNoTracking().Include(c => c.Customer).Include(c => c.User).Include(c => c.Items);
 
-    private void SyncItems(Contract source, Contract target)
+    private List<(ContractItem Incoming, ContractItem Stored)> SyncItems(Contract source, Contract target)
     {
+        var inserted = new List<(ContractItem Incoming, ContractItem Stored)>();
         var incoming = source.Items.ToList();
         var incomingIds = incoming.Where(i => i.Id > 0).Select(i => i.Id).ToHashSet();
 
@@ -61,13 +71,16 @@ public sealed class ContractRepository : Repository<Contract>, IContractReposito
             var tracked = item.Id > 0 ? target.Items.FirstOrDefault(i => i.Id == item.Id) : null;
             if (tracked is null)
             {
-                target.Items.Add(CloneItem(item));
+                var stored = CloneItem(item);
+                target.Items.Add(stored);
+                inserted.Add((item, stored));
                 continue;
             }
 
             CopyItem(item, tracked);
             tracked.LastModifiedAt = DateTime.Now;
         }
+        return inserted;
     }
 
     private static void CopyHeader(Contract source, Contract target)

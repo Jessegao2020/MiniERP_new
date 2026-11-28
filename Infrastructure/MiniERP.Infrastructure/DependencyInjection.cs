@@ -43,6 +43,8 @@ namespace MiniERP.Infrastructure
             services.AddScoped<IInvoiceWorkflow, InvoiceWorkflow>();
             services.AddScoped<IPackingListService, PackingListService>();
             services.AddScoped<IContractService, ContractService>();
+            services.AddSingleton(new ContractPolicy());
+            services.AddScoped<IContractWorkflow, ContractWorkflow>();
             services.AddScoped<ISalesDocumentCopyService, SalesDocumentCopyService>();
             services.AddScoped<IUserService, UserService>();
 

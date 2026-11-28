@@ -76,6 +76,7 @@ public partial class App : Application
         services.AddSingleton(new AppSettingsService(AppDataPaths.GetSettingsPath()));
         services.AddScoped<QuotationPolicy>(sp => sp.GetRequiredService<AppSettingsService>().GetQuotationPolicy());
         services.AddScoped<InvoicePolicy>(sp => sp.GetRequiredService<AppSettingsService>().GetInvoicePolicy());
+        services.AddScoped<ContractPolicy>(sp => sp.GetRequiredService<AppSettingsService>().GetContractPolicy());
 
         Services = services.BuildServiceProvider();
         using var scope = Services.CreateScope();

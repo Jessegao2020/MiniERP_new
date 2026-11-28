@@ -21,5 +21,5 @@ public class ContractItem : AuditableEntity
 
     [NotMapped]
     public decimal LineTotal
-        => decimal.Round(Quantity * UnitPrice * (1m - DiscountPercent / 100m), 2, MidpointRounding.AwayFromZero);
+        => SalesLineAmounts.Calculate(Quantity, UnitPrice, DiscountPercent);
 }

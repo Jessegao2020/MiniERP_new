@@ -56,8 +56,8 @@ public sealed class ContractListViewModel : INotifyPropertyChanged
         {
             var id = SelectedContract.Id;
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IContractService>();
-            await service.DeleteContractAsync(id);
+            var workflow = scope.ServiceProvider.GetRequiredService<IContractWorkflow>();
+            await workflow.DeleteAsync(id);
             await LoadAsync();
             Status = "Contract deleted.";
         }

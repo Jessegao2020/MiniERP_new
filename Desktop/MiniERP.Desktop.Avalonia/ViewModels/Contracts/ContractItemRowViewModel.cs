@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using MiniERP.Domain;
+using MiniERP.ApplicationLayer.Services;
 
 namespace MiniERP.Desktop.ViewModels.Contracts;
 
@@ -16,11 +17,21 @@ public sealed class ContractItemRowViewModel : INotifyPropertyChanged
     private string _unitPriceText;
     private string _discountText;
 
-    public int Id { get; }
+    public int Id { get; private set; }
+    internal void AcceptSavedIdentity(int id) => Id = id;
     public int? SourceArticleId { get; private set; }
     public void SetSourceArticle(int? sourceArticleId) => SourceArticleId = sourceArticleId;
-    public string Currency { get; }
-    public decimal ExchangeRateSnapshot { get; }
+    public string Currency { get; private set; }
+    public decimal ExchangeRateSnapshot { get; private set; }
+
+    public void Reprice(string currency, decimal rate, decimal price)
+    {
+        Currency = currency;
+        ExchangeRateSnapshot = rate;
+        UnitPriceText = ToText(price);
+        OnPropertyChanged(nameof(Currency));
+        OnPropertyChanged(nameof(ExchangeRateSnapshot));
+    }
 
     public string ArticleName { get => _articleName; set => SetField(ref _articleName, value ?? string.Empty); }
     public string? Description { get => _description; set => SetField(ref _description, value); }
@@ -33,7 +44,7 @@ public sealed class ContractItemRowViewModel : INotifyPropertyChanged
     public decimal Quantity => ParseDecimal(QuantityText);
     public decimal UnitPrice => ParseDecimal(UnitPriceText);
     public decimal DiscountPercent => ParseDecimal(DiscountText);
-    public decimal LineTotal => decimal.Round(Quantity * UnitPrice * (1m - DiscountPercent / 100m), 2, MidpointRounding.AwayFromZero);
+    public decimal LineTotal => SalesLineAmounts.Calculate(Quantity, UnitPrice, DiscountPercent);
 
     public ContractItemRowViewModel(ContractItem source)
     {
@@ -51,18 +62,7 @@ public sealed class ContractItemRowViewModel : INotifyPropertyChanged
     }
 
     public ContractItemRowViewModel(Article source, string currency, decimal exchangeRateSnapshot, decimal unitPrice)
-    {
-        SourceArticleId = source.Id;
-        Currency = currency;
-        ExchangeRateSnapshot = exchangeRateSnapshot;
-        _articleName = FirstNonEmpty(source.Name_EN, source.Name) ?? $"Article {source.Id}";
-        _description = source.Description_EN;
-        _specification = FirstNonEmpty(source.Specs_EN, source.Specification);
-        _quantityText = "1";
-        _unit = "PCS";
-        _unitPriceText = ToText(unitPrice);
-        _discountText = "0";
-    }
+        : this(ContractRules.CreateItemSnapshot(source, currency, exchangeRateSnapshot, unitPrice)) { }
 
     // Used by the quotation-style position editor. No master Article is required:
     // manual contract lines preserve the operator's visible text and price snapshot.
@@ -84,15 +84,7 @@ public sealed class ContractItemRowViewModel : INotifyPropertyChanged
     }
 
     public bool TryValidate(out string error)
-    {
-        if (string.IsNullOrWhiteSpace(ArticleName)) { error = "Every contract item needs an article name."; return false; }
-        if (Quantity <= 0) { error = $"Quantity for '{ArticleName}' must be greater than zero."; return false; }
-        if (string.IsNullOrWhiteSpace(Unit)) { error = $"Unit for '{ArticleName}' is required."; return false; }
-        if (UnitPrice < 0) { error = $"Unit price for '{ArticleName}' cannot be negative."; return false; }
-        if (DiscountPercent < 0 || DiscountPercent > 100) { error = $"Discount for '{ArticleName}' must be between 0 and 100%."; return false; }
-        error = string.Empty;
-        return true;
-    }
+        => ContractRules.TryValidatePosition(ArticleName, Quantity, Unit, UnitPrice, DiscountPercent, out error);
 
     public ContractItem ToEntity(int sortOrder) => new()
     {

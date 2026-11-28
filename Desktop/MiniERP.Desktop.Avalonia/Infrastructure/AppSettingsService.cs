@@ -13,6 +13,7 @@ public sealed class AppSettings
     // Optional company defaults; old settings.json files keep legacy behavior.
     public QuotationPolicy? QuotationPolicy { get; set; }
     public InvoicePolicy? InvoicePolicy { get; set; }
+    public ContractPolicy? ContractPolicy { get; set; }
 }
 
 public sealed class AppSettingsService
@@ -39,6 +40,11 @@ public sealed class AppSettingsService
         CnyPerUsd = Current.CnyPerUsd is > 0m ? Current.CnyPerUsd : null
     };
 
+    public ContractPolicy GetContractPolicy() => (Current.ContractPolicy ?? new ContractPolicy()) with
+    {
+        CnyPerUsd = Current.CnyPerUsd is > 0m ? Current.CnyPerUsd : null
+    };
+
     public Task SaveExchangeRateAsync(decimal cnyPerUsd)
         => SaveSettingsAsync(cnyPerUsd, Current.DefaultValidityDays);
 
@@ -54,6 +60,7 @@ public sealed class AppSettingsService
                 DefaultValidityDays = Current.DefaultValidityDays,
                 QuotationPolicy = Current.QuotationPolicy,
                 InvoicePolicy = Current.InvoicePolicy,
+                ContractPolicy = Current.ContractPolicy,
                 ThemeMode = normalized
             };
             await WriteSettingsAsync(updated);
@@ -96,6 +103,7 @@ public sealed class AppSettingsService
                 DefaultValidityDays = defaultValidityDays,
                 QuotationPolicy = Current.QuotationPolicy,
                 InvoicePolicy = Current.InvoicePolicy,
+                ContractPolicy = Current.ContractPolicy,
                 ThemeMode = NormalizeThemeMode(themeMode ?? Current.ThemeMode)
             };
             await WriteSettingsAsync(updated);

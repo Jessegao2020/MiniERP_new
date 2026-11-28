@@ -49,25 +49,30 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
         }
     }
 
-    public string Currency
-    {
-        get => _currency;
-        set
-        {
-            var normalized = string.IsNullOrWhiteSpace(value) ? "USD" : value.Trim().ToUpperInvariant();
-            if (_currency == normalized) return;
-            if (Items.Count > 0)
-            {
-                Status = "Remove contract items before changing currency.";
-                OnPropertyChanged();
-                return;
-            }
+    public string Currency => _currency;
 
-            _currency = normalized;
-            Contract.Currency = normalized;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(TotalText));
-        }
+    public decimal CurrencyConversionRate => CurrencyConversionService.ResolveRate(
+        ExchangeRateSnapshot, _settings.Current.CnyPerUsd ?? 0m);
+
+    public IReadOnlyList<CurrencyConversionLine> GetCurrencyConversionLines()
+        => Items.Select((row, index) => CurrencyConversionService.From(row.ToEntity(index))).ToList();
+
+    public void ApplyCurrencyConversion(CurrencyConversionPlan plan)
+    {
+        if (plan.SourceCurrency != Currency || plan.Lines.Count != Items.Count)
+            throw new InvalidOperationException("Currency conversion preview is no longer current.");
+        if (!GetCurrencyConversionLines().SequenceEqual(plan.Lines.Select(line => line.SourceLine)))
+            throw new InvalidOperationException("Currency conversion preview is no longer current.");
+        // Only mutate once every line has been checked.
+        for (var index = 0; index < Items.Count; index++)
+            Items[index].Reprice(plan.TargetCurrency, plan.Rate, plan.Lines[index].NewUnitPrice);
+        _currency = plan.TargetCurrency;
+        ExchangeRateSnapshot = plan.Rate;
+        Contract.Currency = _currency;
+        Contract.ExchangeRate = plan.Rate;
+        OnPropertyChanged(nameof(Currency));
+        NotifyTotals();
+        Status = $"Currency changed to {_currency}. Save to persist the change.";
     }
 
     public string ExchangeRateDisplay => ExchangeRateSnapshot > 0
@@ -135,35 +140,12 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
     {
         _settings = settings;
         IsNew = source is null || source.Id == 0;
-        var currentRate = settings.Current.CnyPerUsd ?? 0m;
-
-        Contract = source is null
-            ? new Contract
-            {
-                ContractNumber = $"CON-{DateTime.Now:yyyyMMdd-HHmmssfff}",
-                ContractDate = DateTime.Now,
-                DeliveryTerm = "FCA Baoding",
-                PaymentTerm = "100% prepayment",
-                LeadTime = "2 business days",
-                Currency = "USD",
-                ExchangeRate = currentRate
-            }
-            : Clone(source);
-
-        // Converted new documents can arrive with empty terms; apply defaults
-        // only when the document is new and the source supplied no value.
-        if (IsNew)
-        {
-            if (string.IsNullOrWhiteSpace(Contract.DeliveryTerm))
-                Contract.DeliveryTerm = "FCA Baoding";
-            if (string.IsNullOrWhiteSpace(Contract.PaymentTerm))
-                Contract.PaymentTerm = "100% prepayment";
-            if (string.IsNullOrWhiteSpace(Contract.LeadTime))
-                Contract.LeadTime = "2 business days";
-        }
-
-        _currency = string.IsNullOrWhiteSpace(Contract.Currency) ? "USD" : Contract.Currency.ToUpperInvariant();
-        ExchangeRateSnapshot = Contract.ExchangeRate > 0 ? Contract.ExchangeRate : currentRate;
+        var policy = settings.GetContractPolicy();
+        var currentRate = policy.CnyPerUsd ?? 0m;
+        Contract = source is null ? ContractRules.CreateDraft(DateTime.Now, policy) : ContractRules.Clone(source);
+        if (IsNew) ContractRules.ApplyDraftDefaults(Contract, policy);
+        _currency = QuotationRules.NormalizeCurrency(Contract.Currency);
+        ExchangeRateSnapshot = ContractRules.ResolveExchangeRate(Contract, currentRate);
         Contract.Currency = _currency;
         Contract.ExchangeRate = ExchangeRateSnapshot;
         ContractDate = new DateTimeOffset(Contract.ContractDate);
@@ -221,14 +203,9 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
     public void AddSelectedArticle()
     {
         if (SelectedArticle is null) { Status = "Select an Article first."; return; }
-        if (SelectedArticle.Price is null) { Status = $"Article '{SelectedArticle.Name}' does not have a CNY price."; return; }
-        if (Currency == "USD" && ExchangeRateSnapshot <= 0) { Status = "Set the USD exchange rate in Settings > System first."; return; }
-
-        var unitPrice = Currency == "USD"
-            ? decimal.Round(SelectedArticle.Price.Value / ExchangeRateSnapshot, 2, MidpointRounding.AwayFromZero)
-            : SelectedArticle.Price.Value;
-
-        var row = new ContractItemRowViewModel(SelectedArticle, Currency, ExchangeRateSnapshot, unitPrice);
+        if (!ContractRules.TryGetArticleUnitPrice(SelectedArticle, Currency, ExchangeRateSnapshot, out var price, out var error))
+        { Status = error; return; }
+        var row = new ContractItemRowViewModel(ContractRules.CreateItemSnapshot(SelectedArticle, Currency, ExchangeRateSnapshot, price));
         AddRow(row);
         SelectedItem = row;
         Status = $"Added '{row.ArticleName}'.";
@@ -265,19 +242,13 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
         try
         {
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IContractService>();
-            var sameNumber = await service.GetContractByNumberAsync(Contract.ContractNumber);
-            if (sameNumber is not null && sameNumber.Id != Contract.Id) { Status = "Contract number already exists."; return false; }
-
-            if (IsNew)
-            {
-                await service.CreateContractAsync(Contract);
-                IsNew = false;
-            }
-            else
-            {
-                await service.UpdateContractAsync(Contract);
-            }
+            var workflow = scope.ServiceProvider.GetRequiredService<IContractWorkflow>();
+            var error = await workflow.SavePreparedAsync(Contract, IsNew, SelectedCustomerContact?.Id);
+            if (error is not null) { Status = error; return false; }
+            IsNew = false;
+            var savedItems = Contract.Items.OrderBy(item => item.SortOrder).ToList();
+            for (var index = 0; index < Items.Count; index++)
+                Items[index].AcceptSavedIdentity(savedItems[index].Id);
 
             Status = "Saved.";
             return true;
@@ -291,8 +262,8 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
         try
         {
             using var scope = App.Services.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IContractService>();
-            await service.DeleteContractAsync(Contract.Id);
+            var workflow = scope.ServiceProvider.GetRequiredService<IContractWorkflow>();
+            await workflow.DeleteAsync(Contract.Id);
             Status = "Deleted.";
             return true;
         }
@@ -303,51 +274,14 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
 
     private bool TryPrepareDocument(bool requireItems)
     {
-        if (string.IsNullOrWhiteSpace(Contract.ContractNumber)) { Status = "Contract number is required."; return false; }
-        if (SelectedCustomer is null) { Status = "Customer is required."; return false; }
-        if (SelectedUser is null) { Status = "User is required."; return false; }
-        if (ContractDate is null) { Status = "Contract date is required."; return false; }
-        if (requireItems && Items.Count == 0) { Status = "Add at least one item before exporting PDF."; return false; }
-        if (Currency == "USD" && Items.Count > 0 && ExchangeRateSnapshot <= 0) { Status = "A valid USD exchange-rate snapshot is required."; return false; }
-
-        foreach (var item in Items)
-        {
-            if (!item.TryValidate(out var error)) { SelectedItem = item; Status = error; return false; }
-        }
-
-        var customerChanged = Contract.CustomerId != 0 && Contract.CustomerId != SelectedCustomer.Id;
-        var userChanged = Contract.UserId != 0 && Contract.UserId != SelectedUser.Id;
-
-        Contract.ContractNumber = Contract.ContractNumber.Trim();
-        Contract.ContractDate = ContractDate.Value.DateTime;
-        Contract.CustomerPoDate = CustomerPoDate?.DateTime;
-        Contract.Currency = Currency;
-        Contract.ExchangeRate = ExchangeRateSnapshot;
-
-        if (customerChanged || string.IsNullOrWhiteSpace(Contract.CustomerNameSnapshot))
-        {
-            Contract.CustomerNameSnapshot = SelectedCustomer.Name.Trim();
-            Contract.CustomerAddressSnapshot = BuildCustomerAddress(SelectedCustomer);
-            Contract.CustomerContactSnapshot = SelectedCustomerContact is null ? null : BuildContactName(SelectedCustomerContact);
-        }
-        else if (Contract.SourceDocumentType == DocumentSourceType.None && SelectedCustomerContact is not null)
-        {
-            Contract.CustomerContactSnapshot = BuildContactName(SelectedCustomerContact);
-        }
-
-        if (userChanged || string.IsNullOrWhiteSpace(Contract.SalesContactNameSnapshot))
-        {
-            Contract.SalesContactNameSnapshot = SelectedUser.Name.Trim();
-            Contract.SalesContactPhoneSnapshot = SelectedUser.Phone;
-            Contract.SalesContactEmailSnapshot = SelectedUser.Email;
-        }
-
-        Contract.CustomerId = SelectedCustomer.Id;
-        Contract.UserId = SelectedUser.Id;
-        Contract.Customer = null;
-        Contract.User = null;
-        Contract.Items = Items.Select((item, index) => item.ToEntity(index)).ToList();
-        return true;
+        if (ContractRules.TryPrepare(Contract, requireItems, SelectedCustomer, SelectedUser,
+            SelectedCustomerContact, ContractDate?.DateTime, CustomerPoDate?.DateTime,
+            Currency, ExchangeRateSnapshot, Items.Select((item, index) => item.ToEntity(index)).ToList(),
+            out var error, out var invalidIndex))
+            return true;
+        if (invalidIndex >= 0) SelectedItem = Items[invalidIndex];
+        Status = error;
+        return false;
     }
 
     private void RefreshCustomerContacts()
@@ -358,7 +292,7 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
 
         foreach (var contact in SelectedCustomer.Contacts.OrderBy(c => c.Name)) CustomerContacts.Add(contact);
         if (SelectedCustomer.Id == Contract.CustomerId && !string.IsNullOrWhiteSpace(Contract.CustomerContactSnapshot))
-            SelectedCustomerContact = CustomerContacts.FirstOrDefault(c => string.Equals(BuildContactName(c), Contract.CustomerContactSnapshot, StringComparison.OrdinalIgnoreCase));
+            SelectedCustomerContact = CustomerContacts.FirstOrDefault(c => string.Equals(ContractRules.BuildContactName(c), Contract.CustomerContactSnapshot, StringComparison.OrdinalIgnoreCase));
         if (IsNew && Contract.SourceDocumentType == DocumentSourceType.None && SelectedCustomerContact is null && CustomerContacts.Count == 1)
             SelectedCustomerContact = CustomerContacts[0];
     }
@@ -372,67 +306,6 @@ public sealed class ContractEditorViewModel : INotifyPropertyChanged
 
     private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e) => NotifyTotals();
     private void NotifyTotals() { OnPropertyChanged(nameof(TotalAmount)); OnPropertyChanged(nameof(TotalText)); }
-
-    private static string BuildCustomerAddress(Customer customer)
-    {
-        var lines = new List<string>();
-        if (!string.IsNullOrWhiteSpace(customer.AddressLine1)) lines.Add(customer.AddressLine1.Trim());
-        if (!string.IsNullOrWhiteSpace(customer.AddressLine2)) lines.Add(customer.AddressLine2.Trim());
-        var cityLine = string.Join(" ", new[] { customer.PostalCode, customer.City, customer.State }.Where(v => !string.IsNullOrWhiteSpace(v)).Select(v => v!.Trim()));
-        if (!string.IsNullOrWhiteSpace(cityLine)) lines.Add(cityLine);
-        if (!string.IsNullOrWhiteSpace(customer.Country)) lines.Add(customer.Country.Trim());
-        return string.Join(Environment.NewLine, lines);
-    }
-
-    private static string BuildContactName(CustomerContact contact)
-        => string.IsNullOrWhiteSpace(contact.Title) ? contact.Name.Trim() : $"{contact.Title.Trim()} {contact.Name.Trim()}";
-
-    private static Contract Clone(Contract source) => new()
-    {
-        Id = source.Id,
-        ContractNumber = source.ContractNumber,
-        ContractDate = source.ContractDate,
-        CustomerId = source.CustomerId,
-        UserId = source.UserId,
-        Currency = source.Currency,
-        ExchangeRate = source.ExchangeRate,
-        DeliveryTerm = source.DeliveryTerm,
-        PaymentTerm = source.PaymentTerm,
-        LeadTime = source.LeadTime,
-        BankInformation = source.BankInformation,
-        Remarks = source.Remarks,
-        TermsAndConditions = source.TermsAndConditions,
-        CustomerPoNumber = source.CustomerPoNumber,
-        CustomerPoDate = source.CustomerPoDate,
-        CustomerNameSnapshot = source.CustomerNameSnapshot,
-        CustomerAddressSnapshot = source.CustomerAddressSnapshot,
-        CustomerContactSnapshot = source.CustomerContactSnapshot,
-        SalesContactNameSnapshot = source.SalesContactNameSnapshot,
-        SalesContactPhoneSnapshot = source.SalesContactPhoneSnapshot,
-        SalesContactEmailSnapshot = source.SalesContactEmailSnapshot,
-        SourceDocumentType = source.SourceDocumentType,
-        SourceDocumentId = source.SourceDocumentId,
-        SourceDocumentNumber = source.SourceDocumentNumber,
-        CreatedBy = source.CreatedBy,
-        CreatedAt = source.CreatedAt,
-        LastModifiedBy = source.LastModifiedBy,
-        LastModifiedAt = source.LastModifiedAt,
-        Items = source.Items.Select(i => new ContractItem
-        {
-            Id = i.Id,
-            SortOrder = i.SortOrder,
-            SourceArticleId = i.SourceArticleId,
-            ArticleName = i.ArticleName,
-            Description = i.Description,
-            Specification = i.Specification,
-            Quantity = i.Quantity,
-            Unit = i.Unit,
-            UnitPrice = i.UnitPrice,
-            DiscountPercent = i.DiscountPercent,
-            Currency = i.Currency,
-            ExchangeRateSnapshot = i.ExchangeRateSnapshot
-        }).ToList()
-    };
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
