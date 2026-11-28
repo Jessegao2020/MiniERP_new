@@ -8,7 +8,8 @@ public sealed record CurrencyConversionLine(string Name, int? ArticleId, decimal
     string Unit, decimal UnitPrice, decimal DiscountPercent, string Currency, decimal ExchangeRate);
 
 public sealed record CurrencyConversionPreviewLine(string Name, decimal Quantity, decimal DiscountPercent,
-    decimal OldUnitPrice, decimal NewUnitPrice, decimal OldTotal, decimal NewTotal);
+    decimal OldUnitPrice, decimal NewUnitPrice, decimal OldTotal, decimal NewTotal,
+    CurrencyConversionLine SourceLine);
 
 public sealed record CurrencyConversionPlan(string SourceCurrency, string TargetCurrency, decimal Rate,
     CurrencyConversionMode Mode, IReadOnlyList<CurrencyConversionPreviewLine> Lines,
@@ -62,7 +63,7 @@ public static class CurrencyConversionService
                 }
                 preview.Add(new CurrencyConversionPreviewLine(line.Name, line.Quantity, line.DiscountPercent,
                     line.UnitPrice, price, SalesLineAmounts.Calculate(line.Quantity, line.UnitPrice, line.DiscountPercent),
-                    SalesLineAmounts.Calculate(line.Quantity, price, line.DiscountPercent)));
+                    SalesLineAmounts.Calculate(line.Quantity, price, line.DiscountPercent), line));
             }
             plan = new CurrencyConversionPlan(source, target, rate, mode, preview.AsReadOnly(),
                 preview.Sum(l => l.OldTotal), preview.Sum(l => l.NewTotal));

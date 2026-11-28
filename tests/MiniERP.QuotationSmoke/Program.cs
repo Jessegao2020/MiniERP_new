@@ -52,6 +52,54 @@ var policy = new QuotationPolicy { NumberCode = "ACME", DefaultCurrency = "CNY",
 var custom = QuotationRules.CreateDraft(date, policy);
 Check(custom.Currency == "CNY" && custom.ValidUntil == date.AddDays(45) && custom.DeliveryTerm == "EXW", "custom policy defaults");
 Check(await QuotationNumberAllocator.PreviewNextAsync(service, 3, date, policy) == "26ACME1127301", "custom number code");
+// Test the shared conversion planner independently from Avalonia or SQLite.
+var conversionLines = new[]
+{
+    new CurrencyConversionLine("Negotiated board", 5, 3m, "PCS", 100m, 10m, "USD", 7m),
+    new CurrencyConversionLine("Manual service", null, 2m, "PCS", 25m, 0m, "USD", 7m)
+};
+Check(CurrencyConversionService.TryPlan("USD", "CNY", 7m,
+    CurrencyConversionMode.ConvertExistingPrices, conversionLines, new[] { article }, out var converted, out _),
+    "convert catalog and manual lines together");
+Check(converted!.OldTotal == 320m && converted.NewTotal == 2240m &&
+    converted.Lines[0].NewUnitPrice == 700m && converted.Lines[1].NewUnitPrice == 175m,
+    "negotiated prices, discount and totals preserved by conversion");
+Check(conversionLines[0].UnitPrice == 100m && conversionLines[1].Currency == "USD",
+    "preview does not mutate its input");
+Check(!CurrencyConversionService.TryPlan("USD", "CNY", 7m, CurrencyConversionMode.RepriceFromCatalog,
+    conversionLines, new[] { article }, out var failed, out _) && failed is null,
+    "catalog repricing fails atomically for a manual line");
+Check(CurrencyConversionService.TryPlan("USD", "CNY", 7m, CurrencyConversionMode.RepriceFromCatalog,
+    new[] { conversionLines[0] }, new[] { article }, out var catalogPlan, out _) &&
+    catalogPlan!.Lines[0].NewUnitPrice == 770m && catalogPlan.NewTotal == 2079m,
+    "explicit catalog repricing uses current catalog");
+Check(CurrencyConversionService.TryPlan("USD", "CNY", 7m, CurrencyConversionMode.KeepNumericPrices,
+    conversionLines, new[] { article }, out var numeric, out _) && numeric!.NewTotal == 320m,
+    "keep numeric mode changes currency without repricing");
+var reverse = conversionLines.Select((l, index) => l with
+    { Currency = "CNY", UnitPrice = converted.Lines[index].NewUnitPrice }).ToList();
+Check(CurrencyConversionService.TryPlan("CNY", "USD", 7m, CurrencyConversionMode.ConvertExistingPrices,
+    reverse, Array.Empty<Article>(), out var reversed, out _) && reversed!.NewTotal == 320m,
+    "reverse conversion");
+Check(CurrencyConversionService.TryPlan("CNY", "USD", 8m, CurrencyConversionMode.ConvertExistingPrices,
+    new[] { new CurrencyConversionLine("Rounding", null, 1m, "PCS", 8.04m, 0m, "CNY", 8m) },
+    Array.Empty<Article>(), out var rounded, out _) && rounded!.NewTotal == 1.01m, "half-up unit-price rounding");
+Check(!CurrencyConversionService.TryPlan("USD", "CNY", 0m, CurrencyConversionMode.ConvertExistingPrices,
+    conversionLines, Array.Empty<Article>(), out _, out _), "invalid exchange rate blocked");
+Check(CurrencyConversionService.TryPlan("USD", "CNY", 0m, CurrencyConversionMode.ConvertExistingPrices,
+    Array.Empty<CurrencyConversionLine>(), Array.Empty<Article>(), out var empty, out _) && empty!.NewTotal == 0m,
+    "empty document currency switch without rate");
+Check(!CurrencyConversionService.TryPlan("USD", "CNY", 7m, CurrencyConversionMode.ConvertExistingPrices,
+    new[] { conversionLines[0] with { Currency = "CNY" } }, Array.Empty<Article>(), out _, out _),
+    "mixed currencies rejected");
+Check(!CurrencyConversionService.TryPlan("USD", "EUR", 7m, CurrencyConversionMode.ConvertExistingPrices,
+    conversionLines, Array.Empty<Article>(), out _, out _), "unsupported currency rejected");
+Check(!CurrencyConversionService.TryPlan("USD", "CNY", 7m, CurrencyConversionMode.ConvertExistingPrices,
+    new[] { conversionLines[0] with { UnitPrice = decimal.MaxValue } }, Array.Empty<Article>(), out var overflow, out _) && overflow is null,
+    "overflow rejected atomically");
+Check(CurrencyConversionService.ResolveRate(7m, 8m) == 7m && CurrencyConversionService.ResolveRate(0m, 8m) == 8m,
+    "prefer historical snapshot and use settings only as fallback");
+Console.WriteLine("PASS: shared currency conversion planner");
 Console.WriteLine("PASS: headless quotation rules, pricing, snapshots, numbering, copy and policy");
 
 static void Check(bool condition, string name)

@@ -49,6 +49,12 @@ public sealed class InvoiceWorkflow : IInvoiceWorkflow
         invoice.Remarks = request.Remarks;
         invoice.CustomerPoNumber = request.CustomerPoNumber;
         invoice.CustomerPoDate = request.CustomerPoDate;
+        if (previous is not null && previous.Currency != invoice.Currency)
+        {
+            invoice.ExchangeRate = CurrencyConversionService.ResolveRate(previous.ExchangeRate, _policy.CnyPerUsd ?? 0m);
+            if (request.Items.Count > 0 && invoice.ExchangeRate <= 0m)
+                throw new InvalidOperationException("A positive exchange rate is required to change the currency of an invoice with items.");
+        }
         // Existing lines require explicit target-currency prices on a DTO currency
         // change. Desktop applies a confirmed shared conversion plan before saving.
         var items = await BuildItemsAsync(request.Items, invoice, previous);

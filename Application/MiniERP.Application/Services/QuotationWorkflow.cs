@@ -62,6 +62,12 @@ public sealed class QuotationWorkflow : IQuotationWorkflow
         // The historical FX snapshot remains the authority. A header-only legacy
         // quote can adopt a configured rate using the same rule as the desktop.
         q.ExchangeRate = QuotationRules.ResolveExchangeRate(old, _policy.CnyPerUsd ?? 0m);
+        if (old.Currency != q.Currency)
+        {
+            q.ExchangeRate = CurrencyConversionService.ResolveRate(old.ExchangeRate, _policy.CnyPerUsd ?? 0m);
+            if (request.Items.Count > 0 && q.ExchangeRate <= 0m)
+                throw new InvalidOperationException("A positive exchange rate is required to change the currency of a quotation with items.");
+        }
         q.DeliveryTerm = request.DeliveryTerm;
         q.PaymentTerm = request.PaymentTerm;
         q.LeadTime = request.LeadTime;

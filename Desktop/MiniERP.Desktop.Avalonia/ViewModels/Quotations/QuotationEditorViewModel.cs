@@ -75,14 +75,8 @@ public sealed class QuotationEditorViewModel : INotifyPropertyChanged
     {
         if (plan.SourceCurrency != Currency || plan.Lines.Count != Items.Count)
             throw new InvalidOperationException("Currency conversion preview is no longer current.");
-        for (var index = 0; index < Items.Count; index++)
-        {
-            var line = Items[index];
-            var preview = plan.Lines[index];
-            if (line.ArticleName != preview.Name || line.UnitPrice != preview.OldUnitPrice ||
-                line.Quantity != preview.Quantity || line.DiscountPercent != preview.DiscountPercent)
-                throw new InvalidOperationException("Currency conversion preview is no longer current.");
-        }
+        if (!GetCurrencyConversionLines().SequenceEqual(plan.Lines.Select(line => line.SourceLine)))
+            throw new InvalidOperationException("Currency conversion preview is no longer current.");
         // Only mutate once every line has been checked.
         for (var index = 0; index < Items.Count; index++)
             Items[index].Reprice(plan.TargetCurrency, plan.Rate, plan.Lines[index].NewUnitPrice);

@@ -47,7 +47,6 @@ try
     var date = new DateTime(2026, 1, 2, 12, 34, 56, 789);
     Check(InvoiceRules.NewNumber(InvoiceType.Proforma, date, policy) == "PRO-20260102-123456789", "configured PI prefix and legacy format");
     Check(InvoiceRules.NewNumber(InvoiceType.Commercial, date, policy) == "COM-20260102-123456789", "configured commercial prefix");
-    Check(!InvoiceRules.TryChangeCurrency("CNY", 1, out _) && InvoiceRules.TryChangeCurrency("CNY", 0, out _), "currency change rule");
     Check(SalesLineAmounts.Calculate(1m, 1.005m, 0m) == 1.01m, "shared line rounding");
     var cnyLegacy = new Invoice { Currency = "CNY", ExchangeRate = 0m };
     cnyLegacy.Items.Add(new InvoiceItem { Currency = "CNY", ExchangeRateSnapshot = 0m });
@@ -140,6 +139,43 @@ try
         bad.Items.First().ExchangeRateSnapshot = 99m;
         Check((await workflow.SavePreparedAsync(bad, false))?.Contains("exchange-rate") == true, "desktop path rejects mismatched rate");
     }
+
+    // Exercise the same prepared entity write used by the desktop after preview confirmation.
+    foreach (var documentId in new[] { id, commercial.Summary.Id })
+    {
+        using var scope = provider.CreateScope();
+        var workflow = scope.ServiceProvider.GetRequiredService<IInvoiceWorkflow>();
+        var crud = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
+        var invoice = (await crud.GetInvoiceByIdAsync(documentId))!;
+        var lines = invoice.Items.OrderBy(l => l.SortOrder).ToList();
+        var oldIds = lines.Select(l => l.Id).ToArray();
+        var oldNumber = invoice.InvoiceNumber;
+        var oldTotal = invoice.TotalAmount;
+        Check(CurrencyConversionService.TryPlan("USD", "CNY", invoice.ExchangeRate,
+            CurrencyConversionMode.ConvertExistingPrices, lines.Select(CurrencyConversionService.From).ToList(),
+            Array.Empty<Article>(), out var plan, out _), "invoice conversion preview");
+        invoice.Currency = plan!.TargetCurrency;
+        foreach (var (line, index) in lines.Select((l, n) => (l, n)))
+        {
+            line.Currency = invoice.Currency;
+            line.ExchangeRateSnapshot = plan.Rate;
+            line.UnitPrice = plan.Lines[index].NewUnitPrice;
+        }
+        Check(await workflow.SavePreparedAsync(invoice, false) is null, "persist approved invoice conversion");
+        var persisted = await WithInvoice(w => w.GetDetailAsync(documentId));
+        Check(persisted!.Summary.Currency == "CNY" && persisted.Summary.Total == oldTotal * 7m
+            && persisted.Summary.Number == oldNumber && persisted.Items.Select(l => l.Id).SequenceEqual(oldIds)
+            && persisted.Items.All(l => l.Currency == "CNY" && l.ExchangeRate == 7m),
+            "PI/CI converted values and stable identities");
+    }
+    await Reject("PI currency downstream guard", () => WithInvoice(w => w.UpdateAsync(fromQuote.Summary.Id,
+        request with
+        {
+            Number = fromQuote.Summary.Number, Currency = "CNY",
+            Items = new[] { new InvoiceItemRequest(articleId, 2m, 700m, ItemId: fromQuote.Items[0].Id) }
+        })), "downstream");
+    Check((await WithInvoice(w => w.GetDetailAsync(fromQuote.Summary.Id)))!.Summary.Currency == "USD",
+        "blocked PI remains unchanged");
 
     await Reject("PI downstream guard", () => WithInvoice(async w => { await w.DeleteAsync(fromQuote.Summary.Id); return true; }), "downstream");
     await Reject("quotation downstream guard", () => WithQuotation(async w => { await w.DeleteAsync(quote.Summary.Id); return true; }), "downstream");

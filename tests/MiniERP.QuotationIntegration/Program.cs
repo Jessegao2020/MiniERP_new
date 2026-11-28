@@ -195,6 +195,39 @@ try
         });
         await erp.SaveChangesAsync();
     }
+    // A dependent invoice blocks quotation currency changes even via DTO.
+    await Reject("quotation currency downstream guard", () => WithWorkflow(w => w.UpdateAsync(again with
+    {
+        Currency = "CNY",
+        Items = new[] { again.Items[0] with { UnitPrice = 700m }, again.Items[1] with { UnitPrice = 1400m } }
+    })), "downstream");
+    Check((await WithWorkflow(w => w.GetDetailAsync(id)))!.Summary.Currency == "USD",
+        "blocked quotation remains unchanged");
+
+    using (var scope = provider.CreateScope())
+    {
+        var workflow = scope.ServiceProvider.GetRequiredService<IQuotationWorkflow>();
+        var crud = scope.ServiceProvider.GetRequiredService<IQuotationService>();
+        var quotation = (await crud.GetQuotationByIdAsync(copy.Summary.Id))!;
+        var lines = quotation.Items.OrderBy(l => l.SortOrder).ToList();
+        var oldIds = lines.Select(l => l.Id).ToArray();
+        Check(CurrencyConversionService.TryPlan("USD", "CNY", quotation.ExchangeRate,
+            CurrencyConversionMode.ConvertExistingPrices, lines.Select(CurrencyConversionService.From).ToList(),
+            Array.Empty<Article>(), out var plan, out _), "quotation conversion preview");
+        quotation.Currency = plan!.TargetCurrency;
+        foreach (var (line, index) in lines.Select((l, n) => (l, n)))
+        {
+            line.Currency = quotation.Currency;
+            line.ExchangeRateSnapshot = plan.Rate;
+            line.UnitPrice = plan.Lines[index].NewUnitPrice;
+        }
+        Check(await workflow.SavePreparedAsync(quotation, false, true) is null, "persist approved quotation conversion");
+        var persisted = await WithWorkflow(w => w.GetDetailAsync(copy.Summary.Id));
+        Check(persisted!.Summary.Currency == "CNY" && persisted.Summary.TotalAmount == 3920m
+            && persisted.Items.Select(l => l.Id).SequenceEqual(oldIds) && persisted.Items.All(l => l.Currency == "CNY"),
+            "quotation conversion retains identities and persists totals");
+    }
+
     await Reject("downstream document deletion guard",
         () => WithWorkflow(async w => { await w.DeleteAsync(id); return true; }), "downstream");
     Check(await WithWorkflow(w => w.GetDetailAsync(id)) is not null,

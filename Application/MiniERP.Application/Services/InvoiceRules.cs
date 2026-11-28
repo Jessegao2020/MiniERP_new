@@ -35,13 +35,6 @@ public static class InvoiceRules
         if (string.IsNullOrWhiteSpace(invoice.PaymentTerm)) invoice.PaymentTerm = policy.PaymentTerm;
     }
 
-    public static bool TryChangeCurrency(string currency, int itemCount, out string error)
-    {
-        error = !QuotationRules.IsSupportedCurrency(currency) ? "Unsupported invoice currency."
-            : itemCount > 0 ? "Remove invoice items before changing currency." : string.Empty;
-        return error.Length == 0;
-    }
-
     public static bool TryGetArticleUnitPrice(Article article, string currency, decimal rate, out decimal price, out string error)
         => QuotationRules.TryGetArticleUnitPrice(article, currency, rate, out price, out error);
 

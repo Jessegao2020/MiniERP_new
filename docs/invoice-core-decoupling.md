@@ -12,7 +12,7 @@ No database migrations or MCP write tools are introduced.
   delete, and trusted desktop prepared-save adapter. Update replaces all
   line items; existing item IDs must belong to the document. Explicit prices
   are in document currency. Existing lines retain price snapshots if price is
-  omitted. Currency switches require removing existing items first.
+  omitted. Currency changes with items require explicit target-currency prices in DTOs, or the shared confirmed desktop conversion plan.
 - SalesDocumentCopyService continues producing editable, unsaved conversion
   drafts for desktop. Workflow ConvertAsync saves the converted document
   immediately when explicitly called by a trusted host. It copies source
